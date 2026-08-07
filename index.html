@@ -2,16 +2,19 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Данил — Вокруг меня · Дневник ритма</title>
-<meta name="description" content="Дневник Данила. Москва и Подмосковье, танцы, волонтёрство, заметки о жизни вокруг.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#1A1410">
+<meta name="description" content="Дневник Данила. Москва и Подмосковье, танцы, волонтёрство, заметки о жизни вокруг.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Данил — Вокруг меня · Дневник ритма">
 <meta property="og:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
 <meta property="og:url" content="https://www.danil-sarykov.space/">
 <meta property="og:locale" content="ru_RU">
+<title>Данил — Вокруг меня · Дневник ритма</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231A1410'/><circle cx='32' cy='32' r='12' fill='%23C8553D'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --ink:#1A1410;
@@ -22,8 +25,6 @@
   --line:rgba(26,20,16,.12);
   --soft:#544A43;
   --shadow:0 30px 60px -30px rgba(26,20,16,.18);
-  --font-serif:Georgia,'Times New Roman',serif;
-  --font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 [hidden]{display:none!important}
@@ -35,40 +36,43 @@ body{
     radial-gradient(circle at 20% 30%, rgba(200,85,61,.04) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, rgba(200,85,61,.03) 0%, transparent 50%);
   color:var(--ink);
-  font-family:var(--font-sans);
+  font-family:"Manrope",system-ui,-apple-system,sans-serif;
   font-weight:400;font-size:16px;line-height:1.7;letter-spacing:.01em;
   -webkit-font-smoothing:antialiased;
 }
-.serif{font-family:var(--font-serif);font-weight:400;letter-spacing:-.01em}
-.w{width:100%;max-width:1200px;margin:0 auto;padding:0 clamp(20px,5vw,48px)}
+.serif{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.01em}
+.w{width:100%;max-width:1200px;margin:0 auto;padding:0 clamp(20px,5vw,48px);min-width:0}
 a{color:inherit;text-decoration:none}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{max-width:100%;height:auto;display:block}
 ::selection{background:var(--terracotta);color:#fff}
 a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--terracotta);outline-offset:3px;border-radius:2px}
 
+/* ===== ШАПКА ===== */
 .topbar{background:var(--ink);color:var(--cream);border-bottom:1px solid rgba(255,255,255,.08)}
-.topbar .w{display:flex;justify-content:space-between;align-items:center;padding:14px clamp(16px,5vw,48px);gap:14px;flex-wrap:nowrap}
-.mark{font-family:var(--font-serif);font-size:24px;font-weight:400;letter-spacing:-.02em;display:flex;align-items:baseline;flex-shrink:0}
+.topbar .w{display:flex;justify-content:space-between;align-items:center;padding:14px clamp(16px,5vw,48px);gap:14px;flex-wrap:wrap}
+.mark{font-family:"Instrument Serif",serif;font-size:24px;font-weight:400;letter-spacing:-.02em;display:flex;align-items:baseline;flex-shrink:0}
 .mark .letter{font-style:italic}
 .mark .dot{display:inline-block;width:10px;height:10px;background:var(--terracotta);border-radius:50%;margin-left:6px}
-.now-block{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:rgba(244,238,230,.78);letter-spacing:.03em;min-width:0}
+.now-block{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:rgba(244,238,230,.78);letter-spacing:.03em;min-width:0;flex:1 1 auto;justify-content:flex-end}
 .now-block .live-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#22C55E;box-shadow:0 0 12px rgba(34,197,94,.6);animation:livePulse 2s ease-in-out infinite}
 @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.15)}}
-.now-block .now-text{display:flex;gap:10px;align-items:center;white-space:nowrap}
-.now-block .sep{color:rgba(244,238,230,.35)}
+.now-block .now-text{display:flex;gap:10px;align-items:center;white-space:nowrap;min-width:0}
+.now-block .sep{color:rgba(244,238,230,.35);flex-shrink:0}
 
+/* ===== ГЕРОЙ ===== */
 .hero{position:relative;padding:clamp(80px,14vw,160px) 0 clamp(60px,8vw,100px);overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(200,85,61,.08) 0%, transparent 60%);pointer-events:none}
 .hero .w{position:relative;z-index:2}
 .hero-inner{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
 .hero-label{font-size:12px;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--terracotta-text);margin-bottom:24px;display:flex;align-items:center;gap:12px}
 .hero-label::before{content:"";width:30px;height:1px;background:var(--terracotta-text)}
-h1.big{font-family:var(--font-serif);font-weight:400;font-size:clamp(48px,9vw,120px);line-height:.95;letter-spacing:-.025em;margin:0}
+h1.big{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(48px,9vw,120px);line-height:.95;letter-spacing:-.025em;margin:0;word-break:break-word;overflow-wrap:break-word}
 h1.big em{font-style:italic;color:var(--terracotta)}
 h1.big .end-dot{display:inline-block;width:14px;height:14px;background:var(--terracotta);border-radius:50%;vertical-align:middle;margin-left:8px}
-.hero-side{font-family:var(--font-serif);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--soft);line-height:1.45;max-width:260px;text-align:right}
+.hero-side{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--soft);line-height:1.45;max-width:260px;text-align:right}
 .hero-actions{margin-top:48px;display:flex;gap:14px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;gap:10px;padding:16px 32px;border-radius:100px;font-weight:600;font-size:14px;letter-spacing:.03em;transition:all .3s cubic-bezier(.4,0,.2,1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 32px;border-radius:100px;font-weight:600;font-size:14px;letter-spacing:.03em;transition:all .3s cubic-bezier(.4,0,.2,1);text-align:center}
 .btn-primary{background:var(--ink);color:var(--cream)}
 .btn-primary:hover{background:var(--terracotta);transform:translateY(-2px)}
 .btn-primary .arrow{transition:transform .3s ease}
@@ -78,8 +82,9 @@ h1.big .end-dot{display:inline-block;width:14px;height:14px;background:var(--ter
 .btn-ghost .arrow{transition:transform .3s ease}
 .btn-ghost:hover .arrow{transform:translateY(3px)}
 
+/* ===== РИТМ-ПОЛОСА ===== */
 .rhythm{background:var(--ink);color:var(--cream);padding:22px 0 26px;overflow:hidden;border-block:1px solid rgba(244,238,230,.06)}
-.rhythm-label{display:block;padding:0 clamp(20px,5vw,48px);margin-bottom:16px;font-family:var(--font-serif);font-style:italic;font-size:13px;letter-spacing:.12em;color:rgba(244,238,230,.6)}
+.rhythm-label{display:block;padding:0 clamp(20px,5vw,48px);margin-bottom:16px;font-family:"Instrument Serif",serif;font-style:italic;font-size:13px;letter-spacing:.12em;color:rgba(244,238,230,.6)}
 .rhythm-label::before{content:"— "}
 .rhythm-label::after{content:" —"}
 .marquee-track{display:flex;width:max-content;animation:rhythmScroll 30s linear infinite}
@@ -94,96 +99,105 @@ h1.big .end-dot{display:inline-block;width:14px;height:14px;background:var(--ter
 @keyframes eqPulse{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
 @keyframes rhythmScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
 
+/* ===== ЭПИГРАФ ===== */
 .epigraph{padding:clamp(80px,12vw,140px) 0}
 .epigraph-inner{max-width:720px;margin:0 auto;text-align:center;position:relative}
-.epigraph-inner::before{content:"«";position:absolute;top:-80px;left:50%;transform:translateX(-50%);font-family:var(--font-serif);font-size:180px;color:var(--terracotta);opacity:.15;line-height:1}
-.epigraph p{font-family:var(--font-serif);font-style:italic;font-size:clamp(26px,4.5vw,44px);line-height:1.3;letter-spacing:-.01em}
+.epigraph-inner::before{content:"«";position:absolute;top:-80px;left:50%;transform:translateX(-50%);font-family:"Instrument Serif",serif;font-size:180px;color:var(--terracotta);opacity:.15;line-height:1;pointer-events:none}
+.epigraph p{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(26px,4.5vw,44px);line-height:1.3;letter-spacing:-.01em;word-break:break-word}
 .epigraph p em{font-style:normal;color:var(--terracotta)}
-.epigraph .attr{margin-top:32px;font-size:12.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--soft)}
+.epigraph .attr{margin-top:32px;font-size:12.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);word-break:break-word}
 .epigraph .attr::before{content:"— "}
 .epigraph .attr em{font-style:normal;color:var(--terracotta-text)}
 
+/* ===== ЦИФРЫ ===== */
 .days{padding:60px 0;border-block:1px solid var(--line)}
 .days-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
-.days-item{text-align:center;position:relative}
+.days-item{text-align:center;position:relative;min-width:0}
 .days-item:not(:last-child)::after{content:"";position:absolute;right:-20px;top:20%;height:60%;width:1px;background:var(--line)}
-.days-num{font-family:var(--font-serif);font-size:clamp(40px,6vw,72px);line-height:1;color:var(--ink);letter-spacing:-.02em;display:block}
+.days-num{font-family:"Instrument Serif",serif;font-size:clamp(40px,6vw,72px);line-height:1;color:var(--ink);letter-spacing:-.02em;display:block;word-break:break-word}
 .days-num .plus{color:var(--terracotta);font-size:.6em;margin-left:4px}
-.days-label{margin-top:12px;font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--soft)}
+.days-label{margin-top:12px;font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--soft);word-break:break-word}
 
+/* ===== СЕКЦИИ ===== */
 main{width:100%}
 section.pane{padding:clamp(80px,10vw,120px) 0}
 .section-header{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:baseline;margin-bottom:clamp(40px,6vw,64px);padding-bottom:24px;border-bottom:1px solid var(--line)}
-.section-num{font-family:var(--font-serif);font-style:italic;font-size:20px;color:var(--terracotta-text)}
-.section-title{font-family:var(--font-serif);font-size:clamp(28px,4vw,44px);font-weight:400;line-height:1.1;letter-spacing:-.015em}
+.section-num{font-family:"Instrument Serif",serif;font-style:italic;font-size:20px;color:var(--terracotta-text)}
+.section-title{font-family:"Instrument Serif",serif;font-size:clamp(28px,4vw,44px);font-weight:400;line-height:1.1;letter-spacing:-.015em;word-break:break-word}
 .section-title em{font-style:italic;color:var(--terracotta)}
 .author-passport{display:grid;grid-template-columns:auto 1fr;gap:32px;padding:32px;background:var(--paper);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);position:relative}
-.author-passport::before{content:"№ 001";position:absolute;top:12px;right:16px;font-family:var(--font-serif);font-style:italic;font-size:11px;color:var(--soft);letter-spacing:.1em}
-.avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;background:var(--ink);color:var(--cream);display:grid;place-items:center;font-family:var(--font-serif);font-style:italic;font-size:40px;border:2px solid var(--terracotta)}
-.author-info{display:flex;flex-direction:column;gap:12px}
-.author-name{font-family:var(--font-serif);font-size:24px;letter-spacing:-.01em}
+.author-passport::before{content:"№ 001";position:absolute;top:12px;right:16px;font-family:"Instrument Serif",serif;font-style:italic;font-size:11px;color:var(--soft);letter-spacing:.1em}
+.avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;background:var(--ink);color:var(--cream);display:grid;place-items:center;font-family:"Instrument Serif",serif;font-style:italic;font-size:40px;border:2px solid var(--terracotta)}
+.author-info{display:flex;flex-direction:column;gap:12px;min-width:0}
+.author-name{font-family:"Instrument Serif",serif;font-size:24px;letter-spacing:-.01em;word-break:break-word}
 .author-name em{font-style:italic;color:var(--terracotta)}
-.author-line{font-size:15px;color:var(--soft);line-height:1.7;max-width:60ch}
+.author-line{font-size:15px;color:var(--soft);line-height:1.7;max-width:60ch;word-break:break-word}
 
-.posts-note{background:var(--paper);border-left:3px solid var(--terracotta);padding:16px 24px;font-size:14px;color:var(--soft);margin-bottom:40px;line-height:1.7}
+/* ===== ЗАПИСИ ===== */
+.posts-note{background:var(--paper);border-left:3px solid var(--terracotta);padding:16px 24px;font-size:14px;color:var(--soft);margin-bottom:40px;line-height:1.7;word-break:break-word}
 .posts-note b{color:var(--ink);font-weight:600}
 .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:40px}
-.chip-btn{background:transparent;border:1px solid var(--line);color:var(--ink);padding:9px 20px;border-radius:100px;font-size:12.5px;font-weight:600;letter-spacing:.03em;transition:all .25s ease}
+.chip-btn{background:transparent;border:1px solid var(--line);color:var(--ink);padding:9px 20px;border-radius:100px;font-size:12.5px;font-weight:600;letter-spacing:.03em;transition:all .25s ease;white-space:nowrap}
 .chip-btn.active,.chip-btn:hover{background:var(--ink);color:var(--cream);border-color:var(--ink)}
 .plist{display:grid;grid-template-columns:repeat(12,1fr);gap:24px}
-.post{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:36px;display:flex;flex-direction:column;transition:all .3s ease;position:relative;overflow:hidden;grid-column:span 6}
+.post{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:36px;display:flex;flex-direction:column;transition:all .3s ease;position:relative;overflow:hidden;grid-column:span 6;min-width:0}
 .post.wide{grid-column:span 12}
 .post::after{content:"";position:absolute;top:0;left:0;right:0;height:0;background:linear-gradient(135deg,var(--terracotta) 0%,transparent 60%);opacity:.06;transition:opacity .3s ease}
 .post:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:transparent}
 .post:hover::after{opacity:.12}
-.post .issue{font-family:var(--font-serif);font-style:italic;font-size:11.5px;color:var(--terracotta-text);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.post .issue::before{content:"";width:20px;height:1px;background:var(--terracotta-text)}
-.post h3{font-family:var(--font-serif);font-size:clamp(24px,3vw,32px);font-weight:400;line-height:1.15;margin-bottom:18px;letter-spacing:-.015em}
+.post .issue{font-family:"Instrument Serif",serif;font-style:italic;font-size:11.5px;color:var(--terracotta-text);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;word-break:break-word}
+.post .issue::before{content:"";width:20px;height:1px;background:var(--terracotta-text);flex-shrink:0}
+.post h3{font-family:"Instrument Serif",serif;font-size:clamp(24px,3vw,32px);font-weight:400;line-height:1.15;margin-bottom:18px;letter-spacing:-.015em;word-break:break-word}
 .post h3 em{font-style:italic;color:var(--terracotta)}
 .post .full{margin-bottom:20px}
-.post .full p{font-size:15px;color:var(--ink);line-height:1.75;margin-bottom:12px}
+.post .full p{font-size:15px;color:var(--ink);line-height:1.75;margin-bottom:12px;word-break:break-word}
 .post .full p:last-child{margin-bottom:0}
-.post blockquote{font-family:var(--font-serif);font-style:italic;font-size:18px;line-height:1.45;color:var(--ink);margin:24px 0 20px;padding-left:20px;border-left:2px solid var(--terracotta);position:relative}
+.post blockquote{font-family:"Instrument Serif",serif;font-style:italic;font-size:18px;line-height:1.45;color:var(--ink);margin:24px 0 20px;padding-left:20px;border-left:2px solid var(--terracotta);position:relative;word-break:break-word}
 .post blockquote::before{content:"«";position:absolute;top:-8px;left:6px;font-size:32px;color:var(--terracotta);opacity:.4;font-style:normal}
 .post-meta{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:auto;padding-top:20px;border-top:1px dashed var(--line)}
 .post a.go{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--terracotta-text);display:inline-flex;align-items:center;gap:8px;transition:all .25s ease}
 .post a.go::after{content:"→";transition:transform .25s ease}
 .post a.go:hover::after{transform:translateX(5px)}
 
+/* ===== FAQ ===== */
 .faq{display:grid;gap:2px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .faq-item{background:var(--paper)}
 .faq-q{padding:24px 28px;display:flex;justify-content:space-between;align-items:center;gap:20px;width:100%;text-align:left;font-weight:500;font-size:15px;transition:background .2s ease;list-style:none;cursor:pointer}
 .faq-q::-webkit-details-marker{display:none}
 .faq-q::marker{content:''}
 .faq-q:hover{background:rgba(200,85,61,.04)}
-.faq-q .q-text{font-family:var(--font-serif);font-size:18px;letter-spacing:-.005em}
-.faq-q .plus{font-family:var(--font-serif);font-style:italic;font-size:24px;color:var(--terracotta-text);transition:transform .3s ease;flex-shrink:0}
+.faq-q .q-text{font-family:"Instrument Serif",serif;font-size:18px;letter-spacing:-.005em;word-break:break-word}
+.faq-q .plus{font-family:"Instrument Serif",serif;font-style:italic;font-size:24px;color:var(--terracotta-text);transition:transform .3s ease;flex-shrink:0}
 .faq-item[open] .faq-q{background:rgba(200,85,61,.04)}
 .faq-item[open] .faq-q .plus{transform:rotate(45deg)}
-.faq-a{padding:0 28px 24px;font-size:15px;color:var(--soft);line-height:1.7}
+.faq-a{padding:0 28px 24px;font-size:15px;color:var(--soft);line-height:1.7;word-break:break-word}
 .faq-a a{color:var(--terracotta-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 
+/* ===== ФИНАЛ ===== */
 .closing{background:var(--ink);color:var(--cream);padding:clamp(80px,12vw,140px) 0 clamp(60px,8vw,80px);text-align:center;position:relative;overflow:hidden}
-.closing::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(200,85,61,.15) 0%,transparent 60%)}
+.closing::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(200,85,61,.15) 0%,transparent 60%);pointer-events:none}
 .closing-inner{position:relative;z-index:2}
-.closing h2{font-family:var(--font-serif);font-size:clamp(36px,6vw,72px);line-height:1.05;font-weight:400;letter-spacing:-.02em;max-width:16ch;margin:0 auto}
+.closing h2{font-family:"Instrument Serif",serif;font-size:clamp(36px,6vw,72px);line-height:1.05;font-weight:400;letter-spacing:-.02em;max-width:16ch;margin:0 auto;word-break:break-word}
 .closing h2 em{font-style:italic;color:var(--terracotta)}
-.closing p{margin-top:24px;font-family:var(--font-serif);font-style:italic;font-size:clamp(16px,2vw,20px);color:rgba(244,238,230,.78);max-width:46ch;margin-left:auto;margin-right:auto}
+.closing p{margin-top:24px;font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(16px,2vw,20px);color:rgba(244,238,230,.78);max-width:46ch;margin-left:auto;margin-right:auto;word-break:break-word}
 .closing .hero-actions{justify-content:center;margin-top:48px}
 .closing .btn-primary{background:var(--terracotta);color:#fff}
 .closing .btn-primary:hover{background:#fff;color:var(--ink)}
 .closing .btn-ghost{color:var(--cream);border-color:rgba(244,238,230,.22)}
 .closing .btn-ghost:hover{background:rgba(244,238,230,.1);border-color:rgba(244,238,230,.4)}
 footer{margin-top:60px;padding-top:32px;border-top:1px solid rgba(244,238,230,.1);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:12.5px;color:rgba(244,238,230,.62);letter-spacing:.05em}
-footer a{color:var(--cream);font-weight:500;transition:color .2s}
+footer a{color:var(--cream);font-weight:500;transition:color .2s;word-break:break-word}
 footer a:hover{color:var(--terracotta)}
 .foot-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--terracotta);margin:0 10px;vertical-align:middle}
 .foot-name{font-style:italic;color:rgba(244,238,230,.55);letter-spacing:.08em}
 
+/* ===== АДАПТИВ: ПЛАНШЕТ ===== */
 @media(max-width:1080px){
   .hero-inner{gap:28px}
   .hero-side{max-width:220px}
 }
+
+/* ===== АДАПТИВ: ПЛАНШЕТ ВЕРТИКАЛЬНЫЙ ===== */
 @media(max-width:860px){
   .hero-inner{grid-template-columns:1fr}
   .hero-side{text-align:left;max-width:none;font-size:18px}
@@ -194,11 +208,13 @@ footer a:hover{color:var(--terracotta)}
   .post,.post.wide{grid-column:span 1}
   .post{padding:28px 24px}
 }
+
+/* ===== АДАПТИВ: ТЕЛЕФОН ===== */
 @media(max-width:560px){
-  .topbar .w{gap:10px;padding:12px 16px}
+  .topbar .w{gap:10px;padding:12px 16px;justify-content:center}
   .mark{font-size:20px}
   .mark .dot{width:9px;height:9px;margin-left:5px}
-  .now-block{font-size:11px;gap:7px}
+  .now-block{font-size:11px;gap:7px;justify-content:center}
   .now-block .now-text{gap:7px}
   .now-date,.sep-date{display:none}
   .hero{padding:72px 0 56px}
@@ -217,6 +233,39 @@ footer a:hover{color:var(--terracotta)}
   .btn{width:100%;justify-content:center}
   .closing .hero-actions{flex-direction:column;align-items:stretch}
 }
+
+/* ===== АДАПТИВ: ОЧЕНЬ УЗКИЕ ЭКРАНЫ (iPhone SE, старые Android) ===== */
+@media(max-width:380px){
+  .topbar .w{padding:10px 12px}
+  .now-block .city{display:none}
+  .now-block .sep:first-of-type{display:none}
+  .hero{padding:56px 0 44px}
+  h1.big{font-size:clamp(36px,10vw,48px)}
+  .hero-side{font-size:16px}
+  .epigraph{padding:60px 0 80px}
+  .epigraph p{font-size:clamp(22px,6vw,32px)}
+  .epigraph-inner::before{font-size:120px;top:-40px}
+  .days{padding:40px 0}
+  .days-num{font-size:clamp(36px,10vw,56px)}
+  section.pane{padding:60px 0}
+  .section-title{font-size:clamp(24px,7vw,36px)}
+  .author-passport{padding:22px 18px}
+  .avatar{width:64px;height:64px;font-size:32px}
+  .author-name{font-size:20px}
+  .post{padding:20px 16px}
+  .post h3{font-size:clamp(20px,6vw,28px)}
+  .post .full p{font-size:14px}
+  .post blockquote{font-size:15.5px;padding-left:16px}
+  .faq-q{padding:18px 20px;font-size:14.5px}
+  .faq-q .q-text{font-size:16px}
+  .faq-a{padding:0 20px 20px;font-size:14px}
+  .closing{padding:60px 0 50px}
+  .closing h2{font-size:clamp(28px,8vw,48px)}
+  .closing p{font-size:clamp(15px,4vw,18px)}
+  footer{font-size:11.5px}
+}
+
+/* ===== УМЕНЬШЕНИЕ ДВИЖЕНИЯ ===== */
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .marquee-track,.eq i,.live-dot{animation:none!important}
@@ -232,7 +281,7 @@ footer a:hover{color:var(--terracotta)}
     <div class="now-block">
       <span class="live-dot" aria-hidden="true"></span>
       <div class="now-text">
-        <span id="nowPlace">Москва</span>
+        <span class="city" id="nowPlace">Москва</span>
         <span class="sep" aria-hidden="true">·</span>
         <span id="nowTime">—</span>
         <span class="sep sep-date" aria-hidden="true">·</span>
@@ -247,11 +296,11 @@ footer a:hover{color:var(--terracotta)}
     <div class="hero-label">Дневник ритма</div>
     <div class="hero-inner">
       <h1 class="big">Вокруг<br><em>меня</em><span class="end-dot" aria-hidden="true"></span></h1>
-      <div class="hero-side serif">Моя обычная жизнь — где бы я ни был. Мысли, моменты, то, что происходит вокруг. Без масок и ролей.</div>
+      <div class="hero-side">Моя обычная жизнь — где бы я ни был. Мысли, моменты, то, что происходит вокруг. Без масок и ролей.</div>
     </div>
     <div class="hero-actions">
       <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Читать в Telegram<span class="arrow" aria-hidden="true">→</span></a>
-      <button type="button" class="btn btn-ghost" id="toPosts">К записям<span class="arrow" aria-hidden="true">↓</span></button>
+      <a class="btn btn-ghost" href="#posts">К записям<span class="arrow" aria-hidden="true">↓</span></a>
     </div>
   </div>
 </header>
@@ -322,13 +371,13 @@ footer a:hover{color:var(--terracotta)}
   <section class="pane">
     <div class="w">
       <div class="section-header">
-        <span class="section-num serif">I.</span>
+        <span class="section-num">I.</span>
         <h2 class="section-title">О чём этот <em>дневник</em></h2>
       </div>
       <div class="author-passport">
-        <div class="avatar serif">Д</div>
+        <div class="avatar">Д</div>
         <div class="author-info">
-          <div class="author-name serif"><em>Данил</em> · автор дневника</div>
+          <div class="author-name"><em>Данил</em> · автор дневника</div>
           <p class="author-line">Пишу про обычную жизнь: танцы, волонтёрство, люди и события Москвы и Подмосковья. Без масок и ролей — всё по-настоящему.</p>
         </div>
       </div>
@@ -338,7 +387,7 @@ footer a:hover{color:var(--terracotta)}
   <section class="pane" id="posts" style="background:var(--paper);border-block:1px solid var(--line)">
     <div class="w">
       <div class="section-header">
-        <span class="section-num serif">II.</span>
+        <span class="section-num">II.</span>
         <h2 class="section-title">Записи <em>дневника</em></h2>
       </div>
 
@@ -346,7 +395,7 @@ footer a:hover{color:var(--terracotta)}
         <b>Записи можно читать прямо здесь.</b> Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому тексты продублированы на сайте.
       </div>
 
-      <div class="filters" role="group" aria-label="Фильтры">
+      <div class="filters" role="group" aria-label="Фильтры записей">
         <button type="button" class="chip-btn active" data-filter="all" aria-pressed="true">Все записи</button>
         <button type="button" class="chip-btn" data-filter="moscow" aria-pressed="false">Москва</button>
         <button type="button" class="chip-btn" data-filter="dance" aria-pressed="false">Танцы</button>
@@ -357,7 +406,7 @@ footer a:hover{color:var(--terracotta)}
       <div class="plist" id="postList">
         <article class="post" data-category="moscow">
           <div class="issue">Запись № 01 · Москва</div>
-          <h3 class="serif">Доброе утро, <em>Москва</em></h3>
+          <h3>Доброе утро, <em>Москва</em></h3>
           <div class="full">
             <p>Вышел сегодня — и как будто шагнул в тишину. Дорога ровная, блестит лёгким льдом, снег лежит спокойно, не шелохнётся.</p>
             <p>А голые ветки сверху держат этот серо-голубой свет, как будто натянули над городом мягкую крышу. Такая простая, тихая красота — без событий, без спешки.</p>
@@ -370,7 +419,7 @@ footer a:hover{color:var(--terracotta)}
 
         <article class="post" data-category="dance">
           <div class="issue">Запись № 02 · Танцы</div>
-          <h3 class="serif">Снова <em>танцую</em></h3>
+          <h3>Снова <em>танцую</em></h3>
           <div class="full">
             <p>Второй мастер-класс по оздоровительному танцу по приглашению Елены Дружновой. В первый раз было непривычно и непонятно, справлюсь ли — но лидер должен подавать личный пример.</p>
             <p>Сейчас движения даются заметно легче. А главное — понятно, как это важно для людей, которые приходят.</p>
@@ -383,7 +432,7 @@ footer a:hover{color:var(--terracotta)}
 
         <article class="post" data-category="volunteer">
           <div class="issue">Запись № 03 · Волонтёрство</div>
-          <h3 class="serif">Галерея <em>Светлячков</em></h3>
+          <h3>Галерея <em>Светлячков</em></h3>
           <div class="full">
             <p>Творческая встреча в парке «Сосенки» в рамках проекта «Мир в фокусе» и фестиваля «Лето в Москве».</p>
             <p>Десятки плакатов и открыток о доброте, письма поддержки, живой разговор о медиаволонтёрстве. Пространство, где о доброте говорят через искусство.</p>
@@ -396,7 +445,7 @@ footer a:hover{color:var(--terracotta)}
 
         <article class="post" data-category="events">
           <div class="issue">Запись № 04 · События</div>
-          <h3 class="serif">Клуб «Лица <em>района</em>»</h3>
+          <h3>Клуб «Лица <em>района</em>»</h3>
           <div class="full">
             <p>Встречи, где деловое общение переплетается с душевными беседами: командные игры, мастер-классы, советы психологов, чай со сладостями.</p>
             <p>Новые связи здесь легко превращаются в рабочие проекты или тёплую дружбу.</p>
@@ -412,27 +461,27 @@ footer a:hover{color:var(--terracotta)}
   <section class="pane">
     <div class="w">
       <div class="section-header">
-        <span class="section-num serif">III.</span>
+        <span class="section-num">III.</span>
         <h2 class="section-title">Часто <em>спрашивают</em></h2>
       </div>
       <div class="faq">
         <details class="faq-item">
           <summary class="faq-q">
-            <span class="q-text serif">Как часто выходят записи?</span>
+            <span class="q-text">Как часто выходят записи?</span>
             <span class="plus" aria-hidden="true">+</span>
           </summary>
           <div class="faq-a">Без строгого графика — когда случается что-то стоящее. Обычно несколько раз в неделю.</div>
         </details>
         <details class="faq-item">
           <summary class="faq-q">
-            <span class="q-text serif">Как связаться?</span>
+            <span class="q-text">Как связаться?</span>
             <span class="plus" aria-hidden="true">+</span>
           </summary>
           <div class="faq-a">Проще всего — в Telegram, <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>. Открыт к разговору и новым проектам.</div>
         </details>
         <details class="faq-item">
           <summary class="faq-q">
-            <span class="q-text serif">Почему ссылки на Telegram могут не открываться?</span>
+            <span class="q-text">Почему ссылки на Telegram могут не открываться?</span>
             <span class="plus" aria-hidden="true">+</span>
           </summary>
           <div class="faq-a">В некоторых регионах Telegram работает только с VPN. Поэтому тексты записей продублированы здесь, на сайте.</div>
@@ -445,15 +494,15 @@ footer a:hover{color:var(--terracotta)}
 <section class="closing">
   <div class="w">
     <div class="closing-inner">
-      <h2 class="serif">Проще и <em>честнее</em>.<br>Без лишнего.</h2>
-      <p class="serif">Если близко то, о чём я пишу — заходи в канал или читай прямо здесь.</p>
+      <h2>Проще и <em>честнее</em>.<br>Без лишнего.</h2>
+      <p>Если близко то, о чём я пишу — заходи в канал или читай прямо здесь.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Подписаться<span class="arrow" aria-hidden="true">→</span></a>
         <button type="button" class="btn btn-ghost" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
       </div>
       <footer>
         <span>© <span id="copyYear">2026</span> Данил<span class="foot-dot" aria-hidden="true"></span><a href="https://www.danil-sarykov.space/">danil-sarykov.space</a></span>
-        <span class="foot-name serif">вокруг меня · дневник ритма</span>
+        <span class="foot-name">вокруг меня · дневник ритма</span>
         <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>
       </footer>
     </div>
@@ -465,6 +514,7 @@ footer a:hover{color:var(--terracotta)}
   'use strict';
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  /* город посетителя по часовому поясу */
   var TZ_CITY = {
     'Europe/Kaliningrad':'Калининград','Europe/Moscow':'Москва','Europe/Simferopol':'Симферополь',
     'Europe/Volgograd':'Волгоград','Europe/Saratov':'Саратов','Europe/Astrakhan':'Астрахань',
@@ -490,6 +540,7 @@ footer a:hover{color:var(--terracotta)}
     }catch(e){}
   }
 
+  /* часы и дата */
   function pad(n){ return (n<10?'0':'')+n; }
   var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
   function updateNow(){
@@ -505,6 +556,7 @@ footer a:hover{color:var(--terracotta)}
   var yEl = document.getElementById('copyYear');
   if(yEl) yEl.textContent = new Date().getFullYear();
 
+  /* фильтры + первая карточка широкая */
   var btns = [].slice.call(document.querySelectorAll('[data-filter]'));
   var posts = [].slice.call(document.querySelectorAll('.post'));
   function layoutPosts(){
@@ -525,6 +577,7 @@ footer a:hover{color:var(--terracotta)}
   });
   layoutPosts();
 
+  /* копирование с запасным способом */
   document.querySelectorAll('[data-copy]').forEach(function(b){
     var original = b.textContent, timer = null;
     function flash(msg){
@@ -555,15 +608,6 @@ footer a:hover{color:var(--terracotta)}
       }
     });
   });
-
-  var jump = document.getElementById('toPosts');
-  var target = document.getElementById('posts');
-  if(jump && target){
-    jump.addEventListener('click', function(e){
-      e.preventDefault();
-      target.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'start'});
-    });
-  }
 })();
 </script>
 

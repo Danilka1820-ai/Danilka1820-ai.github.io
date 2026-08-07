@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Данил — Вокруг меня · Дневник ритма</title>
+<meta name="description" content="Личный дневник Данила: Москва и Подмосковье, обычная жизнь, танцы, волонтёрство, заметки о том, что происходит вокруг.">
+<meta name="theme-color" content="#EDF1F5" id="metaTheme">
+<meta name="color-scheme" content="light dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Данил — Вокруг меня · Дневник ритма">
+<meta property="og:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
+<meta property="og:url" content="https://www.danil-sarykov.space/">
+<meta property="og:locale" content="ru_RU">
+<meta name="twitter:card" content="summary">
+<link rel="canonical" href="https://www.danil-sarykov.space/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='15' fill='%23131A22'/><rect x='20' y='30' width='4' height='14' rx='2' fill='%23B04E17'/><rect x='28' y='22' width='4' height='22' rx='2' fill='%23B04E17'/><rect x='36' y='26' width='4' height='18' rx='2' fill='%23B04E17'/><rect x='44' y='34' width='4' height='10' rx='2' fill='%23B04E17'/></svg>">
+<!-- Bunny Fonts — зеркало Google Fonts без слежки, серверы в ЕС. Запросов к Google на сайте больше нет. -->
+<link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+<link href="https://fonts.bunny.net/css2?family=Spectral:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ПАЛИТРА «СЕРО-ГОЛУБОЙ СВЕТ»
+   Цвет взят из записи Данила об утренней Москве:
+   «голые ветки сверху держат этот серо-голубой свет».
+   Холодный город + один тёплый уголёк — волонтёрство и танец.
+   ============================================================ */
+:root{
+  --bg:#EDF1F5;
+  --surface:#FFFFFF;
+  --surface-2:#F5F8FA;
+  --ink:#131A22;
+  --muted:#55697C;
+  --line:#D5DFE8;
+  --ember:#B04E17;
+  --ember-hover:#9E430F;
+  --on-ember:#FFFFFF;
+  --deep:#131A22;
+  --on-deep:#EDF1F5;
+  --on-deep-soft:rgba(237,241,245,.74);
+  --line-deep:rgba(237,241,245,.14);
+  --shadow:0 28px 56px -30px rgba(19,26,34,.22);
+}
+[data-theme="dark"]{
+  --bg:#0C1219;
+  --surface:#131C26;
+  --surface-2:#18232F;
+  --ink:#E8EEF4;
+  --muted:#93A8BA;
+  --line:#223040;
+  --ember:#F08A3C;
+  --ember-hover:#FF9E56;
+  --on-ember:#0C1219;
+  --deep:#070C11;
+  --on-deep:#E8EEF4;
+  --on-deep-soft:rgba(232,238,244,.74);
+  --line-deep:rgba(232,238,244,.12);
+  --shadow:0 28px 56px -30px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none !important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:84px}
+body{
+  width:100%;max-width:100%;overflow-x:hidden;
+  background:var(--bg);color:var(--ink);
+  font-family:"Manrope",system-ui,-apple-system,sans-serif;
+  font-weight:400;font-size:17px;line-height:1.72;letter-spacing:.004em;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  transition:background-color .35s ease,color .35s ease;
+}
+.w{width:100%;max-width:1180px;margin:0 auto;padding:0 clamp(20px,5vw,48px)}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::selection{background:var(--ember);color:var(--on-ember)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outline-offset:3px;border-radius:4px}
+
+/* ===== ФИРМЕННЫЙ ЗНАК: полоски-эквалайзер ===== */
+.bars{display:inline-flex;align-items:flex-end;gap:3px;height:15px;flex-shrink:0}
+.bars i{width:3px;border-radius:2px;background:var(--ember);display:block}
+.bars i:nth-child(1){height:47%}
+.bars i:nth-child(2){height:100%}
+.bars i:nth-child(3){height:73%}
+.bars i:nth-child(4){height:33%}
+.bars.live i{transform-origin:bottom;animation:eq 1.25s ease-in-out infinite}
+.bars.live i:nth-child(2){animation-delay:.14s}
+.bars.live i:nth-child(3){animation-delay:.28s}
+.bars.live i:nth-child(4){animation-delay:.42s}
+@keyframes eq{0%,100%{transform:scaleY(.34)}50%{transform:scaleY(1)}}
+
+/* ===== ПОЛОСА ПРОГРЕССА ===== */
+.progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--ember);z-index:200;transition:width .1s linear}
+
+/* ===== ШАПКА ===== */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:var(--bg);
+  border-bottom:1px solid var(--line);
+  transition:background-color .35s ease,border-color .35s ease;
+}
+.topbar .w{display:flex;justify-content:space-between;align-items:center;padding:13px clamp(16px,5vw,48px);gap:14px}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand .name{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:22px;letter-spacing:-.015em}
+.head-right{display:flex;align-items:center;gap:clamp(10px,2vw,20px);min-width:0}
+.now{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:500;color:var(--muted);letter-spacing:.03em;white-space:nowrap}
+.now .pip{width:7px;height:7px;border-radius:50%;background:#22C55E;box-shadow:0 0 10px rgba(34,197,94,.55);flex-shrink:0;animation:pip 2.2s ease-in-out infinite}
+@keyframes pip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
+.now .sep{opacity:.4}
+.theme-btn{
+  width:38px;height:38px;border-radius:50%;border:1px solid var(--line);
+  display:grid;place-items:center;flex-shrink:0;
+  transition:border-color .25s ease,transform .25s ease;
+}
+.theme-btn:hover{border-color:var(--ember);transform:rotate(18deg)}
+.theme-btn svg{width:17px;height:17px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round}
+.ic-moon{display:none}
+[data-theme="dark"] .ic-sun{display:none}
+[data-theme="dark"] .ic-moon{display:block}
+
+/* ===== ГЕРОЙ ===== */
+.hero{position:relative;padding:clamp(70px,12vw,142px) 0 clamp(56px,8vw,96px);overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 55% at 28% 45%, rgba(176,78,23,.10) 0%, transparent 68%);
+}
+[data-theme="dark"] .hero::before{background:radial-gradient(ellipse 60% 55% at 28% 45%, rgba(240,138,60,.13) 0%, transparent 68%)}
+.hero .w{position:relative;z-index:2}
+.kicker{display:inline-flex;align-items:center;gap:13px;font-size:11.5px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--ember);margin-bottom:28px}
+h1{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:clamp(46px,9vw,116px);line-height:1.02;letter-spacing:-.032em;margin:0}
+h1 em{font-style:italic;font-weight:400;color:var(--ember)}
+.hero-grid{display:grid;grid-template-columns:1fr auto;gap:44px;align-items:end}
+.hero-note{font-family:"Spectral",Georgia,serif;font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--muted);line-height:1.52;max-width:275px;text-align:right}
+.cta{display:flex;gap:13px;flex-wrap:wrap;margin-top:clamp(34px,5vw,50px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 32px;border-radius:100px;font-weight:600;font-size:14.5px;letter-spacing:.015em;transition:all .3s cubic-bezier(.4,0,.2,1)}
+.btn-solid{background:var(--ember);color:var(--on-ember)}
+.btn-solid:hover{background:var(--ember-hover);transform:translateY(-2px)}
+.btn-line{border:1px solid var(--line);color:var(--ink)}
+.btn-line:hover{border-color:var(--ink);background:var(--surface);transform:translateY(-2px)}
+.btn .ar{transition:transform .3s ease}
+.btn-solid:hover .ar{transform:translateX(4px)}
+.btn-line:hover .ar{transform:translateY(3px)}
+
+/* ===== РИТМ-ЛЕНТА ===== */
+.rhythm{background:var(--deep);color:var(--on-deep);padding:20px 0 24px;overflow:hidden;border-block:1px solid var(--line-deep)}
+.rhythm-cap{display:block;padding:0 clamp(20px,5vw,48px);margin-bottom:14px;font-family:"Spectral",Georgia,serif;font-style:italic;font-size:14px;letter-spacing:.09em;color:var(--on-deep-soft)}
+.rhythm-cap::before{content:"— "}
+.rhythm-cap::after{content:" —"}
+.track{display:flex;width:max-content;animation:roll 34s linear infinite}
+.rhythm:hover .track{animation-play-state:paused}
+.set{display:flex;align-items:center;gap:24px;padding-right:24px;flex:0 0 auto;font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.22em;white-space:nowrap}
+@keyframes roll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ===== ЭПИГРАФ ===== */
+.epigraph{padding:clamp(76px,12vw,138px) 0}
+.epi-in{max-width:770px;margin:0 auto;text-align:center;position:relative}
+.epi-in::before{content:"«";position:absolute;top:-72px;left:50%;transform:translateX(-50%);font-family:"Spectral",Georgia,serif;font-size:172px;color:var(--ember);opacity:.13;line-height:1;pointer-events:none}
+.epigraph p{position:relative;z-index:2;font-family:"Spectral",Georgia,serif;font-style:italic;font-size:clamp(26px,4.4vw,47px);line-height:1.32;letter-spacing:-.012em}
+.epigraph p em{font-style:normal;color:var(--ember)}
+.epi-attr{margin-top:30px;font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.epi-attr::before{content:"— "}
+
+/* ===== ЦИФРЫ ===== */
+.stats{padding:58px 0;border-block:1px solid var(--line);background:var(--surface-2);transition:background-color .35s ease}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:38px}
+.stat{text-align:center;position:relative}
+.stat:not(:last-child)::after{content:"";position:absolute;right:-19px;top:22%;height:56%;width:1px;background:var(--line)}
+.stat b{display:block;font-family:"Spectral",Georgia,serif;font-weight:500;font-size:clamp(40px,6vw,70px);line-height:1;letter-spacing:-.025em}
+.stat b .pl{color:var(--ember);font-size:.58em;margin-left:3px}
+.stat span{display:block;margin-top:11px;font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+
+/* ===== СЕКЦИИ ===== */
+main{width:100%}
+section.pane{padding:clamp(74px,10vw,116px) 0}
+.sec-head{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:baseline;margin-bottom:clamp(38px,6vw,58px);padding-bottom:22px;border-bottom:1px solid var(--line)}
+.sec-num{font-family:"Spectral",Georgia,serif;font-style:italic;font-size:21px;color:var(--ember)}
+.sec-title{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:clamp(28px,4vw,46px);line-height:1.14;letter-spacing:-.022em}
+.sec-title em{font-style:italic;font-weight:400;color:var(--ember)}
+
+/* ===== АВТОР ===== */
+.passport{display:grid;grid-template-columns:auto 1fr;gap:30px;padding:34px;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);position:relative;transition:background-color .35s ease,border-color .35s ease}
+.passport::before{content:"№ 001";position:absolute;top:14px;right:18px;font-family:"Spectral",Georgia,serif;font-style:italic;font-size:12px;color:var(--muted);letter-spacing:.1em}
+.ava{width:86px;height:86px;border-radius:50%;flex-shrink:0;background:var(--deep);color:var(--on-deep);display:grid;place-items:center;font-family:"Spectral",Georgia,serif;font-style:italic;font-size:40px;border:2px solid var(--ember)}
+.p-info{display:flex;flex-direction:column;gap:11px}
+.p-name{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:25px;letter-spacing:-.012em}
+.p-name em{font-style:italic;font-weight:400;color:var(--ember)}
+.p-line{font-size:16px;color:var(--muted);line-height:1.72;max-width:60ch}
+
+/* ===== ЗАПИСИ ===== */
+.note{background:var(--surface);border-left:3px solid var(--ember);padding:18px 26px;font-size:15px;color:var(--muted);margin-bottom:38px;line-height:1.7;border-radius:0 6px 6px 0;transition:background-color .35s ease}
+.note b{color:var(--ink);font-weight:600}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:38px}
+.f-btn{border:1px solid var(--line);color:var(--muted);padding:10px 21px;border-radius:100px;font-size:13px;font-weight:600;letter-spacing:.02em;transition:all .25s ease}
+.f-btn:hover{border-color:var(--ink);color:var(--ink);transform:translateY(-1px)}
+.f-btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.plist{display:grid;grid-template-columns:repeat(12,1fr);gap:22px}
+.post{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:36px;display:flex;flex-direction:column;position:relative;overflow:hidden;grid-column:span 6;transition:transform .3s ease,box-shadow .3s ease,background-color .35s ease,border-color .35s ease}
+.post.wide{grid-column:span 12}
+.post::after{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--ember);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.4,0,.2,1)}
+.post:hover{transform:translateY(-4px);box-shadow:var(--shadow)}
+.post:hover::after{transform:scaleX(1)}
+.issue{display:flex;align-items:center;gap:10px;font-family:"Spectral",Georgia,serif;font-style:italic;font-size:12.5px;color:var(--ember);letter-spacing:.13em;text-transform:uppercase;margin-bottom:15px}
+.post h3{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:clamp(25px,3vw,34px);line-height:1.18;margin-bottom:17px;letter-spacing:-.022em}
+.post h3 em{font-style:italic;font-weight:400;color:var(--ember)}
+.post .body p{font-size:16px;line-height:1.78;margin-bottom:12px}
+.post .body p:last-child{margin-bottom:0}
+.post blockquote{font-family:"Spectral",Georgia,serif;font-style:italic;font-size:19px;line-height:1.5;margin:22px 0;padding-left:21px;border-left:2px solid var(--ember)}
+.p-foot{display:flex;justify-content:flex-end;margin-top:auto;padding-top:19px;border-top:1px dashed var(--line)}
+.go{font-size:12.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--ember);display:inline-flex;align-items:center;gap:8px}
+.go::after{content:"→";transition:transform .25s ease}
+.go:hover::after{transform:translateX(5px)}
+
+/* ===== ВОПРОСЫ ===== */
+.faq{display:grid;gap:2px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.q-item{background:var(--surface);transition:background-color .35s ease}
+.q-sum{padding:23px 27px;display:flex;justify-content:space-between;align-items:center;gap:20px;cursor:pointer;list-style:none;transition:background .2s ease}
+.q-sum::-webkit-details-marker{display:none}
+.q-sum::marker{content:''}
+.q-sum:hover{background:var(--surface-2)}
+.q-txt{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:19px;letter-spacing:-.012em}
+.q-pm{font-family:"Spectral",Georgia,serif;font-size:27px;line-height:1;color:var(--ember);transition:transform .3s ease;flex-shrink:0}
+.q-item[open] .q-sum{background:var(--surface-2)}
+.q-item[open] .q-pm{transform:rotate(45deg)}
+.q-ans{padding:0 27px 23px;font-size:16px;color:var(--muted);line-height:1.72}
+.q-ans a{color:var(--ember);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* ===== ФИНАЛ ===== */
+.closing{background:var(--deep);color:var(--on-deep);padding:clamp(78px,12vw,138px) 0 clamp(54px,8vw,74px);text-align:center;position:relative;overflow:hidden}
+.closing::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 50% 60% at 50% 20%, rgba(176,78,23,.22) 0%, transparent 66%)}
+[data-theme="dark"] .closing::before{background:radial-gradient(ellipse 50% 60% at 50% 20%, rgba(240,138,60,.18) 0%, transparent 66%)}
+.cl-in{position:relative;z-index:2}
+.closing h2{font-family:"Spectral",Georgia,serif;font-weight:500;font-size:clamp(36px,6vw,72px);line-height:1.1;letter-spacing:-.028em;max-width:16ch;margin:0 auto}
+.closing h2 em{font-style:italic;font-weight:400;color:var(--ember)}
+.closing p{margin:23px auto 0;font-family:"Spectral",Georgia,serif;font-style:italic;font-size:clamp(17px,2vw,21px);color:var(--on-deep-soft);max-width:46ch}
+.closing .cta{justify-content:center;margin-top:44px}
+.closing .btn-line{color:var(--on-deep);border-color:var(--line-deep)}
+.closing .btn-line:hover{background:rgba(237,241,245,.09);border-color:rgba(237,241,245,.4)}
+footer{margin-top:56px;padding-top:30px;border-top:1px solid var(--line-deep);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--on-deep-soft);letter-spacing:.03em}
+footer a{color:var(--on-deep);font-weight:600;transition:color .2s}
+footer a:hover{color:var(--ember)}
+.f-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ember);margin:0 9px;vertical-align:middle}
+.f-tag{font-family:"Spectral",Georgia,serif;font-style:italic;color:var(--on-deep-soft);letter-spacing:.05em}
+
+/* ===== НАВЕРХ ===== */
+.up{position:fixed;right:26px;bottom:26px;width:48px;height:48px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:18px;box-shadow:var(--shadow);z-index:150;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease,background .25s ease}
+.up.show{opacity:1;pointer-events:auto;transform:none}
+.up:hover{background:var(--ember);color:var(--on-ember)}
+
+/* ===== ПОЯВЛЕНИЕ ===== */
+.rise{opacity:0;transform:translateY(24px);transition:opacity .75s cubic-bezier(.22,.61,.36,1),transform .75s cubic-bezier(.22,.61,.36,1)}
+.rise.on{opacity:1;transform:none}
+
+/* ===== АДАПТИВ ===== */
+@media(max-width:1080px){.hero-grid{gap:30px}.hero-note{max-width:235px}}
+@media(max-width:880px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-note{text-align:left;max-width:none;font-size:19px}
+  .stats-grid{grid-template-columns:1fr;gap:28px}
+  .stat::after{display:none}
+  .stat:not(:last-child){padding-bottom:24px;border-bottom:1px solid var(--line)}
+  .plist{grid-template-columns:1fr}
+  .post,.post.wide{grid-column:span 1}
+  .post{padding:30px 26px}
+}
+@media(max-width:580px){
+  body{font-size:16px}
+  .topbar .w{padding:11px 16px;gap:10px}
+  .brand .name{font-size:19px}
+  .now{font-size:11px;gap:7px}
+  .now .n-date,.now .s-date{display:none}
+  .theme-btn{width:34px;height:34px}
+  .theme-btn svg{width:15px;height:15px}
+  .hero{padding:56px 0 48px}
+  h1{font-size:clamp(40px,11vw,56px)}
+  .hero-note{font-size:17.5px}
+  .kicker{font-size:10.5px;letter-spacing:.18em;gap:9px}
+  .sec-head{grid-template-columns:1fr;gap:7px}
+  .passport{grid-template-columns:1fr;text-align:center;justify-items:center;padding:28px 22px}
+  .p-line{text-align:left}
+  .post{padding:26px 22px}
+  .post blockquote{font-size:17.5px}
+  .f-btn{padding:8px 16px;font-size:12px}
+  .cta{flex-direction:column}
+  .btn{width:100%}
+  footer{flex-direction:column;text-align:center}
+  .up{right:16px;bottom:16px;width:44px;height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .track,.bars.live i,.now .pip{animation:none !important}
+  .rise{opacity:1;transform:none;transition:none}
+  *,*::before,*::after{transition-duration:.01ms !important}
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="prog" aria-hidden="true"></div>
+
+<div class="topbar">
+  <div class="w">
+    <div class="brand">
+      <span class="bars live" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="name">Данил</span>
+    </div>
+    <div class="head-right">
+      <div class="now">
+        <span class="pip" aria-hidden="true"></span>
+        <span id="place">Москва</span>
+        <span class="sep" aria-hidden="true">·</span>
+        <span id="clock">—</span>
+        <span class="sep s-date" aria-hidden="true">·</span>
+        <span class="n-date" id="date">—</span>
+      </div>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Включить тёмную тему">
+        <svg class="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2.5 12h2M19.5 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+        <svg class="ic-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="w">
+    <div class="kicker"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Дневник ритма</div>
+    <div class="hero-grid">
+      <h1>Вокруг<br><em>меня</em></h1>
+      <p class="hero-note">Моя обычная жизнь — где бы я ни был. Мысли, моменты, то, что происходит вокруг. Без масок и ролей.</p>
+    </div>
+    <div class="cta">
+      <a class="btn btn-solid" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Читать в Telegram<span class="ar" aria-hidden="true">→</span></a>
+      <a class="btn btn-line" href="#posts">К записям<span class="ar" aria-hidden="true">↓</span></a>
+    </div>
+  </div>
+</header>
+
+<div class="rhythm">
+  <span class="rhythm-cap">мой ритм</span>
+  <div class="track" aria-hidden="true">
+    <div class="set">
+      <span>Утро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Утро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+    </div>
+    <div class="set">
+      <span>Утро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Утро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="bars"><i></i><i></i><i></i><i></i></span>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <section class="epigraph">
+    <div class="w">
+      <div class="epi-in rise">
+        <p>Идёшь — и слышишь<br>только шаги. <em>И свой ритм.</em></p>
+        <div class="epi-attr">из записи об утренней Москве</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="w">
+      <div class="stats-grid">
+        <div class="stat rise"><b>500<span class="pl">+</span></b><span>публикаций</span></div>
+        <div class="stat rise"><b>216<span class="pl">+</span></b><span>фотографий</span></div>
+        <div class="stat rise"><b>2</b><span>региона</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pane">
+    <div class="w">
+      <div class="sec-head rise">
+        <span class="sec-num">I.</span>
+        <h2 class="sec-title">О чём этот <em>дневник</em></h2>
+      </div>
+      <div class="passport rise">
+        <div class="ava">Д</div>
+        <div class="p-info">
+          <div class="p-name"><em>Данил</em> · автор дневника</div>
+          <p class="p-line">Пишу про обычную жизнь: танцы, волонтёрство, люди и события Москвы и Подмосковья. Без масок и ролей — всё по-настоящему.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pane" id="posts" style="background:var(--surface-2);border-block:1px solid var(--line)">
+    <div class="w">
+      <div class="sec-head rise">
+        <span class="sec-num">II.</span>
+        <h2 class="sec-title">Записи <em>дневника</em></h2>
+      </div>
+
+      <div class="note rise">
+        <b>Записи можно читать прямо здесь.</b> Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому тексты продублированы на сайте.
+      </div>
+
+      <div class="filters rise" role="group" aria-label="Фильтры записей">
+        <button type="button" class="f-btn on" data-f="all" aria-pressed="true">Все записи</button>
+        <button type="button" class="f-btn" data-f="moscow" aria-pressed="false">Москва</button>
+        <button type="button" class="f-btn" data-f="dance" aria-pressed="false">Танцы</button>
+        <button type="button" class="f-btn" data-f="volunteer" aria-pressed="false">Волонтёрство</button>
+        <button type="button" class="f-btn" data-f="events" aria-pressed="false">События</button>
+      </div>
+
+      <div class="plist" id="plist">
+
+        <article class="post rise" data-cat="moscow">
+          <div class="issue"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Запись № 01 · Москва</div>
+          <h3>Доброе утро, <em>Москва</em></h3>
+          <div class="body">
+            <p>Вышел сегодня — и как будто шагнул в тишину. Дорога ровная, блестит лёгким льдом, снег лежит спокойно, не шелохнётся.</p>
+            <p>А голые ветки сверху держат этот серо-голубой свет, как будто натянули над городом мягкую крышу. Такая простая, тихая красота — без событий, без спешки.</p>
+          </div>
+          <blockquote>Просто город, который на минуту притормозил.</blockquote>
+          <div class="p-foot"><a class="go" href="https://t.me/danilka2028k/516" target="_blank" rel="noopener noreferrer">Оригинал</a></div>
+        </article>
+
+        <article class="post rise" data-cat="dance">
+          <div class="issue"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Запись № 02 · Танцы</div>
+          <h3>Снова <em>танцую</em></h3>
+          <div class="body">
+            <p>Второй мастер-класс по оздоровительному танцу по приглашению Елены Дружновой. В первый раз было непривычно и непонятно, справлюсь ли — но лидер должен подавать личный пример.</p>
+            <p>Сейчас движения даются заметно легче. А главное — понятно, как это важно для людей, которые приходят.</p>
+          </div>
+          <blockquote>Танец — это история, которая пишется телом.</blockquote>
+          <div class="p-foot"><a class="go" href="https://t.me/danilka2028k/496" target="_blank" rel="noopener noreferrer">Оригинал</a></div>
+        </article>
+
+        <article class="post rise" data-cat="volunteer">
+          <div class="issue"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Запись № 03 · Волонтёрство</div>
+          <h3>Галерея <em>Светлячков</em></h3>
+          <div class="body">
+            <p>Творческая встреча в парке «Сосенки» в рамках проекта «Мир в фокусе» и фестиваля «Лето в Москве».</p>
+            <p>Десятки плакатов и открыток о доброте, письма поддержки, живой разговор о медиаволонтёрстве. Пространство, где о доброте говорят через искусство.</p>
+          </div>
+          <blockquote>Важные проекты рождаются, когда кто-то один верит в идею так сильно, что заражает остальных.</blockquote>
+          <div class="p-foot"><a class="go" href="https://t.me/danilka2028k/501" target="_blank" rel="noopener noreferrer">Оригинал</a></div>
+        </article>
+
+        <article class="post rise" data-cat="events">
+          <div class="issue"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Запись № 04 · События</div>
+          <h3>Клуб «Лица <em>района</em>»</h3>
+          <div class="body">
+            <p>Встречи, где деловое общение переплетается с душевными беседами: командные игры, мастер-классы, советы психологов, чай со сладостями.</p>
+            <p>Новые связи здесь легко превращаются в рабочие проекты или тёплую дружбу.</p>
+          </div>
+          <div class="p-foot"><a class="go" href="https://t.me/danilka2028k/508" target="_blank" rel="noopener noreferrer">Оригинал</a></div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="pane">
+    <div class="w">
+      <div class="sec-head rise">
+        <span class="sec-num">III.</span>
+        <h2 class="sec-title">Часто <em>спрашивают</em></h2>
+      </div>
+      <div class="faq rise">
+        <details class="q-item">
+          <summary class="q-sum"><span class="q-txt">Как часто выходят записи?</span><span class="q-pm" aria-hidden="true">+</span></summary>
+          <div class="q-ans">Без строгого графика — когда случается что-то стоящее. Обычно несколько раз в неделю.</div>
+        </details>
+        <details class="q-item">
+          <summary class="q-sum"><span class="q-txt">Как связаться?</span><span class="q-pm" aria-hidden="true">+</span></summary>
+          <div class="q-ans">Проще всего — в Telegram, <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>. Открыт к разговору и новым проектам.</div>
+        </details>
+        <details class="q-item">
+          <summary class="q-sum"><span class="q-txt">Почему ссылки на Telegram могут не открываться?</span><span class="q-pm" aria-hidden="true">+</span></summary>
+          <div class="q-ans">В некоторых регионах Telegram работает только с VPN. Поэтому тексты записей продублированы здесь, на сайте.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<section class="closing">
+  <div class="w">
+    <div class="cl-in">
+      <h2>Проще и <em>честнее</em>.<br>Без лишнего.</h2>
+      <p>Если близко то, о чём я пишу — заходи в канал или читай прямо здесь.</p>
+      <div class="cta">
+        <a class="btn btn-solid" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Подписаться<span class="ar" aria-hidden="true">→</span></a>
+        <button type="button" class="btn btn-line" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
+      </div>
+      <footer>
+        <span>© <span id="year">2026</span> Данил<span class="f-dot" aria-hidden="true"></span><a href="https://www.danil-sarykov.space/">danil-sarykov.space</a></span>
+        <span class="f-tag">вокруг меня · дневник ритма</span>
+        <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>
+      </footer>
+    </div>
+  </div>
+</section>
+
+<button type="button" class="up" id="up" aria-label="Наверх">↑</button>
+
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"Blog",
+  "name":"Данил — Вокруг меня",
+  "url":"https://www.danil-sarykov.space/",
+  "inLanguage":"ru-RU",
+  "description":"Личный дневник: Москва и Подмосковье, обычная жизнь, танцы, волонтёрство, заметки.",
+  "author":{"@type":"Person","name":"Данил","url":"https://t.me/danilka2028k"}
+}
+</script>
+
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ===== ТЕМА ===== */
+  var btn = document.getElementById('themeBtn');
+  var meta = document.getElementById('metaTheme');
+  var BG = {light:'#EDF1F5', dark:'#0C1219'};
+  function store(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  function read(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function setTheme(t){
+    root.setAttribute('data-theme', t);
+    if(meta) meta.setAttribute('content', BG[t]);
+    if(btn) btn.setAttribute('aria-label', t === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему');
+    store('theme', t);
+  }
+  var saved = read('theme');
+  if(saved === 'dark' || saved === 'light'){
+    setTheme(saved);
+  } else if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+    setTheme('dark');
+  }
+  if(btn){
+    btn.addEventListener('click', function(){
+      setTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+  }
+
+  /* ===== ГОРОД ПО ЧАСОВОМУ ПОЯСУ ===== */
+  var CITY = {
+    'Europe/Kaliningrad':'Калининград','Europe/Moscow':'Москва','Europe/Simferopol':'Симферополь',
+    'Europe/Volgograd':'Волгоград','Europe/Saratov':'Саратов','Europe/Astrakhan':'Астрахань',
+    'Europe/Ulyanovsk':'Ульяновск','Europe/Kirov':'Киров','Europe/Samara':'Самара',
+    'Asia/Yekaterinburg':'Екатеринбург','Asia/Omsk':'Омск','Asia/Novosibirsk':'Новосибирск',
+    'Asia/Barnaul':'Барнаул','Asia/Tomsk':'Томск','Asia/Krasnoyarsk':'Красноярск',
+    'Asia/Irkutsk':'Иркутск','Asia/Chita':'Чита','Asia/Yakutsk':'Якутск',
+    'Asia/Vladivostok':'Владивосток','Asia/Magadan':'Магадан','Asia/Sakhalin':'Сахалин',
+    'Asia/Kamchatka':'Камчатка','Asia/Anadyr':'Анадырь',
+    'Europe/Minsk':'Минск','Europe/Kyiv':'Киев','Europe/Kiev':'Киев','Europe/Chisinau':'Кишинёв',
+    'Asia/Almaty':'Алматы','Asia/Tashkent':'Ташкент','Asia/Bishkek':'Бишкек',
+    'Asia/Tbilisi':'Тбилиси','Asia/Yerevan':'Ереван','Asia/Baku':'Баку',
+    'Europe/Istanbul':'Стамбул','Asia/Dubai':'Дубай','Europe/Berlin':'Берлин',
+    'Europe/Warsaw':'Варшава','Europe/London':'Лондон','Europe/Paris':'Париж',
+    'America/New_York':'Нью-Йорк','Asia/Tokyo':'Токио'
+  };
+  var placeEl = document.getElementById('place');
+  if(placeEl){
+    try{
+      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
+      var c = CITY[tz] || (tz.split('/').pop() || '').replace(/_/g,' ');
+      if(c) placeEl.textContent = c;
+    }catch(e){}
+  }
+
+  /* ===== ЧАСЫ ===== */
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  var M = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  function tick(){
+    var d = new Date();
+    var c = document.getElementById('clock');
+    var dt = document.getElementById('date');
+    if(c) c.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    if(dt) dt.textContent = d.getDate() + ' ' + M[d.getMonth()];
+  }
+  tick();
+  setInterval(tick, 20000);
+
+  var y = document.getElementById('year');
+  if(y) y.textContent = new Date().getFullYear();
+
+  /* ===== ПРОГРЕСС + НАВЕРХ ===== */
+  var prog = document.getElementById('prog');
+  var up = document.getElementById('up');
+  var busy = false;
+  function onScroll(){
+    if(busy) return;
+    busy = true;
+    requestAnimationFrame(function(){
+      var e = document.documentElement;
+      var max = e.scrollHeight - e.clientHeight;
+      if(prog) prog.style.width = (max > 0 ? (e.scrollTop / max) * 100 : 0) + '%';
+      if(up) up.classList.toggle('show', e.scrollTop > 520);
+      busy = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+  if(up) up.addEventListener('click', function(){
+    window.scrollTo({top:0, behavior: reduce ? 'auto' : 'smooth'});
+  });
+
+  /* ===== ПОЯВЛЕНИЕ ===== */
+  var rs = [].slice.call(document.querySelectorAll('.rise'));
+  if('IntersectionObserver' in window && !reduce){
+    var io = new IntersectionObserver(function(list){
+      list.forEach(function(en, i){
+        if(en.isIntersecting){
+          var el = en.target;
+          setTimeout(function(){ el.classList.add('on'); }, i * 70);
+          io.unobserve(el);
+        }
+      });
+    }, {threshold:.12, rootMargin:'0px 0px -40px 0px'});
+    rs.forEach(function(el){ io.observe(el); });
+  } else {
+    rs.forEach(function(el){ el.classList.add('on'); });
+  }
+
+  /* ===== ФИЛЬТР ===== */
+  var fbs = [].slice.call(document.querySelectorAll('[data-f]'));
+  var ps = [].slice.call(document.querySelectorAll('.post'));
+  function layout(){
+    var first = false;
+    ps.forEach(function(p){
+      p.classList.remove('wide');
+      if(!p.hidden && !first){ p.classList.add('wide'); first = true; }
+    });
+  }
+  fbs.forEach(function(b){
+    b.addEventListener('click', function(){
+      var cat = b.getAttribute('data-f');
+      fbs.forEach(function(x){ x.classList.remove('on'); x.setAttribute('aria-pressed','false'); });
+      b.classList.add('on'); b.setAttribute('aria-pressed','true');
+      ps.forEach(function(p){ p.hidden = !(cat === 'all' || p.getAttribute('data-cat') === cat); });
+      layout();
+    });
+  });
+  layout();
+
+  /* ===== КОПИРОВАНИЕ ===== */
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    var orig = b.textContent, t = null;
+    function flash(m){
+      b.textContent = m;
+      clearTimeout(t);
+      t = setTimeout(function(){ b.textContent = orig; }, 2000);
+    }
+    function fb(text){
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('aria-hidden','true');
+      ta.style.cssText = 'position:absolute;left:-9999px';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      var ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+      ta.remove(); return ok;
+    }
+    b.addEventListener('click', function(){
+      var text = b.getAttribute('data-copy');
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text)
+          .then(function(){ flash('Скопировано ✓'); })
+          .catch(function(){ flash(fb(text) ? 'Скопировано ✓' : 'Скопируйте вручную'); });
+      } else {
+        flash(fb(text) ? 'Скопировано ✓' : 'Скопируйте вручную');
+      }
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

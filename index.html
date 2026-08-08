@@ -4,18 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
-<meta name="description" content="Данила Сарников — веб-разработчик. Создаю современные веб-сайты и цифровые сервисы с использованием ИИ-инструментов.">
+<meta name="description" content="Данил Сарыков — веб-разработчик. Создаю современные веб-сайты и цифровые сервисы с использованием ИИ-инструментов.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Данила Сарников — Веб-разработка & ИИ">
+<meta property="og:title" content="Данил Сарыков — Веб-разработка & ИИ">
 <meta property="og:description" content="Создаю современные веб-сайты и цифровые сервисы с использованием ИИ-инструментов.">
 <meta property="og:image" content="https://danil-sarykov.space/og-image.png">
 <meta property="og:url" content="https://danil-sarykov.space/">
 <meta property="og:locale" content="ru_RU">
-<title>Данила Сарников — Веб-разработка & ИИ</title>
+<title>Данил Сарыков — Веб-разработка & ИИ</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230f172a'/><text x='32' y='42' font-family='sans-serif' font-size='30' font-weight='700' fill='%233b82f6' text-anchor='middle'>D</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #0f172a;
@@ -257,6 +257,24 @@ button {
 }
 
 /* About */
+.about-intro {
+  max-width: 760px;
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.about-intro a {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.about-intro a:hover {
+  color: var(--accent);
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -290,6 +308,86 @@ button {
 
 .about-card p a:hover {
   color: var(--accent);
+}
+
+/* Diary */
+.diary-section {
+  background: var(--bg-elevated);
+  border-block: 1px solid var(--border);
+}
+
+.diary-intro {
+  max-width: 700px;
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.diary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.diary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 26px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.diary-issue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-hover);
+}
+
+.diary-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+}
+
+.diary-title em {
+  font-style: italic;
+  color: var(--accent-hover);
+}
+
+.diary-excerpt {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.diary-quote {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text);
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+}
+
+.diary-link {
+  margin-top: auto;
+  color: var(--accent-hover);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.diary-link:hover {
+  color: var(--accent);
+}
+
+.diary-cta {
+  margin-top: 40px;
+  text-align: center;
 }
 
 /* Skills */
@@ -429,7 +527,8 @@ button {
 
 /* Fade only (no transform) so :hover translateY on cards keeps working */
 .skill-card,
-.project-card {
+.project-card,
+.diary-card {
   opacity: 0;
   animation: fadeIn 0.7s ease forwards;
 }
@@ -444,6 +543,10 @@ button {
 .project-card:nth-child(2) { animation-delay: 0.2s; }
 .project-card:nth-child(3) { animation-delay: 0.3s; }
 
+.diary-card:nth-child(1) { animation-delay: 0.1s; }
+.diary-card:nth-child(2) { animation-delay: 0.2s; }
+.diary-card:nth-child(3) { animation-delay: 0.3s; }
+
 @media (prefers-reduced-motion: reduce) {
   .hero-photo,
   .badge,
@@ -451,7 +554,8 @@ button {
   .hero-text,
   .hero-actions,
   .skill-card,
-  .project-card {
+  .project-card,
+  .diary-card {
     animation: none;
     opacity: 1;
   }
@@ -545,11 +649,12 @@ button {
 
 <header class="site-header">
   <div class="container header-inner">
-    <a href="#top" class="logo">Данила Сарников</a>
+    <a href="#top" class="logo">Данил Сарыков</a>
 
     <nav class="nav" id="nav">
       <ul class="nav-list">
         <li><a href="#about" class="nav-link">Обо мне</a></li>
+        <li><a href="#diary" class="nav-link">Дневник</a></li>
         <li><a href="#skills" class="nav-link">Навыки</a></li>
         <li><a href="#projects" class="nav-link">Проекты</a></li>
         <li><a href="#contacts" class="nav-link">Контакты</a></li>
@@ -568,7 +673,7 @@ button {
 
   <section class="hero">
     <div class="container hero-inner">
-      <img src="assets/images/profile.jpg" alt="Данила Сарников" class="hero-photo" width="150" height="150">
+      <img src="assets/images/profile.jpg" alt="Данил Сарыков" class="hero-photo" width="150" height="150">
       <span class="badge">Веб-разработка &amp; ИИ</span>
       <h1 class="hero-title">Создаю современные веб-сайты и цифровые сервисы</h1>
       <p class="hero-text">
@@ -585,6 +690,13 @@ button {
   <section id="about" class="section">
     <div class="container">
       <h2 class="section-title">Обо мне</h2>
+      <p class="about-intro">
+        Живу между Москвой и Подмосковьем. Провожу мастер-классы по оздоровительному танцу и участвую
+        в волонтёрских проектах — а наравне с этим учусь веб-разработке, разбираюсь во фронтенде и использую
+        ИИ-инструменты, чтобы быстрее находить решения и создавать удобные интерфейсы. Обо всём этом я
+        пишу в своём Telegram-канале
+        <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>.
+      </p>
       <div class="about-grid">
         <div class="about-card">
           <h3>Хроника кодинга</h3>
@@ -610,6 +722,51 @@ button {
             с новостями о моих сервисах и личных проектах.
           </p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="diary" class="section diary-section">
+    <div class="container">
+      <h2 class="section-title">Дневник: вокруг меня</h2>
+      <p class="diary-intro">
+        Кроме кода — я веду личный дневник в Telegram: Москва и Подмосковье, танцы, волонтёрство,
+        обычная жизнь без масок и ролей. Несколько записей оттуда — прямо здесь.
+      </p>
+      <div class="diary-grid">
+        <article class="diary-card">
+          <div class="diary-issue">Запись № 01 · Москва</div>
+          <h3 class="diary-title">Доброе утро, <em>Москва</em></h3>
+          <p class="diary-excerpt">
+            Вышел сегодня — и как будто шагнул в тишину. Дорога ровная, блестит лёгким льдом, снег лежит
+            спокойно, не шелохнётся.
+          </p>
+          <blockquote class="diary-quote">Просто город, который на минуту притормозил.</blockquote>
+          <a href="https://t.me/danilka2028k/516" class="diary-link" target="_blank" rel="noopener noreferrer">Читать оригинал →</a>
+        </article>
+        <article class="diary-card">
+          <div class="diary-issue">Запись № 02 · Танцы</div>
+          <h3 class="diary-title">Снова <em>танцую</em></h3>
+          <p class="diary-excerpt">
+            Второй мастер-класс по оздоровительному танцу. В первый раз было непривычно — но лидер должен
+            подавать личный пример. Сейчас движения даются заметно легче.
+          </p>
+          <blockquote class="diary-quote">Танец — это история, которая пишется телом.</blockquote>
+          <a href="https://t.me/danilka2028k/496" class="diary-link" target="_blank" rel="noopener noreferrer">Читать оригинал →</a>
+        </article>
+        <article class="diary-card">
+          <div class="diary-issue">Запись № 03 · Волонтёрство</div>
+          <h3 class="diary-title">Галерея <em>«Светлячков»</em></h3>
+          <p class="diary-excerpt">
+            Творческая встреча в парке «Сосенки» в рамках проекта «Мир в фокусе»: десятки плакатов и открыток
+            о доброте, письма поддержки, живой разговор о медиаволонтёрстве.
+          </p>
+          <blockquote class="diary-quote">Важные проекты рождаются, когда кто-то один верит в идею так сильно, что заражает остальных.</blockquote>
+          <a href="https://t.me/danilka2028k/501" class="diary-link" target="_blank" rel="noopener noreferrer">Читать оригинал →</a>
+        </article>
+      </div>
+      <div class="diary-cta">
+        <a href="https://t.me/danilka2028k" class="btn btn-outline" target="_blank" rel="noopener noreferrer">Читать дневник в Telegram</a>
       </div>
     </div>
   </section>
@@ -670,7 +827,7 @@ button {
 
 <footer class="site-footer" id="contacts">
   <div class="container footer-inner">
-    <p class="footer-copy">© 2026 Данила</p>
+    <p class="footer-copy">© 2026 Данил Сарыков</p>
     <div class="footer-socials">
       <a href="https://github.com/Danilka1820-ai" target="_blank" rel="noopener noreferrer" aria-label="GitHub">GitHub</a>
       <a href="mailto:dahytan22@gmail.com" aria-label="Email">Email</a>

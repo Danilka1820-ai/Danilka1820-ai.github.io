@@ -238,6 +238,24 @@ button {
 }
 
 /* About */
+.about-intro {
+  max-width: 760px;
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.about-intro a {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.about-intro a:hover {
+  color: var(--accent);
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -271,6 +289,86 @@ button {
 
 .about-card p a:hover {
   color: var(--accent);
+}
+
+/* Diary */
+.diary-section {
+  background: var(--bg-elevated);
+  border-block: 1px solid var(--border);
+}
+
+.diary-intro {
+  max-width: 700px;
+  margin: 0 auto 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+.diary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+.diary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 28px 26px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.diary-issue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-hover);
+}
+
+.diary-title {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: 1.4rem;
+  letter-spacing: -0.01em;
+}
+
+.diary-title em {
+  font-style: italic;
+  color: var(--accent-hover);
+}
+
+.diary-excerpt {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.diary-quote {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text);
+  border-left: 2px solid var(--accent);
+  padding-left: 14px;
+}
+
+.diary-link {
+  margin-top: auto;
+  color: var(--accent-hover);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.diary-link:hover {
+  color: var(--accent);
+}
+
+.diary-cta {
+  margin-top: 40px;
+  text-align: center;
 }
 
 /* Skills */
@@ -410,7 +508,8 @@ button {
 
 /* Fade only (no transform) so :hover translateY on cards keeps working */
 .skill-card,
-.project-card {
+.project-card,
+.diary-card {
   opacity: 0;
   animation: fadeIn 0.7s ease forwards;
 }
@@ -425,6 +524,10 @@ button {
 .project-card:nth-child(2) { animation-delay: 0.2s; }
 .project-card:nth-child(3) { animation-delay: 0.3s; }
 
+.diary-card:nth-child(1) { animation-delay: 0.1s; }
+.diary-card:nth-child(2) { animation-delay: 0.2s; }
+.diary-card:nth-child(3) { animation-delay: 0.3s; }
+
 @media (prefers-reduced-motion: reduce) {
   .hero-photo,
   .badge,
@@ -432,7 +535,8 @@ button {
   .hero-text,
   .hero-actions,
   .skill-card,
-  .project-card {
+  .project-card,
+  .diary-card {
     animation: none;
     opacity: 1;
   }

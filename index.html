@@ -165,6 +165,9 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 /* ===== ЗАПИСИ ===== */
 .posts-note{background:var(--paper);border-left:3px solid var(--terracotta);padding:16px 24px;font-size:14px;color:var(--soft);margin-bottom:40px;line-height:1.7;word-break:break-word}
 .posts-note b{color:var(--ink);font-weight:600}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:40px}
+.chip-btn{background:transparent;border:1px solid var(--line);color:var(--ink);padding:9px 20px;border-radius:100px;font-size:12.5px;font-weight:600;letter-spacing:.03em;transition:all .25s ease;white-space:nowrap}
+.chip-btn.active,.chip-btn:hover{background:var(--ink);color:var(--cream);border-color:var(--ink)}
 .plist{display:grid;grid-template-columns:repeat(12,1fr);gap:24px}
 .post{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:36px;display:flex;flex-direction:column;transition:all .3s ease;position:relative;overflow:hidden;grid-column:span 6;min-width:0}
 .post.wide{grid-column:span 12}
@@ -267,6 +270,8 @@ footer a:hover{color:var(--terracotta)}
   .post{padding:24px 20px}
   .post .full p{font-size:14.5px}
   .post blockquote{font-size:16.5px}
+  .filters{gap:6px}
+  .chip-btn{padding:8px 16px;font-size:12px}
   footer{flex-direction:column;align-items:center;text-align:center}
   .hero-actions{flex-direction:column;width:100%}
   .btn{width:100%;justify-content:center}
@@ -435,6 +440,8 @@ footer a:hover{color:var(--terracotta)}
       <div class="posts-note">
         <b>Записи можно читать прямо здесь.</b> Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому тексты продублированы на сайте.
       </div>
+
+      <div class="filters" id="postFilters" role="group" aria-label="Фильтры записей" hidden></div>
 
       <div class="plist" id="postList" aria-live="polite"></div>
     </div>
@@ -612,6 +619,7 @@ footer a:hover{color:var(--terracotta)}
     'https://corsproxy.io/?url=' + encodeURIComponent(CSV_URL)
   ];
   var postListEl = document.getElementById('postList');
+  var postFiltersEl = document.getElementById('postFilters');
 
   function looksLikeCsv(text){
     return !!text && !/^\s*<(!doctype|html)/i.test(text);
@@ -663,13 +671,17 @@ footer a:hover{color:var(--terracotta)}
     return /^https?:\/\//i.test(url);
   }
 
-  function buildPostCard(number, date, text, link){
+  function buildPostCard(number, date, text, link, tag){
     var card = document.createElement('article');
     card.className = 'post post-enter';
+    if (tag) card.setAttribute('data-category', tag);
 
     var issue = document.createElement('div');
     issue.className = 'issue';
-    issue.textContent = 'Запись № ' + number + (date.trim() ? ' · ' + date.trim() : '');
+    var label = 'Запись № ' + number;
+    if (date.trim()) label += ' · ' + date.trim();
+    if (tag) label += ' · ' + tag;
+    issue.textContent = label;
     card.appendChild(issue);
 
     var full = document.createElement('div');
@@ -698,24 +710,68 @@ footer a:hover{color:var(--terracotta)}
     return card;
   }
 
+  function updateWide(){
+    var firstDone = false;
+    [].slice.call(postListEl.querySelectorAll('.post')).forEach(function(p){
+      p.classList.remove('wide');
+      if (!p.hidden && !firstDone){ p.classList.add('wide'); firstDone = true; }
+    });
+  }
+
+  function renderFilters(tags){
+    postFiltersEl.innerHTML = '';
+    if (!tags.length){
+      postFiltersEl.hidden = true;
+      return;
+    }
+    postFiltersEl.hidden = false;
+
+    function makeChip(label, category, active){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip-btn' + (active ? ' active' : '');
+      b.setAttribute('data-filter', category);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      b.textContent = label;
+      b.addEventListener('click', function(){
+        [].slice.call(postFiltersEl.querySelectorAll('.chip-btn')).forEach(function(x){
+          x.classList.remove('active'); x.setAttribute('aria-pressed', 'false');
+        });
+        b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
+        [].slice.call(postListEl.querySelectorAll('.post')).forEach(function(p){
+          p.hidden = !(category === 'all' || p.getAttribute('data-category') === category);
+        });
+        updateWide();
+      });
+      return b;
+    }
+
+    postFiltersEl.appendChild(makeChip('Все записи', 'all', true));
+    tags.forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
+  }
+
   function renderPosts(rows){
     postListEl.innerHTML = '';
     var dataRows = rows.slice(1); /* пропускаем строку заголовков */
     var frag = document.createDocumentFragment();
     var number = 0;
+    var tags = [];
     dataRows.forEach(function(r){
-      var date = r[0] || '', text = r[1] || '', link = r[2] || '';
+      var date = r[0] || '', text = r[1] || '', link = r[2] || '', tag = (r[3] || '').trim();
       if (!text.trim()) return;
       number++;
-      var card = buildPostCard(number, date, text, link);
+      if (tag && tags.indexOf(tag) === -1) tags.push(tag);
+      var card = buildPostCard(number, date, text, link, tag);
       if (number === 1) card.classList.add('wide');
       frag.appendChild(card);
     });
     if (!number){
       postListEl.innerHTML = '<p class="posts-empty">Записей пока нет.</p>';
+      if (postFiltersEl) postFiltersEl.hidden = true;
       return;
     }
     postListEl.appendChild(frag);
+    if (postFiltersEl) renderFilters(tags);
   }
 
   if (postListEl){
@@ -724,6 +780,7 @@ footer a:hover{color:var(--terracotta)}
       .then(function(text){ renderPosts(parseCSV(text)); })
       .catch(function(){
         postListEl.innerHTML = '<p class="posts-error">Не получилось загрузить записи. Загляни в <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Telegram</a>.</p>';
+        if (postFiltersEl) postFiltersEl.hidden = true;
       });
   }
 })();

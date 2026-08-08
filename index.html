@@ -188,19 +188,11 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .post a.go::after{content:"→";transition:transform .25s ease}
 .post a.go:hover::after{transform:translateX(5px)}
 
-/* ===== ЛЕНТА ИЗ TELEGRAM (динамическая) ===== */
-.tg-feed{margin-top:56px;padding-top:48px;border-top:1px dashed var(--line)}
-.tg-feed-label{font-family:"Instrument Serif",serif;font-style:italic;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--terracotta-text);margin-bottom:24px;display:flex;align-items:center;gap:12px;word-break:break-word}
-.tg-feed-label::before{content:"";width:24px;height:1px;background:var(--terracotta-text);flex-shrink:0}
-.tg-posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
-.tg-post{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:28px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);opacity:0;animation:tgFadeIn .5s ease forwards}
-@keyframes tgFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.tg-post-date{font-family:"Instrument Serif",serif;font-style:italic;font-size:12px;letter-spacing:.08em;color:var(--terracotta-text);text-transform:uppercase;word-break:break-word}
-.tg-post-text{font-size:15px;color:var(--ink);line-height:1.7;word-break:break-word}
-.tg-post-link{margin-top:auto;align-self:flex-start;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--terracotta-text);display:inline-flex;align-items:center;gap:6px;transition:gap .2s ease}
-.tg-post-link:hover{gap:10px}
-.tg-post-loading,.tg-post-empty,.tg-post-error{font-size:14px;color:var(--soft);font-style:italic;grid-column:1/-1}
-.tg-post-error a{color:var(--terracotta-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+/* ===== ЗАПИСИ: ДИНАМИЧЕСКАЯ ЗАГРУЗКА ИЗ ТАБЛИЦЫ ===== */
+@keyframes postFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.post.post-enter{opacity:0;animation:postFadeIn .5s ease forwards}
+.posts-loading,.posts-empty,.posts-error{font-size:14px;color:var(--soft);font-style:italic;grid-column:1/-1}
+.posts-error a{color:var(--terracotta-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 
 /* ===== FAQ ===== */
 .faq{display:grid;gap:2px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
@@ -449,84 +441,9 @@ footer a:hover{color:var(--terracotta)}
         <b>Записи можно читать прямо здесь.</b> Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому тексты продублированы на сайте.
       </div>
 
-      <div class="filters" role="group" aria-label="Фильтры записей">
-        <button type="button" class="chip-btn active" data-filter="all" aria-pressed="true">Все записи</button>
-        <button type="button" class="chip-btn" data-filter="moscow" aria-pressed="false">Москва</button>
-        <button type="button" class="chip-btn" data-filter="dance" aria-pressed="false">Танцы</button>
-        <button type="button" class="chip-btn" data-filter="volunteer" aria-pressed="false">Волонтёрство</button>
-        <button type="button" class="chip-btn" data-filter="events" aria-pressed="false">События</button>
-      </div>
+      <div class="filters" id="postFilters" role="group" aria-label="Фильтры записей" hidden></div>
 
-      <div class="plist" id="postList">
-        <article class="post" data-category="moscow">
-          <div class="issue">Запись № 01 · Москва</div>
-          <h3>Доброе утро, <em>Москва</em></h3>
-          <div class="full">
-            <p>Вышел сегодня — и как будто шагнул в тишину. Дорога ровная, блестит лёгким льдом, снег лежит спокойно, не шелохнётся.</p>
-            <p>А голые ветки сверху держат этот серо-голубой свет, как будто натянули над городом мягкую крышу. Такая простая, тихая красота — без событий, без спешки.</p>
-          </div>
-          <blockquote>Просто город, который на минуту притормозил.</blockquote>
-          <div class="post-meta">
-            <a class="go" href="https://t.me/danilka2028k/516" target="_blank" rel="noopener noreferrer">Оригинал</a>
-          </div>
-        </article>
-
-        <article class="post" data-category="dance">
-          <div class="issue">Запись № 02 · Танцы</div>
-          <h3>Снова <em>танцую</em></h3>
-          <div class="full">
-            <p>Второй мастер-класс по оздоровительному танцу по приглашению Елены Дружновой. В первый раз было непривычно и непонятно, справлюсь ли — но лидер должен подавать личный пример.</p>
-            <p>Сейчас движения даются заметно легче. А главное — понятно, как это важно для людей, которые приходят.</p>
-          </div>
-          <blockquote>Танец — это история, которая пишется телом.</blockquote>
-          <div class="post-meta">
-            <a class="go" href="https://t.me/danilka2028k/496" target="_blank" rel="noopener noreferrer">Оригинал</a>
-          </div>
-        </article>
-
-        <article class="post" data-category="volunteer">
-          <div class="issue">Запись № 03 · Волонтёрство</div>
-          <h3>Галерея <em>Светлячков</em></h3>
-          <div class="full">
-            <p>Творческая встреча в парке «Сосенки» в рамках проекта «Мир в фокусе» и фестиваля «Лето в Москве».</p>
-            <p>Десятки плакатов и открыток о доброте, письма поддержки, живой разговор о медиаволонтёрстве. Пространство, где о доброте говорят через искусство.</p>
-          </div>
-          <blockquote>Важные проекты рождаются, когда кто-то один верит в идею так сильно, что заражает остальных.</blockquote>
-          <div class="post-meta">
-            <a class="go" href="https://t.me/danilka2028k/501" target="_blank" rel="noopener noreferrer">Оригинал</a>
-          </div>
-        </article>
-
-        <article class="post" data-category="events">
-          <div class="issue">Запись № 04 · События</div>
-          <h3>Клуб «Лица <em>района</em>»</h3>
-          <div class="full">
-            <p>Встречи, где деловое общение переплетается с душевными беседами: командные игры, мастер-классы, советы психологов, чай со сладостями.</p>
-            <p>Новые связи здесь легко превращаются в рабочие проекты или тёплую дружбу.</p>
-          </div>
-          <div class="post-meta">
-            <a class="go" href="https://t.me/danilka2028k/508" target="_blank" rel="noopener noreferrer">Оригинал</a>
-          </div>
-        </article>
-
-        <article class="post" data-category="events">
-          <div class="issue">Запись № 05 · События</div>
-          <h3>Свой уголок <em>в интернете</em></h3>
-          <div class="full">
-            <p>Дневник в Telegram — это здорово, но иногда хочется места, где всё собрано вместе и открывается без VPN, в один клик.</p>
-            <p>Так появился этот сайт: маленькая книжка про мою обычную жизнь. Ничего лишнего — только то, чем я и так делюсь в канале.</p>
-          </div>
-          <blockquote>Не сайт ради сайта, а просто ещё одна страница дневника.</blockquote>
-          <div class="post-meta">
-            <a class="go" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Канал</a>
-          </div>
-        </article>
-      </div>
-
-      <div class="tg-feed">
-        <div class="tg-feed-label">Свежее из Telegram</div>
-        <div id="telegram-posts" class="tg-posts" aria-live="polite"></div>
-      </div>
+      <div class="plist" id="postList" aria-live="polite"></div>
     </div>
   </section>
 
@@ -630,27 +547,6 @@ footer a:hover{color:var(--terracotta)}
   var yEl = document.getElementById('copyYear');
   if(yEl) yEl.textContent = new Date().getFullYear();
 
-  /* фильтры + первая карточка широкая */
-  var btns = [].slice.call(document.querySelectorAll('[data-filter]'));
-  var posts = [].slice.call(document.querySelectorAll('.post'));
-  function layoutPosts(){
-    var firstDone = false;
-    posts.forEach(function(p){
-      p.classList.remove('wide');
-      if(!p.hidden && !firstDone){ p.classList.add('wide'); firstDone = true; }
-    });
-  }
-  btns.forEach(function(b){
-    b.addEventListener('click', function(){
-      var cat = b.getAttribute('data-filter');
-      btns.forEach(function(x){ x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
-      b.classList.add('active'); b.setAttribute('aria-pressed','true');
-      posts.forEach(function(p){ p.hidden = !(cat==='all' || p.getAttribute('data-category')===cat); });
-      layoutPosts();
-    });
-  });
-  layoutPosts();
-
   /* копирование с запасным способом */
   document.querySelectorAll('[data-copy]').forEach(function(b){
     var original = b.textContent, timer = null;
@@ -713,7 +609,7 @@ footer a:hover{color:var(--terracotta)}
     });
   }
 
-  /* динамические записи из Google-таблицы (CSV: Дата, Текст, Ссылка) */
+  /* записи дневника из Google-таблицы (CSV: Дата, Текст, Ссылка) */
   var CSV_URL = 'https://docs.google.com/spreadsheets/d/1eaQjLOxlZqADycEDMlpK7BL60fp6Jn1iCO476bZs2hQ/export?format=csv';
   /* CORS-прокси на случай, если браузер заблокирует прямую загрузку с docs.google.com.
      /raw у allorigins отдаёт сырой текст без обёртки в JSON — это важно для парсера CSV. */
@@ -722,7 +618,8 @@ footer a:hover{color:var(--terracotta)}
     'https://api.allorigins.win/raw?url=' + encodeURIComponent(CSV_URL),
     'https://corsproxy.io/?url=' + encodeURIComponent(CSV_URL)
   ];
-  var tgContainer = document.getElementById('telegram-posts');
+  var postListEl = document.getElementById('postList');
+  var postFiltersEl = document.getElementById('postFilters');
 
   function looksLikeCsv(text){
     return !!text && !/^\s*<(!doctype|html)/i.test(text);
@@ -774,56 +671,116 @@ footer a:hover{color:var(--terracotta)}
     return /^https?:\/\//i.test(url);
   }
 
-  function buildTgCard(date, text, link){
+  function buildPostCard(number, date, text, link, tag){
     var card = document.createElement('article');
-    card.className = 'tg-post';
+    card.className = 'post post-enter';
+    if (tag) card.setAttribute('data-category', tag);
 
-    var dateEl = document.createElement('div');
-    dateEl.className = 'tg-post-date';
-    dateEl.textContent = date.trim();
-    card.appendChild(dateEl);
+    var issue = document.createElement('div');
+    issue.className = 'issue';
+    var label = 'Запись № ' + number;
+    if (date.trim()) label += ' · ' + date.trim();
+    if (tag) label += ' · ' + tag;
+    issue.textContent = label;
+    card.appendChild(issue);
 
-    var textEl = document.createElement('p');
-    textEl.className = 'tg-post-text';
-    textEl.textContent = text.trim();
-    card.appendChild(textEl);
+    var full = document.createElement('div');
+    full.className = 'full';
+    text.trim().split('\n').forEach(function(line){
+      line = line.trim();
+      if (!line) return;
+      var p = document.createElement('p');
+      p.textContent = line;
+      full.appendChild(p);
+    });
+    card.appendChild(full);
 
     if (link && isSafeUrl(link.trim())){
+      var meta = document.createElement('div');
+      meta.className = 'post-meta';
       var a = document.createElement('a');
-      a.className = 'tg-post-link';
+      a.className = 'go';
       a.href = link.trim();
       a.target = '_blank';
       a.rel = 'noopener noreferrer';
-      a.textContent = 'Читать в Telegram →';
-      card.appendChild(a);
+      a.textContent = 'Оригинал';
+      meta.appendChild(a);
+      card.appendChild(meta);
     }
     return card;
   }
 
-  function renderTgPosts(rows){
-    tgContainer.innerHTML = '';
-    var dataRows = rows.slice(1); /* пропускаем строку заголовков */
-    var frag = document.createDocumentFragment();
-    var count = 0;
-    dataRows.forEach(function(r){
-      var date = r[0] || '', text = r[1] || '', link = r[2] || '';
-      if (!text.trim()) return;
-      frag.appendChild(buildTgCard(date, text, link));
-      count++;
+  function updateWide(){
+    var firstDone = false;
+    [].slice.call(postListEl.querySelectorAll('.post')).forEach(function(p){
+      p.classList.remove('wide');
+      if (!p.hidden && !firstDone){ p.classList.add('wide'); firstDone = true; }
     });
-    if (!count){
-      tgContainer.innerHTML = '<p class="tg-post-empty">Записей пока нет.</p>';
-      return;
-    }
-    tgContainer.appendChild(frag);
   }
 
-  if (tgContainer){
-    tgContainer.innerHTML = '<p class="tg-post-loading">Загружаю записи…</p>';
+  function renderFilters(tags){
+    postFiltersEl.innerHTML = '';
+    if (!tags.length){
+      postFiltersEl.hidden = true;
+      return;
+    }
+    postFiltersEl.hidden = false;
+
+    function makeChip(label, category, active){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip-btn' + (active ? ' active' : '');
+      b.setAttribute('data-filter', category);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      b.textContent = label;
+      b.addEventListener('click', function(){
+        [].slice.call(postFiltersEl.querySelectorAll('.chip-btn')).forEach(function(x){
+          x.classList.remove('active'); x.setAttribute('aria-pressed', 'false');
+        });
+        b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
+        [].slice.call(postListEl.querySelectorAll('.post')).forEach(function(p){
+          p.hidden = !(category === 'all' || p.getAttribute('data-category') === category);
+        });
+        updateWide();
+      });
+      return b;
+    }
+
+    postFiltersEl.appendChild(makeChip('Все записи', 'all', true));
+    tags.forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
+  }
+
+  function renderPosts(rows){
+    postListEl.innerHTML = '';
+    var dataRows = rows.slice(1); /* пропускаем строку заголовков */
+    var frag = document.createDocumentFragment();
+    var number = 0;
+    var tags = [];
+    dataRows.forEach(function(r){
+      var date = r[0] || '', text = r[1] || '', link = r[2] || '', tag = (r[3] || '').trim();
+      if (!text.trim()) return;
+      number++;
+      if (tag && tags.indexOf(tag) === -1) tags.push(tag);
+      var card = buildPostCard(number, date, text, link, tag);
+      if (number === 1) card.classList.add('wide');
+      frag.appendChild(card);
+    });
+    if (!number){
+      postListEl.innerHTML = '<p class="posts-empty">Записей пока нет.</p>';
+      if (postFiltersEl) postFiltersEl.hidden = true;
+      return;
+    }
+    postListEl.appendChild(frag);
+    if (postFiltersEl) renderFilters(tags);
+  }
+
+  if (postListEl){
+    postListEl.innerHTML = '<p class="posts-loading">Загружаю записи…</p>';
     fetchCsvFrom(CSV_SOURCES, 0)
-      .then(function(text){ renderTgPosts(parseCSV(text)); })
+      .then(function(text){ renderPosts(parseCSV(text)); })
       .catch(function(){
-        tgContainer.innerHTML = '<p class="tg-post-error">Не получилось загрузить записи. Загляни в <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Telegram</a>.</p>';
+        postListEl.innerHTML = '<p class="posts-error">Не получилось загрузить записи. Загляни в <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Telegram</a>.</p>';
+        if (postFiltersEl) postFiltersEl.hidden = true;
       });
   }
 })();

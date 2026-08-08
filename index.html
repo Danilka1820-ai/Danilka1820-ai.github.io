@@ -176,6 +176,8 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .post:hover::after{opacity:.12}
 .post .issue{font-family:"Instrument Serif",serif;font-style:italic;font-size:11.5px;color:var(--terracotta-text);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;word-break:break-word}
 .post .issue::before{content:"";width:20px;height:1px;background:var(--terracotta-text);flex-shrink:0}
+.post-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.post-tag{font-family:"Instrument Serif",serif;font-style:italic;font-size:12px;letter-spacing:.03em;color:var(--terracotta-text);background:rgba(200,85,61,.08);border:1px solid rgba(200,85,61,.2);border-radius:100px;padding:4px 14px;white-space:nowrap}
 .post h3{font-family:"Instrument Serif",serif;font-size:clamp(24px,3vw,32px);font-weight:400;line-height:1.15;margin-bottom:18px;letter-spacing:-.015em;word-break:break-word}
 .post h3 em{font-style:italic;color:var(--terracotta)}
 .post .full{margin-bottom:20px}
@@ -671,18 +673,35 @@ footer a:hover{color:var(--terracotta)}
     return /^https?:\/\//i.test(url);
   }
 
-  function buildPostCard(number, date, text, link, tag){
+  function parseTags(raw){
+    return (raw || '').split(',')
+      .map(function(t){ return t.trim(); })
+      .filter(function(t){ return t; });
+  }
+
+  function buildPostCard(number, date, text, link, tags){
     var card = document.createElement('article');
     card.className = 'post post-enter';
-    if (tag) card.setAttribute('data-category', tag);
+    if (tags.length) card.setAttribute('data-tags', tags.join(','));
 
     var issue = document.createElement('div');
     issue.className = 'issue';
     var label = 'Запись № ' + number;
     if (date.trim()) label += ' · ' + date.trim();
-    if (tag) label += ' · ' + tag;
     issue.textContent = label;
     card.appendChild(issue);
+
+    if (tags.length){
+      var tagsEl = document.createElement('div');
+      tagsEl.className = 'post-tags';
+      tags.forEach(function(t){
+        var tagEl = document.createElement('span');
+        tagEl.className = 'post-tag';
+        tagEl.textContent = t;
+        tagsEl.appendChild(tagEl);
+      });
+      card.appendChild(tagsEl);
+    }
 
     var full = document.createElement('div');
     full.className = 'full';
@@ -739,7 +758,8 @@ footer a:hover{color:var(--terracotta)}
         });
         b.classList.add('active'); b.setAttribute('aria-pressed', 'true');
         [].slice.call(postListEl.querySelectorAll('.post')).forEach(function(p){
-          p.hidden = !(category === 'all' || p.getAttribute('data-category') === category);
+          var postTags = (p.getAttribute('data-tags') || '').split(',');
+          p.hidden = !(category === 'all' || postTags.indexOf(category) !== -1);
         });
         updateWide();
       });
@@ -755,13 +775,14 @@ footer a:hover{color:var(--terracotta)}
     var dataRows = rows.slice(1); /* пропускаем строку заголовков */
     var frag = document.createDocumentFragment();
     var number = 0;
-    var tags = [];
+    var allTags = [];
     dataRows.forEach(function(r){
-      var date = r[0] || '', text = r[1] || '', link = r[2] || '', tag = (r[3] || '').trim();
+      var date = r[0] || '', text = r[1] || '', link = r[2] || '';
+      var tags = parseTags(r[3]);
       if (!text.trim()) return;
       number++;
-      if (tag && tags.indexOf(tag) === -1) tags.push(tag);
-      var card = buildPostCard(number, date, text, link, tag);
+      tags.forEach(function(t){ if (allTags.indexOf(t) === -1) allTags.push(t); });
+      var card = buildPostCard(number, date, text, link, tags);
       if (number === 1) card.classList.add('wide');
       frag.appendChild(card);
     });
@@ -771,7 +792,7 @@ footer a:hover{color:var(--terracotta)}
       return;
     }
     postListEl.appendChild(frag);
-    if (postFiltersEl) renderFilters(tags);
+    if (postFiltersEl) renderFilters(allTags);
   }
 
   if (postListEl){

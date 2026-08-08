@@ -3,874 +3,668 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
-<meta name="description" content="Данил Сарыков — веб-разработчик. Создаю современные веб-сайты и цифровые сервисы с использованием ИИ-инструментов.">
+<meta name="theme-color" content="#1A1410">
+<meta name="description" content="Дневник Данила Сарыкова. Москва и Подмосковье, танцы, волонтёрство, заметки о жизни вокруг.">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Данил Сарыков — Веб-разработка & ИИ">
-<meta property="og:description" content="Создаю современные веб-сайты и цифровые сервисы с использованием ИИ-инструментов.">
+<meta property="og:title" content="Данил Сарыков — Вокруг меня · Дневник ритма">
+<meta property="og:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
 <meta property="og:image" content="https://danil-sarykov.space/og-image.png">
-<meta property="og:url" content="https://danil-sarykov.space/">
+<meta property="og:url" content="https://www.danil-sarykov.space/">
 <meta property="og:locale" content="ru_RU">
-<title>Данил Сарыков — Веб-разработка & ИИ</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230f172a'/><text x='32' y='42' font-family='sans-serif' font-size='30' font-weight='700' fill='%233b82f6' text-anchor='middle'>D</text></svg>">
+<title>Данил Сарыков — Вокруг меня · Дневник ритма</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231A1410'/><circle cx='32' cy='32' r='12' fill='%23C8553D'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0f172a;
-  --bg-elevated: #16213a;
-  --text: #f8fafc;
-  --text-muted: #94a3b8;
-  --accent: #3b82f6;
-  --accent-hover: #60a5fa;
-  --border: rgba(248, 250, 252, 0.1);
-  --radius: 12px;
-  --container-width: 1120px;
-  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
-/* Reset */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: var(--font-main);
-  background-color: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-ul {
-  list-style: none;
-}
-
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
-}
-
-.container {
-  width: 100%;
-  max-width: var(--container-width);
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-/* Header */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border);
-}
-
-.header-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 72px;
-}
-
-.logo {
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: -0.01em;
-}
-
-.nav-list {
-  display: flex;
-  gap: 32px;
-}
-
-.nav-link {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  transition: color 0.2s ease;
-}
-
-.nav-link:hover {
-  color: var(--text);
-}
-
-.burger {
-  display: none;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 32px;
-  height: 32px;
-}
-
-.burger span {
-  display: block;
-  width: 100%;
-  height: 2px;
-  background: var(--text);
-  border-radius: 2px;
-  transition: transform 0.25s ease, opacity 0.25s ease;
-}
-
-.burger.is-active span:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
-}
-
-.burger.is-active span:nth-child(2) {
-  opacity: 0;
-}
-
-.burger.is-active span:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
-}
-
-/* Hero */
-.hero {
-  padding: clamp(80px, 14vw, 160px) 0 clamp(60px, 8vw, 100px);
-  text-align: center;
-  background:
-    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(59, 130, 246, 0.16), transparent 70%);
-}
-
-.hero-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.hero-photo {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid var(--accent);
-  margin: 0 auto 28px;
-  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.12);
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 18px;
-  border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  color: var(--accent-hover);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  margin-bottom: 24px;
-}
-
-.hero-title {
-  font-size: clamp(2.2rem, 5.5vw, 3.75rem);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  max-width: 820px;
-}
-
-.hero-text {
-  margin-top: 22px;
-  max-width: 620px;
-  color: var(--text-muted);
-  font-size: 1.1rem;
-}
-
-.hero-actions {
-  margin-top: 36px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 30px;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
-}
-
-.btn-primary {
-  background: var(--accent);
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background: var(--accent-hover);
-  transform: translateY(-2px);
-}
-
-.btn-outline {
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-
-.btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent-hover);
-  transform: translateY(-2px);
-}
-
-/* Sections */
-.section {
-  padding: 90px 0;
-}
-
-.section-title {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 40px;
-  text-align: center;
-}
-
-/* About */
-.about-intro {
-  max-width: 760px;
-  margin: 0 auto 40px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 1.05rem;
-}
-
-.about-intro a {
-  color: var(--accent-hover);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.about-intro a:hover {
-  color: var(--accent);
-}
-
-.about-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-}
-
-.about-card {
-  padding: 32px 28px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.about-card h3 {
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--accent-hover);
-  margin-bottom: 12px;
-}
-
-.about-card p {
-  color: var(--text-muted);
-  font-size: 0.98rem;
-}
-
-.about-card p a {
-  color: var(--accent-hover);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.about-card p a:hover {
-  color: var(--accent);
-}
-
-/* Diary */
-.diary-section {
-  background: var(--bg-elevated);
-  border-block: 1px solid var(--border);
-}
-
-.diary-intro {
-  max-width: 700px;
-  margin: 0 auto 40px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 1.05rem;
-}
-
-.diary-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-
-.diary-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 28px 26px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.diary-issue {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent-hover);
-}
-
-.diary-title {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-weight: 400;
-  font-size: 1.4rem;
-  letter-spacing: -0.01em;
-}
-
-.diary-title em {
-  font-style: italic;
-  color: var(--accent-hover);
-}
-
-.diary-excerpt {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-
-.diary-quote {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-style: italic;
-  font-size: 1.1rem;
-  color: var(--text);
-  border-left: 2px solid var(--accent);
-  padding-left: 14px;
-}
-
-.diary-link {
-  margin-top: auto;
-  color: var(--accent-hover);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.diary-link:hover {
-  color: var(--accent);
-}
-
-.diary-cta {
-  margin-top: 40px;
-  text-align: center;
-}
-
-/* Skills */
-.skills-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-}
-
-.skill-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 28px 16px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  text-align: center;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.skill-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--accent);
-}
-
-.skill-icon {
-  font-size: 1.8rem;
-}
-
-.skill-card h3 {
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-/* Projects */
-.projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
-}
-
-.project-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.project-card:hover {
-  transform: translateY(-6px);
-  border-color: var(--accent);
-  box-shadow: 0 20px 40px -20px rgba(59, 130, 246, 0.35);
-}
-
-.project-thumb {
-  height: 140px;
-  border-radius: 8px;
-  margin-bottom: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.05));
-  color: var(--accent-hover);
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-size: 0.85rem;
-}
-
-.project-card h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.project-card p {
-  color: var(--text-muted);
-  font-size: 0.95rem;
-}
-
-.project-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 16px;
-  color: var(--accent-hover);
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.project-link .arrow {
-  transition: transform 0.2s ease;
-}
-
-.project-link:hover {
-  color: var(--accent);
-}
-
-.project-link:hover .arrow {
-  transform: translateX(4px);
-}
-
-/* Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.hero-photo,
-.badge,
-.hero-title,
-.hero-text,
-.hero-actions {
-  opacity: 0;
-  animation: fadeInUp 0.7s ease forwards;
-}
-
-.hero-photo { animation-delay: 0.05s; }
-.badge { animation-delay: 0.15s; }
-.hero-title { animation-delay: 0.25s; }
-.hero-text { animation-delay: 0.35s; }
-.hero-actions { animation-delay: 0.45s; }
-
-/* Fade only (no transform) so :hover translateY on cards keeps working */
-.skill-card,
-.project-card,
-.diary-card {
-  opacity: 0;
-  animation: fadeIn 0.7s ease forwards;
-}
-
-.skill-card:nth-child(1) { animation-delay: 0.1s; }
-.skill-card:nth-child(2) { animation-delay: 0.2s; }
-.skill-card:nth-child(3) { animation-delay: 0.3s; }
-.skill-card:nth-child(4) { animation-delay: 0.4s; }
-.skill-card:nth-child(5) { animation-delay: 0.5s; }
-
-.project-card:nth-child(1) { animation-delay: 0.1s; }
-.project-card:nth-child(2) { animation-delay: 0.2s; }
-.project-card:nth-child(3) { animation-delay: 0.3s; }
-
-.diary-card:nth-child(1) { animation-delay: 0.1s; }
-.diary-card:nth-child(2) { animation-delay: 0.2s; }
-.diary-card:nth-child(3) { animation-delay: 0.3s; }
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-photo,
-  .badge,
-  .hero-title,
-  .hero-text,
-  .hero-actions,
-  .skill-card,
-  .project-card,
-  .diary-card {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-/* Footer */
-.site-footer {
-  border-top: 1px solid var(--border);
-  padding: 32px 0;
-}
-
-.footer-inner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.footer-copy {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.footer-socials {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.footer-socials a {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.footer-socials a:hover {
-  color: var(--accent-hover);
-}
-
-/* Mobile */
-@media (max-width: 768px) {
-  .burger {
-    display: flex;
-  }
-
-  .nav {
-    position: fixed;
-    top: 72px;
-    left: 0;
-    right: 0;
-    background: var(--bg-elevated);
-    border-bottom: 1px solid var(--border);
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-  }
-
-  .nav.is-open {
-    max-height: 320px;
-  }
-
-  .nav-list {
-    flex-direction: column;
-    gap: 0;
-    padding: 8px 24px 20px;
-  }
-
-  .nav-list li {
-    border-bottom: 1px solid var(--border);
-  }
-
-  .nav-list li:last-child {
-    border-bottom: none;
-  }
-
-  .nav-link {
-    display: block;
-    padding: 14px 0;
-  }
-
-  .hero-photo {
-    width: 120px;
-    height: 120px;
-  }
+:root{
+  --ink:#1A1410;
+  --terracotta:#C8553D;
+  --terracotta-text:#A8412C;
+  --cream:#F4EEE6;
+  --paper:#FBF7F1;
+  --line:rgba(26,20,16,.12);
+  --soft:#544A43;
+  --shadow:0 30px 60px -30px rgba(26,20,16,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  width:100%;max-width:100%;margin:0;padding:0;overflow-x:hidden;
+  background-color:var(--cream);
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(200,85,61,.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(200,85,61,.03) 0%, transparent 50%);
+  color:var(--ink);
+  font-family:"Manrope",system-ui,-apple-system,sans-serif;
+  font-weight:400;font-size:16px;line-height:1.7;letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased;
+}
+.serif{font-family:"Instrument Serif",Georgia,"Times New Roman",serif;font-weight:400;letter-spacing:-.01em}
+.w{width:100%;max-width:1200px;margin:0 auto;padding:0 clamp(20px,5vw,48px);min-width:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{max-width:100%;height:auto;display:block}
+::selection{background:var(--terracotta);color:#fff}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--terracotta);outline-offset:3px;border-radius:2px}
+
+/* ===== ШАПКА ===== */
+.topbar{background:var(--ink);color:var(--cream);border-bottom:1px solid rgba(255,255,255,.08)}
+.topbar .w{display:flex;justify-content:space-between;align-items:center;padding:14px clamp(16px,5vw,48px);gap:14px;flex-wrap:wrap}
+.mark{font-family:"Instrument Serif",serif;font-size:24px;font-weight:400;letter-spacing:-.02em;display:flex;align-items:baseline;flex-shrink:0}
+.mark .letter{font-style:italic}
+.mark .dot{display:inline-block;width:10px;height:10px;background:var(--terracotta);border-radius:50%;margin-left:6px}
+.now-block{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:500;color:rgba(244,238,230,.78);letter-spacing:.03em;min-width:0;flex:1 1 auto;justify-content:flex-end}
+.now-block .live-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#22C55E;box-shadow:0 0 12px rgba(34,197,94,.6);animation:livePulse 2s ease-in-out infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.15)}}
+.now-block .now-text{display:flex;gap:10px;align-items:center;white-space:nowrap;min-width:0}
+.now-block .sep{color:rgba(244,238,230,.35);flex-shrink:0}
+
+/* ===== ГЕРОЙ ===== */
+.hero{position:relative;padding:clamp(80px,14vw,160px) 0 clamp(60px,8vw,100px);overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(200,85,61,.08) 0%, transparent 60%);pointer-events:none}
+.hero .w{position:relative;z-index:2}
+.hero-inner{display:grid;grid-template-columns:1fr auto;gap:40px;align-items:end}
+.hero-label{font-size:12px;font-weight:600;letter-spacing:.25em;text-transform:uppercase;color:var(--terracotta-text);margin-bottom:24px;display:flex;align-items:center;gap:12px}
+.hero-label::before{content:"";width:30px;height:1px;background:var(--terracotta-text)}
+h1.big{font-family:"Instrument Serif",serif;font-weight:400;font-size:clamp(48px,9vw,120px);line-height:.95;letter-spacing:-.025em;margin:0;word-break:break-word;overflow-wrap:break-word}
+h1.big em{font-style:italic;color:var(--terracotta)}
+h1.big .end-dot{display:inline-block;width:14px;height:14px;background:var(--terracotta);border-radius:50%;vertical-align:middle;margin-left:8px}
+.hero-side{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--soft);line-height:1.45;max-width:260px;text-align:right}
+.hero-actions{margin-top:48px;display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:16px 32px;border-radius:100px;font-weight:600;font-size:14px;letter-spacing:.03em;transition:all .3s cubic-bezier(.4,0,.2,1);text-align:center}
+.btn-primary{background:var(--ink);color:var(--cream)}
+.btn-primary:hover{background:var(--terracotta);transform:translateY(-2px)}
+.btn-primary .arrow{transition:transform .3s ease}
+.btn-primary:hover .arrow{transform:translateX(4px)}
+.btn-ghost{color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--ink);background:rgba(26,20,16,.04)}
+.btn-ghost .arrow{transition:transform .3s ease}
+.btn-ghost:hover .arrow{transform:translateY(3px)}
+
+/* ===== РИТМ-ПОЛОСА ===== */
+.rhythm{background:var(--ink);color:var(--cream);padding:22px 0 26px;overflow:hidden;border-block:1px solid rgba(244,238,230,.06)}
+.rhythm-label{display:block;padding:0 clamp(20px,5vw,48px);margin-bottom:16px;font-family:"Instrument Serif",serif;font-style:italic;font-size:13px;letter-spacing:.12em;color:rgba(244,238,230,.6)}
+.rhythm-label::before{content:"— "}
+.rhythm-label::after{content:" —"}
+.marquee-track{display:flex;width:max-content;animation:rhythmScroll 30s linear infinite}
+.rhythm:hover .marquee-track{animation-play-state:paused}
+.mq-group{display:flex;align-items:center;gap:26px;padding-right:26px;flex:0 0 auto;font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.24em;color:var(--cream);white-space:nowrap}
+.eq{display:inline-flex;align-items:flex-end;gap:3px;height:16px;flex-shrink:0}
+.eq i{width:3px;height:100%;background:var(--terracotta);border-radius:2px;transform-origin:bottom;animation:eqPulse 1.2s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.12s}
+.eq i:nth-child(3){animation-delay:.24s}
+.eq i:nth-child(4){animation-delay:.36s}
+.eq i:nth-child(5){animation-delay:.48s}
+@keyframes eqPulse{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes rhythmScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ===== ЭПИГРАФ ===== */
+.epigraph{padding:clamp(80px,12vw,140px) 0}
+.epigraph-inner{max-width:720px;margin:0 auto;text-align:center;position:relative}
+.epigraph-inner::before{content:"«";position:absolute;top:-80px;left:50%;transform:translateX(-50%);font-family:"Instrument Serif",serif;font-size:180px;color:var(--terracotta);opacity:.15;line-height:1;pointer-events:none}
+.epigraph p{font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(26px,4.5vw,44px);line-height:1.3;letter-spacing:-.01em;word-break:break-word}
+.epigraph p em{font-style:normal;color:var(--terracotta)}
+.epigraph .attr{margin-top:32px;font-size:12.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);word-break:break-word}
+.epigraph .attr::before{content:"— "}
+.epigraph .attr em{font-style:normal;color:var(--terracotta-text)}
+
+/* ===== ЦИФРЫ ===== */
+.days{padding:60px 0;border-block:1px solid var(--line)}
+.days-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+.days-item{text-align:center;position:relative;min-width:0}
+.days-item:not(:last-child)::after{content:"";position:absolute;right:-20px;top:20%;height:60%;width:1px;background:var(--line)}
+.days-num{font-family:"Instrument Serif",serif;font-size:clamp(40px,6vw,72px);line-height:1;color:var(--ink);letter-spacing:-.02em;display:block;word-break:break-word}
+.days-num .plus{color:var(--terracotta);font-size:.6em;margin-left:4px}
+.days-label{margin-top:12px;font-size:12px;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--soft);word-break:break-word}
+
+/* ===== СЕКЦИИ ===== */
+main{width:100%}
+section.pane{padding:clamp(80px,10vw,120px) 0}
+.section-header{display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:baseline;margin-bottom:clamp(40px,6vw,64px);padding-bottom:24px;border-bottom:1px solid var(--line)}
+.section-num{font-family:"Instrument Serif",serif;font-style:italic;font-size:20px;color:var(--terracotta-text)}
+.section-title{font-family:"Instrument Serif",serif;font-size:clamp(28px,4vw,44px);font-weight:400;line-height:1.1;letter-spacing:-.015em;word-break:break-word}
+.section-title em{font-style:italic;color:var(--terracotta)}
+.author-passport{display:grid;grid-template-columns:auto 1fr;gap:32px;padding:32px;background:var(--paper);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow);position:relative}
+.author-passport::before{content:"№ 001";position:absolute;top:12px;right:16px;font-family:"Instrument Serif",serif;font-style:italic;font-size:11px;color:var(--soft);letter-spacing:.1em}
+.avatar{width:80px;height:80px;border-radius:50%;flex-shrink:0;background:var(--ink);color:var(--cream);display:grid;place-items:center;font-family:"Instrument Serif",serif;font-style:italic;font-size:40px;border:2px solid var(--terracotta);object-fit:cover}
+.author-info{display:flex;flex-direction:column;gap:12px;min-width:0}
+.author-name{font-family:"Instrument Serif",serif;font-size:24px;letter-spacing:-.01em;word-break:break-word}
+.author-name em{font-style:italic;color:var(--terracotta)}
+.author-line{font-size:15px;color:var(--soft);line-height:1.7;max-width:60ch;word-break:break-word}
+
+/* ===== ЗАПИСИ ===== */
+.posts-note{background:var(--paper);border-left:3px solid var(--terracotta);padding:16px 24px;font-size:14px;color:var(--soft);margin-bottom:40px;line-height:1.7;word-break:break-word}
+.posts-note b{color:var(--ink);font-weight:600}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:40px}
+.chip-btn{background:transparent;border:1px solid var(--line);color:var(--ink);padding:9px 20px;border-radius:100px;font-size:12.5px;font-weight:600;letter-spacing:.03em;transition:all .25s ease;white-space:nowrap}
+.chip-btn.active,.chip-btn:hover{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.plist{display:grid;grid-template-columns:repeat(12,1fr);gap:24px}
+.post{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:36px;display:flex;flex-direction:column;transition:all .3s ease;position:relative;overflow:hidden;grid-column:span 6;min-width:0}
+.post.wide{grid-column:span 12}
+.post::after{content:"";position:absolute;top:0;left:0;right:0;height:0;background:linear-gradient(135deg,var(--terracotta) 0%,transparent 60%);opacity:.06;transition:opacity .3s ease}
+.post:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:transparent}
+.post:hover::after{opacity:.12}
+.post .issue{font-family:"Instrument Serif",serif;font-style:italic;font-size:11.5px;color:var(--terracotta-text);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;word-break:break-word}
+.post .issue::before{content:"";width:20px;height:1px;background:var(--terracotta-text);flex-shrink:0}
+.post h3{font-family:"Instrument Serif",serif;font-size:clamp(24px,3vw,32px);font-weight:400;line-height:1.15;margin-bottom:18px;letter-spacing:-.015em;word-break:break-word}
+.post h3 em{font-style:italic;color:var(--terracotta)}
+.post .full{margin-bottom:20px}
+.post .full p{font-size:15px;color:var(--ink);line-height:1.75;margin-bottom:12px;word-break:break-word}
+.post .full p:last-child{margin-bottom:0}
+.post blockquote{font-family:"Instrument Serif",serif;font-style:italic;font-size:18px;line-height:1.45;color:var(--ink);margin:24px 0 20px;padding-left:20px;border-left:2px solid var(--terracotta);position:relative;word-break:break-word}
+.post blockquote::before{content:"«";position:absolute;top:-8px;left:6px;font-size:32px;color:var(--terracotta);opacity:.4;font-style:normal}
+.post-meta{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-top:auto;padding-top:20px;border-top:1px dashed var(--line)}
+.post a.go{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--terracotta-text);display:inline-flex;align-items:center;gap:8px;transition:all .25s ease}
+.post a.go::after{content:"→";transition:transform .25s ease}
+.post a.go:hover::after{transform:translateX(5px)}
+
+/* ===== FAQ ===== */
+.faq{display:grid;gap:2px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.faq-item{background:var(--paper)}
+.faq-q{padding:24px 28px;display:flex;justify-content:space-between;align-items:center;gap:20px;width:100%;text-align:left;font-weight:500;font-size:15px;transition:background .2s ease;list-style:none;cursor:pointer}
+.faq-q::-webkit-details-marker{display:none}
+.faq-q::marker{content:''}
+.faq-q:hover{background:rgba(200,85,61,.04)}
+.faq-q .q-text{font-family:"Instrument Serif",serif;font-size:18px;letter-spacing:-.005em;word-break:break-word}
+.faq-q .plus{font-family:"Instrument Serif",serif;font-style:italic;font-size:24px;color:var(--terracotta-text);transition:transform .3s ease;flex-shrink:0}
+.faq-item[open] .faq-q{background:rgba(200,85,61,.04)}
+.faq-item[open] .faq-q .plus{transform:rotate(45deg)}
+.faq-a{padding:0 28px 24px;font-size:15px;color:var(--soft);line-height:1.7;word-break:break-word}
+.faq-a a{color:var(--terracotta-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
+/* ===== ФИНАЛ ===== */
+.closing{background:var(--ink);color:var(--cream);padding:clamp(80px,12vw,140px) 0 clamp(60px,8vw,80px);text-align:center;position:relative;overflow:hidden}
+.closing::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(200,85,61,.15) 0%,transparent 60%);pointer-events:none}
+.closing-inner{position:relative;z-index:2}
+.closing h2{font-family:"Instrument Serif",serif;font-size:clamp(36px,6vw,72px);line-height:1.05;font-weight:400;letter-spacing:-.02em;max-width:16ch;margin:0 auto;word-break:break-word}
+.closing h2 em{font-style:italic;color:var(--terracotta)}
+.closing p{margin-top:24px;font-family:"Instrument Serif",serif;font-style:italic;font-size:clamp(16px,2vw,20px);color:rgba(244,238,230,.78);max-width:46ch;margin-left:auto;margin-right:auto;word-break:break-word}
+.closing .hero-actions{justify-content:center;margin-top:48px}
+.closing .btn-primary{background:var(--terracotta);color:#fff}
+.closing .btn-primary:hover{background:#fff;color:var(--ink)}
+.closing .btn-ghost{color:var(--cream);border-color:rgba(244,238,230,.22)}
+.closing .btn-ghost:hover{background:rgba(244,238,230,.1);border-color:rgba(244,238,230,.4)}
+footer{margin-top:60px;padding-top:32px;border-top:1px solid rgba(244,238,230,.1);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:12.5px;color:rgba(244,238,230,.62);letter-spacing:.05em}
+footer a{color:var(--cream);font-weight:500;transition:color .2s;word-break:break-word}
+footer a:hover{color:var(--terracotta)}
+.foot-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--terracotta);margin:0 10px;vertical-align:middle}
+.foot-name{font-style:italic;color:rgba(244,238,230,.55);letter-spacing:.08em}
+
+/* ===== ПОЯВЛЕНИЕ ПРИ ПРОКРУТКЕ ===== */
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.reveal.is-visible{opacity:1;transform:none}
+
+/* ===== ЗАКЛАДКА «НАВЕРХ» ===== */
+.to-top{position:fixed;right:20px;bottom:20px;width:48px;height:48px;border-radius:8px 8px 2px 2px;background:var(--terracotta);color:#fff;display:grid;place-items:center;font-family:"Instrument Serif",serif;font-size:20px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .3s ease,transform .3s ease,background .2s ease;z-index:40}
+.to-top.is-visible{opacity:1;pointer-events:auto;transform:none}
+.to-top:hover{background:var(--ink)}
+
+/* ===== АДАПТИВ: ПЛАНШЕТ ===== */
+@media(max-width:1080px){
+  .hero-inner{gap:28px}
+  .hero-side{max-width:220px}
+}
+
+/* ===== АДАПТИВ: ПЛАНШЕТ ВЕРТИКАЛЬНЫЙ ===== */
+@media(max-width:860px){
+  .hero-inner{grid-template-columns:1fr}
+  .hero-side{text-align:left;max-width:none;font-size:18px}
+  .days-grid{grid-template-columns:1fr;gap:28px}
+  .days-item::after{display:none}
+  .days-item:not(:last-child){padding-bottom:22px;border-bottom:1px solid var(--line)}
+  .plist{grid-template-columns:1fr}
+  .post,.post.wide{grid-column:span 1}
+  .post{padding:28px 24px}
+}
+
+/* ===== АДАПТИВ: ТЕЛЕФОН ===== */
+@media(max-width:560px){
+  .topbar .w{gap:10px;padding:12px 16px;justify-content:center}
+  .mark{font-size:20px}
+  .mark .dot{width:9px;height:9px;margin-left:5px}
+  .now-block{font-size:11px;gap:7px;justify-content:center}
+  .now-block .now-text{gap:7px}
+  .now-date,.sep-date{display:none}
+  .hero{padding:72px 0 56px}
+  h1.big{font-size:clamp(40px,11vw,56px)}
+  .hero-side{font-size:17px}
+  .section-header{grid-template-columns:1fr;gap:8px}
+  .author-passport{grid-template-columns:1fr;text-align:center;justify-items:center;padding:28px 22px}
+  .author-line{text-align:left}
+  .post{padding:24px 20px}
+  .post .full p{font-size:14.5px}
+  .post blockquote{font-size:16.5px}
+  .filters{gap:6px}
+  .chip-btn{padding:8px 16px;font-size:12px}
+  footer{flex-direction:column;align-items:center;text-align:center}
+  .hero-actions{flex-direction:column;width:100%}
+  .btn{width:100%;justify-content:center}
+  .closing .hero-actions{flex-direction:column;align-items:stretch}
+}
+
+/* ===== АДАПТИВ: ОЧЕНЬ УЗКИЕ ЭКРАНЫ (iPhone SE, старые Android) ===== */
+@media(max-width:380px){
+  .topbar .w{padding:10px 12px}
+  .now-block .city{display:none}
+  .now-block .sep:first-of-type{display:none}
+  .hero{padding:56px 0 44px}
+  h1.big{font-size:clamp(36px,10vw,48px)}
+  .hero-side{font-size:16px}
+  .epigraph{padding:60px 0 80px}
+  .epigraph p{font-size:clamp(22px,6vw,32px)}
+  .epigraph-inner::before{font-size:120px;top:-40px}
+  .days{padding:40px 0}
+  .days-num{font-size:clamp(36px,10vw,56px)}
+  section.pane{padding:60px 0}
+  .section-title{font-size:clamp(24px,7vw,36px)}
+  .author-passport{padding:22px 18px}
+  .avatar{width:64px;height:64px;font-size:32px}
+  .author-name{font-size:20px}
+  .post{padding:20px 16px}
+  .post h3{font-size:clamp(20px,6vw,28px)}
+  .post .full p{font-size:14px}
+  .post blockquote{font-size:15.5px;padding-left:16px}
+  .faq-q{padding:18px 20px;font-size:14.5px}
+  .faq-q .q-text{font-size:16px}
+  .faq-a{padding:0 20px 20px;font-size:14px}
+  .closing{padding:60px 0 50px}
+  .closing h2{font-size:clamp(28px,8vw,48px)}
+  .closing p{font-size:clamp(15px,4vw,18px)}
+  footer{font-size:11.5px}
+}
+
+/* ===== УМЕНЬШЕНИЕ ДВИЖЕНИЯ ===== */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .marquee-track,.eq i,.live-dot{animation:none!important}
+  *,*::before,*::after{transition-duration:.01ms!important}
 }
 </style>
 </head>
 <body>
 
-<header class="site-header">
-  <div class="container header-inner">
-    <a href="#top" class="logo">Данил Сарыков</a>
+<div class="topbar">
+  <div class="w">
+    <div class="mark"><span class="letter">Данил</span><span class="dot" aria-hidden="true"></span></div>
+    <div class="now-block">
+      <span class="live-dot" aria-hidden="true"></span>
+      <div class="now-text">
+        <span class="city" id="nowPlace">Москва</span>
+        <span class="sep" aria-hidden="true">·</span>
+        <span id="nowTime">—</span>
+        <span class="sep sep-date" aria-hidden="true">·</span>
+        <span class="now-date" id="nowDate">—</span>
+      </div>
+    </div>
+  </div>
+</div>
 
-    <nav class="nav" id="nav">
-      <ul class="nav-list">
-        <li><a href="#about" class="nav-link">Обо мне</a></li>
-        <li><a href="#diary" class="nav-link">Дневник</a></li>
-        <li><a href="#skills" class="nav-link">Навыки</a></li>
-        <li><a href="#projects" class="nav-link">Проекты</a></li>
-        <li><a href="#contacts" class="nav-link">Контакты</a></li>
-      </ul>
-    </nav>
-
-    <button class="burger" id="burger" aria-label="Открыть меню" aria-expanded="false" aria-controls="nav">
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
+<header class="hero" id="hero">
+  <div class="w">
+    <div class="hero-label">Дневник ритма</div>
+    <div class="hero-inner">
+      <h1 class="big">Вокруг<br><em>меня</em><span class="end-dot" aria-hidden="true"></span></h1>
+      <div class="hero-side">Моя обычная жизнь — где бы я ни был. Мысли, моменты, то, что происходит вокруг. Без масок и ролей.</div>
+    </div>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Читать в Telegram<span class="arrow" aria-hidden="true">→</span></a>
+      <a class="btn btn-ghost" href="#posts">К записям<span class="arrow" aria-hidden="true">↓</span></a>
+    </div>
   </div>
 </header>
 
-<main id="top">
-
-  <section class="hero">
-    <div class="container hero-inner">
-      <img src="assets/images/profile.jpg" alt="Данил Сарыков" class="hero-photo" width="150" height="150">
-      <span class="badge">Веб-разработка &amp; ИИ</span>
-      <h1 class="hero-title">Создаю современные веб-сайты и цифровые сервисы</h1>
-      <p class="hero-text">
-        Изучаю фронтенд-разработку, применяю современные инструменты и ИИ, чтобы создавать быстрые,
-        удобные и красивые интерфейсы.
-      </p>
-      <div class="hero-actions">
-        <a href="https://t.me/danilka2028" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Связаться</a>
-        <a href="https://github.com/Danilka1820-ai" class="btn btn-outline" target="_blank" rel="noopener noreferrer">Мой GitHub</a>
-      </div>
+<div class="rhythm">
+  <span class="rhythm-label">мой ритм</span>
+  <div class="marquee-track" aria-hidden="true">
+    <div class="mq-group">
+      <span>Утро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Утро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
     </div>
-  </section>
-
-  <section id="about" class="section">
-    <div class="container">
-      <h2 class="section-title">Обо мне</h2>
-      <p class="about-intro">
-        Живу между Москвой и Подмосковьем. Провожу мастер-классы по оздоровительному танцу и участвую
-        в волонтёрских проектах — а наравне с этим учусь веб-разработке, разбираюсь во фронтенде и использую
-        ИИ-инструменты, чтобы быстрее находить решения и создавать удобные интерфейсы. Обо всём этом я
-        пишу в своём Telegram-канале
-        <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>.
-      </p>
-      <div class="about-grid">
-        <div class="about-card">
-          <h3>Хроника кодинга</h3>
-          <p>
-            Здесь появится текст из моего Telegram-канала
-            <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>
-            о том, как я изучаю фронтенд: HTML, CSS, JavaScript и первые шаги в разработке.
-          </p>
-        </div>
-        <div class="about-card">
-          <h3>ИИ Лаборатория</h3>
-          <p>
-            Здесь появится текст из моего Telegram-канала
-            <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>
-            о том, как я использую Claude, Google AI и другие ИИ-инструменты в работе.
-          </p>
-        </div>
-        <div class="about-card">
-          <h3>Личные проекты</h3>
-          <p>
-            Здесь появится текст из моего Telegram-канала
-            <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>
-            с новостями о моих сервисах и личных проектах.
-          </p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="diary" class="section diary-section">
-    <div class="container">
-      <h2 class="section-title">Дневник: вокруг меня</h2>
-      <p class="diary-intro">
-        Кроме кода — я веду личный дневник в Telegram: Москва и Подмосковье, танцы, волонтёрство,
-        обычная жизнь без масок и ролей. Несколько записей оттуда — прямо здесь.
-      </p>
-      <div class="diary-grid">
-        <article class="diary-card">
-          <div class="diary-issue">Запись № 01 · Москва</div>
-          <h3 class="diary-title">Доброе утро, <em>Москва</em></h3>
-          <p class="diary-excerpt">
-            Вышел сегодня — и как будто шагнул в тишину. Дорога ровная, блестит лёгким льдом, снег лежит
-            спокойно, не шелохнётся.
-          </p>
-          <blockquote class="diary-quote">Просто город, который на минуту притормозил.</blockquote>
-          <a href="https://t.me/danilka2028k/516" class="diary-link" target="_blank" rel="noopener noreferrer">Читать оригинал →</a>
-        </article>
-        <article class="diary-card">
-          <div class="diary-issue">Запись № 02 · Танцы</div>
-          <h3 class="diary-title">Снова <em>танцую</em></h3>
-          <p class="diary-excerpt">
-            Второй мастер-класс по оздоровительному танцу. В первый раз было непривычно — но лидер должен
-            подавать личный пример. Сейчас движения даются заметно легче.
-          </p>
-          <blockquote class="diary-quote">Танец — это история, которая пишется телом.</blockquote>
-          <a href="https://t.me/danilka2028k/496" class="diary-link" target="_blank" rel="noopener noreferrer">Читать оригинал →</a>
-        </article>
-        <article class="diary-card">
-          <div class="diary-issue">Запись № 03 · Волонтёрство</div>
-          <h3 class="diary-title">Галерея <em>«Светлячков»</em></h3>
-          <p class="diary-excerpt">
-            Творческая встреча в парке «Сосенки» в рамках проекта «Мир в фокусе»: десятки плакатов и открыток
-            о доброте, письма поддержки, живой разговор о медиаволонтёрстве.
-          </p>
-          <blockquote class="diary-quote">Важные проекты рождаются, когда кто-то один верит в идею так сильно, что заражает остальных.</blockquote>
-          <a href="https://t.me/danilka2028k/501" class="diary-link" target="_blank" rel="noopener noreferrer">Читать оригинал →</a>
-        </article>
-      </div>
-      <div class="diary-cta">
-        <a href="https://t.me/danilka2028k" class="btn btn-outline" target="_blank" rel="noopener noreferrer">Читать дневник в Telegram</a>
-      </div>
-    </div>
-  </section>
-
-  <section id="skills" class="section">
-    <div class="container">
-      <h2 class="section-title">Навыки</h2>
-      <div class="skills-grid">
-        <div class="skill-card">
-          <span class="skill-icon">🧱</span>
-          <h3>HTML5</h3>
-        </div>
-        <div class="skill-card">
-          <span class="skill-icon">🎨</span>
-          <h3>CSS3</h3>
-        </div>
-        <div class="skill-card">
-          <span class="skill-icon">⚡</span>
-          <h3>JavaScript</h3>
-        </div>
-        <div class="skill-card">
-          <span class="skill-icon">🌿</span>
-          <h3>Git</h3>
-        </div>
-        <div class="skill-card">
-          <span class="skill-icon">🤖</span>
-          <h3>AI Tools</h3>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="projects" class="section">
-    <div class="container">
-      <h2 class="section-title">Проекты</h2>
-      <div class="projects-grid">
-        <article class="project-card">
-          <div class="project-thumb">🌐 Live</div>
-          <h3>Личный сайт-портфолио</h3>
-          <p>Современный веб-сайт с темной темой, созданный с нуля. Использовал семантический HTML5, CSS-переменные, Grid/Flexbox и работу с нейросетями для написания чистого кода.</p>
-          <a href="https://github.com/Danilka1820-ai/Danilka1820-ai.github.io" class="project-link" target="_blank" rel="noopener noreferrer">Подробнее <span class="arrow">→</span></a>
-        </article>
-        <article class="project-card">
-          <div class="project-thumb">Скоро</div>
-          <h3>Проект №2</h3>
-          <p>Описание проекта появится здесь совсем скоро.</p>
-        </article>
-        <article class="project-card">
-          <div class="project-thumb">Скоро</div>
-          <h3>Проект №3</h3>
-          <p>Описание проекта появится здесь совсем скоро.</p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<footer class="site-footer" id="contacts">
-  <div class="container footer-inner">
-    <p class="footer-copy">© 2026 Данил Сарыков</p>
-    <div class="footer-socials">
-      <a href="https://github.com/Danilka1820-ai" target="_blank" rel="noopener noreferrer" aria-label="GitHub">GitHub</a>
-      <a href="mailto:dahytan22@gmail.com" aria-label="Email">Email</a>
-      <a href="https://t.me/danilka2028" target="_blank" rel="noopener noreferrer" aria-label="Telegram">Telegram</a>
-      <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Мой канал о разработке</a>
+    <div class="mq-group">
+      <span>Утро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Утро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Люди</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Добро</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Тишина</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Лёд</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Свет</span><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>
     </div>
   </div>
-</footer>
+</div>
+
+<section class="epigraph">
+  <div class="w">
+    <div class="epigraph-inner">
+      <p>Идёшь — и слышишь<br>только шаги. <em>И свой ритм.</em></p>
+      <div class="attr">из записи об утренней Москве <em>и Подмосковье</em></div>
+    </div>
+  </div>
+</section>
+
+<section class="days">
+  <div class="w">
+    <div class="days-grid">
+      <div class="days-item">
+        <span class="days-num">500<span class="plus">+</span></span>
+        <div class="days-label">публикаций</div>
+      </div>
+      <div class="days-item">
+        <span class="days-num">216<span class="plus">+</span></span>
+        <div class="days-label">фотографий</div>
+      </div>
+      <div class="days-item">
+        <span class="days-num">2</span>
+        <div class="days-label">региона</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main>
+  <section class="pane">
+    <div class="w">
+      <div class="section-header">
+        <span class="section-num">I.</span>
+        <h2 class="section-title">О чём этот <em>дневник</em></h2>
+      </div>
+      <div class="author-passport">
+        <img class="avatar" src="assets/images/profile.jpg" alt="Данил Сарыков">
+        <div class="author-info">
+          <div class="author-name"><em>Данил Сарыков</em> · автор дневника</div>
+          <p class="author-line">Пишу про обычную жизнь: танцы, волонтёрство, люди и события Москвы и Подмосковья. Без масок и ролей — всё по-настоящему. Веду блог о том, что происходит вокруг, а этот сайт — просто ещё один способ дотянуться до тех, кто читает.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pane" id="posts" style="background:var(--paper);border-block:1px solid var(--line)">
+    <div class="w">
+      <div class="section-header">
+        <span class="section-num">II.</span>
+        <h2 class="section-title">Записи <em>дневника</em></h2>
+      </div>
+
+      <div class="posts-note">
+        <b>Записи можно читать прямо здесь.</b> Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому тексты продублированы на сайте.
+      </div>
+
+      <div class="filters" role="group" aria-label="Фильтры записей">
+        <button type="button" class="chip-btn active" data-filter="all" aria-pressed="true">Все записи</button>
+        <button type="button" class="chip-btn" data-filter="moscow" aria-pressed="false">Москва</button>
+        <button type="button" class="chip-btn" data-filter="dance" aria-pressed="false">Танцы</button>
+        <button type="button" class="chip-btn" data-filter="volunteer" aria-pressed="false">Волонтёрство</button>
+        <button type="button" class="chip-btn" data-filter="events" aria-pressed="false">События</button>
+      </div>
+
+      <div class="plist" id="postList">
+        <article class="post" data-category="moscow">
+          <div class="issue">Запись № 01 · Москва</div>
+          <h3>Доброе утро, <em>Москва</em></h3>
+          <div class="full">
+            <p>Вышел сегодня — и как будто шагнул в тишину. Дорога ровная, блестит лёгким льдом, снег лежит спокойно, не шелохнётся.</p>
+            <p>А голые ветки сверху держат этот серо-голубой свет, как будто натянули над городом мягкую крышу. Такая простая, тихая красота — без событий, без спешки.</p>
+          </div>
+          <blockquote>Просто город, который на минуту притормозил.</blockquote>
+          <div class="post-meta">
+            <a class="go" href="https://t.me/danilka2028k/516" target="_blank" rel="noopener noreferrer">Оригинал</a>
+          </div>
+        </article>
+
+        <article class="post" data-category="dance">
+          <div class="issue">Запись № 02 · Танцы</div>
+          <h3>Снова <em>танцую</em></h3>
+          <div class="full">
+            <p>Второй мастер-класс по оздоровительному танцу по приглашению Елены Дружновой. В первый раз было непривычно и непонятно, справлюсь ли — но лидер должен подавать личный пример.</p>
+            <p>Сейчас движения даются заметно легче. А главное — понятно, как это важно для людей, которые приходят.</p>
+          </div>
+          <blockquote>Танец — это история, которая пишется телом.</blockquote>
+          <div class="post-meta">
+            <a class="go" href="https://t.me/danilka2028k/496" target="_blank" rel="noopener noreferrer">Оригинал</a>
+          </div>
+        </article>
+
+        <article class="post" data-category="volunteer">
+          <div class="issue">Запись № 03 · Волонтёрство</div>
+          <h3>Галерея <em>Светлячков</em></h3>
+          <div class="full">
+            <p>Творческая встреча в парке «Сосенки» в рамках проекта «Мир в фокусе» и фестиваля «Лето в Москве».</p>
+            <p>Десятки плакатов и открыток о доброте, письма поддержки, живой разговор о медиаволонтёрстве. Пространство, где о доброте говорят через искусство.</p>
+          </div>
+          <blockquote>Важные проекты рождаются, когда кто-то один верит в идею так сильно, что заражает остальных.</blockquote>
+          <div class="post-meta">
+            <a class="go" href="https://t.me/danilka2028k/501" target="_blank" rel="noopener noreferrer">Оригинал</a>
+          </div>
+        </article>
+
+        <article class="post" data-category="events">
+          <div class="issue">Запись № 04 · События</div>
+          <h3>Клуб «Лица <em>района</em>»</h3>
+          <div class="full">
+            <p>Встречи, где деловое общение переплетается с душевными беседами: командные игры, мастер-классы, советы психологов, чай со сладостями.</p>
+            <p>Новые связи здесь легко превращаются в рабочие проекты или тёплую дружбу.</p>
+          </div>
+          <div class="post-meta">
+            <a class="go" href="https://t.me/danilka2028k/508" target="_blank" rel="noopener noreferrer">Оригинал</a>
+          </div>
+        </article>
+
+        <article class="post" data-category="events">
+          <div class="issue">Запись № 05 · События</div>
+          <h3>Свой уголок <em>в интернете</em></h3>
+          <div class="full">
+            <p>Дневник в Telegram — это здорово, но иногда хочется места, где всё собрано вместе и открывается без VPN, в один клик.</p>
+            <p>Так появился этот сайт: маленькая книжка про мою обычную жизнь. Ничего лишнего — только то, чем я и так делюсь в канале.</p>
+          </div>
+          <blockquote>Не сайт ради сайта, а просто ещё одна страница дневника.</blockquote>
+          <div class="post-meta">
+            <a class="go" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Канал</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="pane">
+    <div class="w">
+      <div class="section-header">
+        <span class="section-num">III.</span>
+        <h2 class="section-title">Часто <em>спрашивают</em></h2>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span class="q-text">Как часто выходят записи?</span>
+            <span class="plus" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-a">Без строгого графика — когда случается что-то стоящее. Обычно несколько раз в неделю.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span class="q-text">Как связаться?</span>
+            <span class="plus" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-a">Проще всего — в Telegram, <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>. Открыт к разговору и новым проектам.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span class="q-text">Почему ссылки на Telegram могут не открываться?</span>
+            <span class="plus" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-a">В некоторых регионах Telegram работает только с VPN. Поэтому тексты записей продублированы здесь, на сайте.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<section class="closing">
+  <div class="w">
+    <div class="closing-inner">
+      <h2>Проще и <em>честнее</em>.<br>Без лишнего.</h2>
+      <p>Если близко то, о чём я пишу — заходи в канал или читай прямо здесь.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Подписаться<span class="arrow" aria-hidden="true">→</span></a>
+        <button type="button" class="btn btn-ghost" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
+      </div>
+      <footer>
+        <span>© <span id="copyYear">2026</span> Данил Сарыков<span class="foot-dot" aria-hidden="true"></span><a href="https://www.danil-sarykov.space/">danil-sarykov.space</a></span>
+        <span class="foot-name">вокруг меня · дневник ритма</span>
+        <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">@danilka2028k</a>
+      </footer>
+    </div>
+  </div>
+</section>
+
+<button type="button" class="to-top" id="toTop" aria-label="Наверх страницы">↑</button>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const burger = document.getElementById('burger');
-  const nav = document.getElementById('nav');
+(function(){
+  'use strict';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (burger && nav) {
-    burger.addEventListener('click', () => {
-      const isOpen = nav.classList.toggle('is-open');
-      burger.classList.toggle('is-active', isOpen);
-      burger.setAttribute('aria-expanded', String(isOpen));
-    });
-
-    nav.querySelectorAll('.nav-link').forEach((link) => {
-      link.addEventListener('click', () => {
-        nav.classList.remove('is-open');
-        burger.classList.remove('is-active');
-        burger.setAttribute('aria-expanded', 'false');
-      });
-    });
+  /* город посетителя по часовому поясу */
+  var TZ_CITY = {
+    'Europe/Kaliningrad':'Калининград','Europe/Moscow':'Москва','Europe/Simferopol':'Симферополь',
+    'Europe/Volgograd':'Волгоград','Europe/Saratov':'Саратов','Europe/Astrakhan':'Астрахань',
+    'Europe/Ulyanovsk':'Ульяновск','Europe/Kirov':'Киров','Europe/Samara':'Самара',
+    'Asia/Yekaterinburg':'Екатеринбург','Asia/Omsk':'Омск','Asia/Novosibirsk':'Новосибирск',
+    'Asia/Barnaul':'Барнаул','Asia/Tomsk':'Томск','Asia/Krasnoyarsk':'Красноярск',
+    'Asia/Irkutsk':'Иркутск','Asia/Chita':'Чита','Asia/Yakutsk':'Якутск',
+    'Asia/Vladivostok':'Владивосток','Asia/Magadan':'Магадан','Asia/Sakhalin':'Сахалин',
+    'Asia/Kamchatka':'Камчатка','Asia/Anadyr':'Анадырь',
+    'Europe/Minsk':'Минск','Europe/Kyiv':'Киев','Europe/Kiev':'Киев','Europe/Chisinau':'Кишинёв',
+    'Asia/Almaty':'Алматы','Asia/Tashkent':'Ташкент','Asia/Bishkek':'Бишкек',
+    'Asia/Tbilisi':'Тбилиси','Asia/Yerevan':'Ереван','Asia/Baku':'Баку',
+    'Europe/Istanbul':'Стамбул','Asia/Dubai':'Дубай','Europe/Berlin':'Берлин',
+    'Europe/Warsaw':'Варшава','Europe/London':'Лондон','Europe/Paris':'Париж',
+    'America/New_York':'Нью-Йорк','Asia/Tokyo':'Токио'
+  };
+  var placeEl = document.getElementById('nowPlace');
+  if(placeEl){
+    try{
+      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
+      var city = TZ_CITY[tz] || (tz.split('/').pop() || '').replace(/_/g,'');
+      if(city) placeEl.textContent = city;
+    }catch(e){}
   }
 
-  document.querySelectorAll('a[href^="#"]').forEach((link) => {
-    link.addEventListener('click', (event) => {
-      const targetId = link.getAttribute('href');
-      if (!targetId || targetId === '#') return;
+  /* часы и дата */
+  function pad(n){ return (n<10?'0':'')+n; }
+  var MONTHS = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+  function updateNow(){
+    var now = new Date();
+    var t = document.getElementById('nowTime');
+    var d = document.getElementById('nowDate');
+    if(t) t.textContent = pad(now.getHours())+':'+pad(now.getMinutes());
+    if(d) d.textContent = now.getDate()+' '+MONTHS[now.getMonth()];
+  }
+  updateNow();
+  setInterval(updateNow, 20000);
 
-      const target = document.querySelector(targetId);
-      if (!target) return;
+  var yEl = document.getElementById('copyYear');
+  if(yEl) yEl.textContent = new Date().getFullYear();
 
-      event.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  /* фильтры + первая карточка широкая */
+  var btns = [].slice.call(document.querySelectorAll('[data-filter]'));
+  var posts = [].slice.call(document.querySelectorAll('.post'));
+  function layoutPosts(){
+    var firstDone = false;
+    posts.forEach(function(p){
+      p.classList.remove('wide');
+      if(!p.hidden && !firstDone){ p.classList.add('wide'); firstDone = true; }
+    });
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click', function(){
+      var cat = b.getAttribute('data-filter');
+      btns.forEach(function(x){ x.classList.remove('active'); x.setAttribute('aria-pressed','false'); });
+      b.classList.add('active'); b.setAttribute('aria-pressed','true');
+      posts.forEach(function(p){ p.hidden = !(cat==='all' || p.getAttribute('data-category')===cat); });
+      layoutPosts();
     });
   });
-});
+  layoutPosts();
+
+  /* копирование с запасным способом */
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    var original = b.textContent, timer = null;
+    function flash(msg){
+      b.textContent = msg;
+      clearTimeout(timer);
+      timer = setTimeout(function(){ b.textContent = original; }, 2000);
+    }
+    function fallback(text){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('aria-hidden','true');
+      ta.style.cssText = 'position:absolute;left:-9999px';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      var ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+      ta.remove();
+      return ok;
+    }
+    b.addEventListener('click', function(){
+      var text = b.getAttribute('data-copy') || 'https://t.me/danilka2028k';
+      if(navigator.clipboard && window.isSecureContext){
+        navigator.clipboard.writeText(text)
+          .then(function(){ flash('Скопировано ✓'); })
+          .catch(function(){ flash(fallback(text) ? 'Скопировано ✓' : 'Скопируйте вручную'); });
+      } else {
+        flash(fallback(text) ? 'Скопировано ✓' : 'Скопируйте вручную');
+      }
+    });
+  });
+
+  /* плавное появление карточек при прокрутке (без JS — всё остаётся видимым) */
+  var revealTargets = [].slice.call(document.querySelectorAll(
+    '.epigraph-inner, .days-item, .author-passport, .post, .faq-item'
+  ));
+  if(!reduce && 'IntersectionObserver' in window){
+    revealTargets.forEach(function(el){ el.classList.add('reveal'); });
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    revealTargets.forEach(function(el){ io.observe(el); });
+  }
+
+  /* закладка «наверх» */
+  var toTop = document.getElementById('toTop');
+  if(toTop){
+    var toggleToTop = function(){
+      toTop.classList.toggle('is-visible', window.scrollY > window.innerHeight * 0.8);
+    };
+    window.addEventListener('scroll', toggleToTop, { passive: true });
+    toggleToTop();
+    toTop.addEventListener('click', function(){
+      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    });
+  }
+})();
 </script>
+
 </body>
 </html>

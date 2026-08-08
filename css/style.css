@@ -145,6 +145,16 @@ button {
   align-items: center;
 }
 
+.hero-photo {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--accent);
+  margin: 0 auto 28px;
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.12);
+}
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -228,18 +238,39 @@ button {
 }
 
 /* About */
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+}
+
 .about-card {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 36px;
+  padding: 32px 28px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
 
+.about-card h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--accent-hover);
+  margin-bottom: 12px;
+}
+
 .about-card p {
   color: var(--text-muted);
-  font-size: 1.05rem;
+  font-size: 0.98rem;
+}
+
+.about-card p a {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.about-card p a:hover {
+  color: var(--accent);
 }
 
 /* Skills */
@@ -344,6 +375,7 @@ button {
 
 .footer-socials {
   display: flex;
+  flex-wrap: wrap;
   gap: 24px;
 }
 
@@ -397,5 +429,10 @@ button {
   .nav-link {
     display: block;
     padding: 14px 0;
+  }
+
+  .hero-photo {
+    width: 120px;
+    height: 120px;
   }
 }

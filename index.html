@@ -188,6 +188,20 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .post a.go::after{content:"→";transition:transform .25s ease}
 .post a.go:hover::after{transform:translateX(5px)}
 
+/* ===== ЛЕНТА ИЗ TELEGRAM (динамическая) ===== */
+.tg-feed{margin-top:56px;padding-top:48px;border-top:1px dashed var(--line)}
+.tg-feed-label{font-family:"Instrument Serif",serif;font-style:italic;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--terracotta-text);margin-bottom:24px;display:flex;align-items:center;gap:12px;word-break:break-word}
+.tg-feed-label::before{content:"";width:24px;height:1px;background:var(--terracotta-text);flex-shrink:0}
+.tg-posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.tg-post{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:28px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);opacity:0;animation:tgFadeIn .5s ease forwards}
+@keyframes tgFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.tg-post-date{font-family:"Instrument Serif",serif;font-style:italic;font-size:12px;letter-spacing:.08em;color:var(--terracotta-text);text-transform:uppercase;word-break:break-word}
+.tg-post-text{font-size:15px;color:var(--ink);line-height:1.7;word-break:break-word}
+.tg-post-link{margin-top:auto;align-self:flex-start;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--terracotta-text);display:inline-flex;align-items:center;gap:6px;transition:gap .2s ease}
+.tg-post-link:hover{gap:10px}
+.tg-post-loading,.tg-post-empty,.tg-post-error{font-size:14px;color:var(--soft);font-style:italic;grid-column:1/-1}
+.tg-post-error a{color:var(--terracotta-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+
 /* ===== FAQ ===== */
 .faq{display:grid;gap:2px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .faq-item{background:var(--paper)}
@@ -508,6 +522,11 @@ footer a:hover{color:var(--terracotta)}
           </div>
         </article>
       </div>
+
+      <div class="tg-feed">
+        <div class="tg-feed-label">Свежее из Telegram</div>
+        <div id="telegram-posts" class="tg-posts" aria-live="polite"></div>
+      </div>
     </div>
   </section>
 
@@ -692,6 +711,95 @@ footer a:hover{color:var(--terracotta)}
     toTop.addEventListener('click', function(){
       window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
     });
+  }
+
+  /* динамические записи из Google-таблицы (CSV: Дата, Текст, Ссылка) */
+  var CSV_URL = 'https://docs.google.com/spreadsheets/d/1eaQjLOxlZqADycEDMlpK7BL60fp6Jn1iCO476bZs2hQ/export?format=csv';
+  var tgContainer = document.getElementById('telegram-posts');
+
+  function parseCSV(text){
+    var rows = [], row = [], field = '', inQuotes = false;
+    for (var i = 0; i < text.length; i++){
+      var ch = text[i], next = text[i + 1];
+      if (inQuotes){
+        if (ch === '"' && next === '"'){ field += '"'; i++; }
+        else if (ch === '"'){ inQuotes = false; }
+        else { field += ch; }
+      } else if (ch === '"'){
+        inQuotes = true;
+      } else if (ch === ','){
+        row.push(field); field = '';
+      } else if (ch === '\r'){
+        /* игнорируем — перевод строки обрабатывается через \n */
+      } else if (ch === '\n'){
+        row.push(field); rows.push(row); row = []; field = '';
+      } else {
+        field += ch;
+      }
+    }
+    if (field !== '' || row.length){ row.push(field); rows.push(row); }
+    return rows.filter(function(r){ return r.some(function(c){ return c.trim() !== ''; }); });
+  }
+
+  function isSafeUrl(url){
+    return /^https?:\/\//i.test(url);
+  }
+
+  function buildTgCard(date, text, link){
+    var card = document.createElement('article');
+    card.className = 'tg-post';
+
+    var dateEl = document.createElement('div');
+    dateEl.className = 'tg-post-date';
+    dateEl.textContent = date.trim();
+    card.appendChild(dateEl);
+
+    var textEl = document.createElement('p');
+    textEl.className = 'tg-post-text';
+    textEl.textContent = text.trim();
+    card.appendChild(textEl);
+
+    if (link && isSafeUrl(link.trim())){
+      var a = document.createElement('a');
+      a.className = 'tg-post-link';
+      a.href = link.trim();
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = 'Читать в Telegram →';
+      card.appendChild(a);
+    }
+    return card;
+  }
+
+  function renderTgPosts(rows){
+    tgContainer.innerHTML = '';
+    var dataRows = rows.slice(1); /* пропускаем строку заголовков */
+    var frag = document.createDocumentFragment();
+    var count = 0;
+    dataRows.forEach(function(r){
+      var date = r[0] || '', text = r[1] || '', link = r[2] || '';
+      if (!text.trim()) return;
+      frag.appendChild(buildTgCard(date, text, link));
+      count++;
+    });
+    if (!count){
+      tgContainer.innerHTML = '<p class="tg-post-empty">Записей пока нет.</p>';
+      return;
+    }
+    tgContainer.appendChild(frag);
+  }
+
+  if (tgContainer){
+    tgContainer.innerHTML = '<p class="tg-post-loading">Загружаю записи…</p>';
+    fetch(CSV_URL)
+      .then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function(text){ renderTgPosts(parseCSV(text)); })
+      .catch(function(){
+        tgContainer.innerHTML = '<p class="tg-post-error">Не получилось загрузить записи. Загляни в <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Telegram</a>.</p>';
+      });
   }
 })();
 </script>

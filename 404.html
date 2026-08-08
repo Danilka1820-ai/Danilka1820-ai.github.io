@@ -3,55 +3,74 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0f172a">
-<meta name="description" content="Страница не найдена — Данил Сарыков.">
+<meta name="theme-color" content="#1A1410">
+<meta name="description" content="Страница не найдена — дневник Данила Сарыкова.">
 <title>404 — Страница не найдена</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230f172a'/><text x='32' y='42' font-family='sans-serif' font-size='30' font-weight='700' fill='%233b82f6' text-anchor='middle'>D</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231A1410'/><circle cx='32' cy='32' r='12' fill='%23C8553D'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-.not-found {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px;
+:root{
+  --ink:#1A1410;
+  --terracotta:#C8553D;
+  --cream:#F4EEE6;
+  --soft:#544A43;
+  --line:rgba(26,20,16,.12);
 }
-
-.not-found .code {
-  font-size: clamp(4rem, 14vw, 8rem);
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:24px;
+  background:var(--cream);
+  color:var(--ink);
+  font-family:"Manrope",system-ui,-apple-system,sans-serif;
 }
-
-.not-found h1 {
-  margin-top: 16px;
-  font-size: clamp(1.3rem, 3vw, 1.8rem);
-  font-weight: 700;
+.code{
+  font-family:"Instrument Serif",serif;
+  font-style:italic;
+  font-size:clamp(4rem,16vw,8rem);
+  color:var(--terracotta);
+  line-height:1;
 }
-
-.not-found p {
-  margin-top: 12px;
-  color: var(--text-muted);
-  max-width: 420px;
+h1{
+  margin-top:16px;
+  font-family:"Instrument Serif",serif;
+  font-weight:400;
+  font-size:clamp(1.4rem,3.5vw,2rem);
 }
-
-.not-found .btn {
-  margin-top: 32px;
+p{
+  margin-top:12px;
+  color:var(--soft);
+  max-width:380px;
 }
+a.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  margin-top:32px;
+  padding:14px 30px;
+  border-radius:100px;
+  background:var(--ink);
+  color:var(--cream);
+  text-decoration:none;
+  font-weight:600;
+  font-size:14px;
+  letter-spacing:.03em;
+  transition:background .25s ease,transform .25s ease;
+}
+a.btn:hover{background:var(--terracotta);transform:translateY(-2px)}
 </style>
 </head>
 <body>
-<main class="not-found">
   <span class="code">404</span>
-  <h1>Страница не найдена</h1>
-  <p>Похоже, такой страницы не существует или она была перемещена.</p>
-  <a href="/" class="btn btn-primary">На главную</a>
-</main>
+  <h1>Такой страницы дневника нет</h1>
+  <p>Похоже, эта запись не существует или переехала. Вернись на главную страницу.</p>
+  <a href="/" class="btn">На главную →</a>
 </body>
 </html>

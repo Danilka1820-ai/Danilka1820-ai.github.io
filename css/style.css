@@ -354,6 +354,90 @@ button {
   font-size: 0.95rem;
 }
 
+.project-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  color: var(--accent-hover);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.project-link .arrow {
+  transition: transform 0.2s ease;
+}
+
+.project-link:hover {
+  color: var(--accent);
+}
+
+.project-link:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hero-photo,
+.badge,
+.hero-title,
+.hero-text,
+.hero-actions {
+  opacity: 0;
+  animation: fadeInUp 0.7s ease forwards;
+}
+
+.hero-photo { animation-delay: 0.05s; }
+.badge { animation-delay: 0.15s; }
+.hero-title { animation-delay: 0.25s; }
+.hero-text { animation-delay: 0.35s; }
+.hero-actions { animation-delay: 0.45s; }
+
+/* Fade only (no transform) so :hover translateY on cards keeps working */
+.skill-card,
+.project-card {
+  opacity: 0;
+  animation: fadeIn 0.7s ease forwards;
+}
+
+.skill-card:nth-child(1) { animation-delay: 0.1s; }
+.skill-card:nth-child(2) { animation-delay: 0.2s; }
+.skill-card:nth-child(3) { animation-delay: 0.3s; }
+.skill-card:nth-child(4) { animation-delay: 0.4s; }
+.skill-card:nth-child(5) { animation-delay: 0.5s; }
+
+.project-card:nth-child(1) { animation-delay: 0.1s; }
+.project-card:nth-child(2) { animation-delay: 0.2s; }
+.project-card:nth-child(3) { animation-delay: 0.3s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-photo,
+  .badge,
+  .hero-title,
+  .hero-text,
+  .hero-actions,
+  .skill-card,
+  .project-card {
+    animation: none;
+    opacity: 1;
+  }
+}
+
 /* Footer */
 .site-footer {
   border-top: 1px solid var(--border);

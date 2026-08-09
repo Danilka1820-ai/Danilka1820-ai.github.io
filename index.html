@@ -629,6 +629,7 @@ footer a:hover{color:var(--terracotta)}
       img.src = photo;
       img.alt = '';
       img.loading = 'lazy';
+      img.onerror = function(){ img.style.display = 'none'; };
       card.appendChild(img);
     }
 

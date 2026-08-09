@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://danil-sarykov.space/sitemap.xml
+Sitemap: https://sarykov.ru/sitemap.xml

@@ -194,6 +194,7 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .post.post-enter{opacity:0;animation:postFadeIn .5s ease forwards}
 .posts-loading,.posts-empty,.posts-error{font-size:14px;color:var(--soft);font-style:italic;grid-column:1/-1}
 .posts-error a{color:var(--terracotta-text);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.posts-error-detail{display:block;margin-top:6px;font-style:normal;font-size:12px;opacity:.55}
 
 /* ===== FAQ ===== */
 .faq{display:grid;gap:2px;background:var(--line);border:1px solid var(--line);border-radius:4px;overflow:hidden}
@@ -750,8 +751,25 @@ footer a:hover{color:var(--terracotta)}
         return res.json();
       })
       .then(function(posts){ renderPosts(Array.isArray(posts) ? posts : []); })
-      .catch(function(){
-        postListEl.innerHTML = '<p class="posts-error">Не получилось загрузить записи. Загляни в <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Telegram</a>.</p>';
+      .catch(function(err){
+        postListEl.innerHTML = '';
+        var p = document.createElement('p');
+        p.className = 'posts-error';
+        p.appendChild(document.createTextNode('Не получилось загрузить записи. Загляни в '));
+        var a = document.createElement('a');
+        a.href = 'https://t.me/danilka2028k';
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = 'Telegram';
+        p.appendChild(a);
+        p.appendChild(document.createTextNode('.'));
+        if (err && err.message){
+          var small = document.createElement('small');
+          small.className = 'posts-error-detail';
+          small.textContent = String(err.message);
+          p.appendChild(small);
+        }
+        postListEl.appendChild(p);
         if (postFiltersEl) postFiltersEl.hidden = true;
       });
   }

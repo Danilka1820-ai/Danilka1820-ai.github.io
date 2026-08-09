@@ -612,7 +612,10 @@ footer a:hover{color:var(--terracotta)}
   }
 
   /* записи дневника из Google-таблицы (CSV: Дата, Текст, Ссылка) */
-  var CSV_URL = 'https://docs.google.com/spreadsheets/d/1eaQjLOxlZqADycEDMlpK7BL60fp6Jn1iCO476bZs2hQ/export?format=csv';
+  /* метка времени в ссылке — чтобы браузер, Google и прокси не отдавали закешированную
+     версию файла и каждая загрузка страницы забирала действительно свежие данные */
+  var CSV_URL = 'https://docs.google.com/spreadsheets/d/1eaQjLOxlZqADycEDMlpK7BL60fp6Jn1iCO476bZs2hQ/export?format=csv'
+    + '&_=' + Date.now();
   /* CORS-прокси на случай, если браузер заблокирует прямую загрузку с docs.google.com.
      /raw у allorigins отдаёт сырой текст без обёртки в JSON — это важно для парсера CSV. */
   var CSV_SOURCES = [
@@ -631,7 +634,7 @@ footer a:hover{color:var(--terracotta)}
     if (index >= sources.length){
       return Promise.reject(new Error('Все источники CSV недоступны'));
     }
-    return fetch(sources[index])
+    return fetch(sources[index], { cache: 'no-store' })
       .then(function(res){
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.text();

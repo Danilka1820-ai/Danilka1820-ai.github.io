@@ -176,6 +176,7 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .post:hover::after{opacity:.12}
 .post .issue{font-family:"Instrument Serif",serif;font-style:italic;font-size:11.5px;color:var(--terracotta-text);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;word-break:break-word}
 .post .issue::before{content:"";width:20px;height:1px;background:var(--terracotta-text);flex-shrink:0}
+.post-photo{width:100%;max-height:420px;object-fit:cover;border-radius:4px;border:1px solid var(--line);margin-bottom:20px}
 .post-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .post-tag{font-family:"Instrument Serif",serif;font-style:italic;font-size:12px;letter-spacing:.03em;color:var(--terracotta-text);background:rgba(200,85,61,.08);border:1px solid rgba(200,85,61,.2);border-radius:100px;padding:4px 14px;white-space:nowrap}
 .post h3{font-family:"Instrument Serif",serif;font-size:clamp(24px,3vw,32px);font-weight:400;line-height:1.15;margin-bottom:18px;letter-spacing:-.015em;word-break:break-word}
@@ -611,81 +612,30 @@ footer a:hover{color:var(--terracotta)}
     });
   }
 
-  /* записи дневника из Google-таблицы (CSV: Дата, Текст, Ссылка) */
-  /* метка времени в ссылке — чтобы браузер, Google и прокси не отдавали закешированную
-     версию файла и каждая загрузка страницы забирала действительно свежие данные */
-  var CSV_URL = 'https://docs.google.com/spreadsheets/d/1eaQjLOxlZqADycEDMlpK7BL60fp6Jn1iCO476bZs2hQ/export?format=csv'
-    + '&_=' + Date.now();
-  /* CORS-прокси на случай, если браузер заблокирует прямую загрузку с docs.google.com.
-     /raw у allorigins отдаёт сырой текст без обёртки в JSON — это важно для парсера CSV. */
-  var CSV_SOURCES = [
-    CSV_URL,
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(CSV_URL),
-    'https://corsproxy.io/?url=' + encodeURIComponent(CSV_URL)
-  ];
+  /* записи дневника — Cloudflare Worker читает публичную страницу-превью
+     Telegram-канала (t.me/s/...) и отдаёт её сюда уже разобранной в JSON;
+     никакого бота, токена, Google Таблицы или отдельного хранилища не нужно */
+  var POSTS_URL = 'https://cool-butterfly-3969.dahytan22.workers.dev/';
   var postListEl = document.getElementById('postList');
   var postFiltersEl = document.getElementById('postFilters');
-
-  function looksLikeCsv(text){
-    return !!text && !/^\s*<(!doctype|html)/i.test(text);
-  }
-
-  function fetchCsvFrom(sources, index){
-    if (index >= sources.length){
-      return Promise.reject(new Error('Все источники CSV недоступны'));
-    }
-    return fetch(sources[index], { cache: 'no-store' })
-      .then(function(res){
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.text();
-      })
-      .then(function(text){
-        if (!looksLikeCsv(text)) throw new Error('Ответ не похож на CSV');
-        return text;
-      })
-      .catch(function(){
-        return fetchCsvFrom(sources, index + 1);
-      });
-  }
-
-  function parseCSV(text){
-    var rows = [], row = [], field = '', inQuotes = false;
-    for (var i = 0; i < text.length; i++){
-      var ch = text[i], next = text[i + 1];
-      if (inQuotes){
-        if (ch === '"' && next === '"'){ field += '"'; i++; }
-        else if (ch === '"'){ inQuotes = false; }
-        else { field += ch; }
-      } else if (ch === '"'){
-        inQuotes = true;
-      } else if (ch === ','){
-        row.push(field); field = '';
-      } else if (ch === '\r'){
-        /* игнорируем — перевод строки обрабатывается через \n */
-      } else if (ch === '\n'){
-        row.push(field); rows.push(row); row = []; field = '';
-      } else {
-        field += ch;
-      }
-    }
-    if (field !== '' || row.length){ row.push(field); rows.push(row); }
-    return rows.filter(function(r){ return r.some(function(c){ return c.trim() !== ''; }); });
-  }
 
   function isSafeUrl(url){
     return /^https?:\/\//i.test(url);
   }
 
-  function parseTags(raw){
-    return (raw || '').split(',')
-      .map(function(t){ return t.trim(); })
-      .filter(function(t){ return t; });
-  }
-
-  function buildPostCard(number, date, text, link, tags){
+  function buildPostCard(number, date, text, link, tags, photo){
     var card = document.createElement('article');
     card.className = 'post post-enter';
     if (tags.length) card.setAttribute('data-tags', tags.join(','));
+
+    if (photo){
+      var img = document.createElement('img');
+      img.className = 'post-photo';
+      img.src = photo;
+      img.alt = '';
+      img.loading = 'lazy';
+      card.appendChild(img);
+    }
 
     var issue = document.createElement('div');
     issue.className = 'issue';
@@ -773,19 +723,19 @@ footer a:hover{color:var(--terracotta)}
     tags.forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
   }
 
-  function renderPosts(rows){
+  function renderPosts(posts){
     postListEl.innerHTML = '';
-    var dataRows = rows.slice(1); /* пропускаем строку заголовков */
     var frag = document.createDocumentFragment();
     var number = 0;
     var allTags = [];
-    dataRows.forEach(function(r){
-      var date = r[0] || '', text = r[1] || '', link = r[2] || '';
-      var tags = parseTags(r[3]);
+    posts.forEach(function(post){
+      var date = post.date || '', text = post.text || '', link = post.link || '';
+      var tags = Array.isArray(post.tags) ? post.tags : [];
+      var photo = post.photo || '';
       if (!text.trim()) return;
       number++;
       tags.forEach(function(t){ if (allTags.indexOf(t) === -1) allTags.push(t); });
-      var card = buildPostCard(number, date, text, link, tags);
+      var card = buildPostCard(number, date, text, link, tags, photo);
       if (number === 1) card.classList.add('wide');
       frag.appendChild(card);
     });
@@ -800,8 +750,12 @@ footer a:hover{color:var(--terracotta)}
 
   if (postListEl){
     postListEl.innerHTML = '<p class="posts-loading">Загружаю записи…</p>';
-    fetchCsvFrom(CSV_SOURCES, 0)
-      .then(function(text){ renderPosts(parseCSV(text)); })
+    fetch(POSTS_URL, { cache: 'no-store' })
+      .then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(posts){ renderPosts(Array.isArray(posts) ? posts : []); })
       .catch(function(){
         postListEl.innerHTML = '<p class="posts-error">Не получилось загрузить записи. Загляни в <a href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Telegram</a>.</p>';
         if (postFiltersEl) postFiltersEl.hidden = true;

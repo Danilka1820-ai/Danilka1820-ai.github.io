@@ -612,9 +612,10 @@ footer a:hover{color:var(--terracotta)}
     });
   }
 
-  /* записи дневника из data/posts.json — файл публикует Apps Script напрямую в репозиторий
-     при каждом новом посте в Telegram, никакой Google Таблицы или CORS-прокси здесь больше нет */
-  var POSTS_URL = 'data/posts.json';
+  /* записи дневника — Cloudflare Worker читает публичную страницу-превью
+     Telegram-канала (t.me/s/...) и отдаёт её сюда уже разобранной в JSON;
+     никакого бота, токена, Google Таблицы или отдельного хранилища не нужно */
+  var POSTS_URL = 'https://cool-butterfly-3969.dahytan22.workers.dev/';
   var postListEl = document.getElementById('postList');
   var postFiltersEl = document.getElementById('postFilters');
 

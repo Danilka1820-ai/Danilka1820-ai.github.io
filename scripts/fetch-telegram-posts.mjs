@@ -82,10 +82,18 @@ async function optimizeVideo(file, kind) {
 }
 
 async function optimizeImage(file) {
-  if (!MAGICK) return;
   const tmp = `${file}.tmp.jpg`;
-  const args = ['-auto-orient', '-strip', '-resize', '1400x1400>', '-quality', '80', '-interlace', 'Plane', tmp];
-  const ok = MAGICK === 'magick' ? tool(MAGICK, [file, ...args]) : tool(MAGICK, [file, ...args]);
+  let ok = false;
+
+  if (MAGICK) {
+    ok = tool(MAGICK, [file, '-auto-orient', '-strip', '-resize', '1400x1400>', '-quality', '80', '-interlace', 'Plane', tmp]);
+  } else if (FFMPEG) {
+    ok = tool(FFMPEG, [
+      '-y', '-loglevel', 'error', '-i', file,
+      '-vf', "scale='min(1400,iw)':-2", '-q:v', '4', tmp,
+    ]);
+  }
+
   if (ok) await keepIfSmaller(file, tmp, 'ужал');
   else if (existsSync(tmp)) await unlink(tmp);
 }

@@ -28,8 +28,285 @@
 <link rel="manifest" href="/manifest.json">
 
 <!-- Шрифты лежат на самом сайте: ни одного обращения к чужим серверам при
-     загрузке. Там, где интернет режут, страница больше не ждёт Google. -->
-<link rel="stylesheet" href="/assets/fonts/fonts.css">
+     загрузке. Там, где интернет режут, страница больше не ждёт Google.
+     Описание встроено в страницу скриптом scripts/vendor-fonts.mjs — руками
+     между метками не править. -->
+<script>
+/* Экономный режим. Если браузер сообщает о 2G или включённой экономии
+   трафика, страница отказывается от украшений, которые стоят байтов и
+   работы видеокарты: фоновой подсветки, размытий и постеров к видео.
+   Ставится до первой отрисовки, чтобы ничего лишнего не загрузилось. */
+(function(){
+  try{
+    var c = navigator.connection || navigator.mozConnection || {};
+    if (c.saveData === true || /(^|\-)2g$/.test(c.effectiveType || '')){
+      document.documentElement.className += ' thin';
+    }
+  }catch(e){}
+})();
+</script>
+
+<style>/* ШРИФТЫ:НАЧАЛО */
+/* Шрифты лежат на самом сайте: внешних запросов при загрузке страницы нет.
+   Файл собирается скриптом scripts/vendor-fonts.mjs, руками не правится. */
+
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-400-normal-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-400-normal-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-400-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-400-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:500;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-500-normal-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:500;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-500-normal-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:500;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-500-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'IBM Plex Mono';
+  font-style:normal;
+  font-weight:500;
+  font-display:swap;
+  src:url('/assets/fonts/ibm-plex-mono-500-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-italic-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-italic-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-italic-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-italic-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-italic-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-italic-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:italic;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-italic-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:200;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-200-normal-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:200;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-200-normal-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:200;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-200-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:200;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-200-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-normal-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-normal-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:300;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-300-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-normal-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-normal-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:400;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-400-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:600;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-600-normal-cyrillic-ext.woff2') format('woff2');
+  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:600;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-600-normal-cyrillic.woff2') format('woff2');
+  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:600;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-600-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face{
+  font-family:'Spectral';
+  font-style:normal;
+  font-weight:600;
+  font-display:swap;
+  src:url('/assets/fonts/spectral-600-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* ШРИФТЫ:КОНЕЦ */</style>
 
 <script type="application/ld+json">
 {
@@ -111,10 +388,21 @@ img{ max-width:100%; display:block; }
 a{ color:inherit; text-decoration:none; }
 [hidden]{ display:none !important; }
 
+/* Заметная рамка: сайт листают и с клавиатуры, и пультом на телевизоре,
+   где курсора нет вовсе. scroll-margin не даёт шапке накрыть выбранное. */
 :focus-visible{
-  outline:2px solid var(--lamp-ink);
+  outline:3px solid var(--lamp-ink);
   outline-offset:3px;
-  border-radius:2px;
+  border-radius:4px;
+  scroll-margin-top:90px;
+  scroll-margin-bottom:24px;
+}
+
+/* Палец и пульт промахиваются по мелким ссылкам. Расширяем область нажатия
+   невидимой подложкой, не трогая внешний вид. */
+.hit{ position:relative; }
+.hit::after{
+  content:""; position:absolute; inset:-12px -10px; border-radius:8px;
 }
 
 .wrap{
@@ -162,6 +450,16 @@ a{ color:inherit; text-decoration:none; }
   }
   .glass::before{ display:none; }
 }
+
+/* Экономный режим: ни фоновой подсветки, ни размытий — на дешёвом телефоне
+   с 2G они стоят и трафика, и кадров. Вид остаётся тот же, только плотный. */
+.thin body{ background-image:none; }
+.thin .top,.thin .top.is-stuck,.thin .glass,.thin .btn,.thin .nav__pill,
+.thin .top__nav,.thin .top__more,.thin .round__play span,.thin .up{
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+}
+.thin .top,.thin .top.is-stuck{ background:var(--paper); }
+.thin .glass::before{ display:none; }
 
 .label{
   font-family:var(--mono);
@@ -282,7 +580,7 @@ a{ color:inherit; text-decoration:none; }
 /* Три точки рядом с именем — на широком экране не нужны, часы и так видны. */
 .top__more{
   display:none; flex:0 0 auto; align-self:center;
-  width:30px; height:30px; border-radius:50%; cursor:pointer;
+  width:40px; height:40px; border-radius:50%; cursor:pointer;
   align-items:center; justify-content:center;
   font-family:var(--mono); font-size:15px; line-height:1;
   color:var(--ink-2);
@@ -331,12 +629,23 @@ a{ color:inherit; text-decoration:none; }
   }
   .tab--cta[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
 
-  /* Часы встают в строку — туда, где на широком экране стоят разделы. */
-  .top__now{ display:flex; margin-left:auto; color:var(--ink-2); }
+  /* Часы встают в строку сразу за тремя точками, а не улетают к правому краю:
+     так имя, кнопка и время читаются одной группой. */
+  .top__in{ gap:10px; }
+  .top__now{
+    display:flex; margin-left:0; margin-right:auto;
+    color:var(--ink-2); min-width:0;
+  }
+  .top__now .now-date,.top__now .sep-date{ display:inline; }
 }
 @media (max-width:560px){
-  .top__name{ font-size:11px; letter-spacing:.12em; }
-  .top__now{ font-size:10.5px; letter-spacing:.06em; gap:6px; }
+  .top__name{ font-size:11px; letter-spacing:.1em; }
+  .top__now{ font-size:10.5px; letter-spacing:.04em; gap:5px; }
+  .top__more{ width:36px; height:36px; }
+}
+/* На совсем узких дата уже не влезает — остаются город и время. */
+@media (max-width:379px){
+  .top__now .now-date,.top__now .sep-date{ display:none; }
 }
 @media (max-width:900px) and (prefers-reduced-motion: reduce){
   .top__nav{ transition:none; transform:none; }
@@ -444,7 +753,7 @@ a{ color:inherit; text-decoration:none; }
   background:rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.6);
   border-radius:999px;
   box-shadow:0 4px 14px -10px rgba(17,21,27,.5), inset 0 1px 0 rgba(255,255,255,.8);
-  padding:8px 14px; cursor:pointer;
+  padding:11px 16px; min-height:42px; cursor:pointer;
   transition:color .2s, border-color .2s, background .2s, box-shadow .2s;
 }
 .filters button:hover{ color:var(--ink); background:rgba(255,255,255,.72); }
@@ -506,8 +815,10 @@ a{ color:inherit; text-decoration:none; }
   font-family:var(--mono); font-size:11px; letter-spacing:.12em;
   text-transform:uppercase; color:var(--ink-2);
   border-bottom:1px solid var(--rule); padding-bottom:2px;
+  position:relative;
   transition:color .2s, border-color .2s;
 }
+.entry__more::after{ content:""; position:absolute; inset:-14px -10px; border-radius:8px; }
 .entry__more:hover{ color:var(--lamp-ink); border-bottom-color:var(--lamp); }
 
 .feed__foot{ margin-top:var(--s6); padding-left:calc(var(--rail) + var(--s5)); }
@@ -620,7 +931,8 @@ a{ color:inherit; text-decoration:none; }
   align-items:baseline; padding-block:var(--s3);
 }
 .foot__row .label:last-child{ margin-left:auto; }
-.foot a.u{ border-bottom:1px solid var(--rule); }
+.foot a.u{ border-bottom:1px solid var(--rule); position:relative; }
+.foot a.u::after{ content:""; position:absolute; inset:-14px -10px; border-radius:8px; }
 .foot a.u:hover{ border-bottom-color:var(--lamp); }
 
 /* наверх */
@@ -668,6 +980,45 @@ a{ color:inherit; text-decoration:none; }
   .hero{ grid-template-columns:1fr; gap:var(--s5); padding-block:var(--s6) var(--s6); }
   .hero__fig{ order:-1; max-width:220px; margin-inline:0; }
   .hero__fig img{ aspect-ratio:1/1; }
+}
+
+/* ─────────────────────────────────────────────
+   БОЛЬШИЕ ЭКРАНЫ И ТЕЛЕВИЗОРЫ
+   На мониторе 2K и особенно на телевизоре, который смотрят с трёх метров,
+   колонка в 1160 пикселей превращается в ленточку с мелким текстом. Растим
+   и полосу, и кегль, и рельс — пропорции при этом сохраняются.
+   ───────────────────────────────────────────── */
+@media (min-width:1600px){
+  :root{ --page:1360px; --measure:38rem; --rail:120px; }
+  body{ font-size:20px; }
+  .label,.tab,.top__name{ font-size:13px; }
+}
+@media (min-width:2000px){
+  :root{ --page:1560px; --measure:42rem; --rail:140px; }
+  body{ font-size:22px; }
+  .label,.tab,.top__name{ font-size:14px; }
+  .entry__date{ font-size:17px; }
+}
+@media (min-width:2560px){
+  :root{ --page:1840px; --measure:48rem; --rail:170px; }
+  body{ font-size:25px; }
+  .label,.tab,.top__name{ font-size:16px; }
+  .entry__date{ font-size:19px; }
+  .btn,.filters button{ font-size:14px; padding:16px 26px; }
+}
+@media (min-width:3200px){
+  :root{ --page:2300px; --measure:56rem; --rail:210px; }
+  body{ font-size:30px; }
+  .label,.tab,.top__name{ font-size:19px; }
+  .entry__date{ font-size:23px; }
+  .btn,.filters button{ font-size:17px; padding:20px 32px; }
+  .top__name{ letter-spacing:.2em; }
+}
+
+/* Телевизоры и приставки: курсора нет, ходят пультом — рамка выбора должна
+   быть видна с дивана. */
+@media (min-width:1600px){
+  :focus-visible{ outline-width:4px; outline-offset:4px; scroll-margin-top:120px; }
 }
 
 @media (max-width:720px){
@@ -880,6 +1231,14 @@ a{ color:inherit; text-decoration:none; }
 (function(){
   'use strict';
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var THIN = document.documentElement.classList.contains('thin');
+
+  /* ── повторный заход из кэша: мгновенно и даже без сети ── */
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('/sw.js').catch(function(){});
+    });
+  }
 
   /* ── год в подвале ── */
   var yearEl = document.getElementById('year');
@@ -1136,7 +1495,8 @@ a{ color:inherit; text-decoration:none; }
     video.preload = 'none';
     video.playsInline = true;
     video.setAttribute('playsinline','');
-    if (item.poster) video.poster = item.poster;
+    // Постер — это ещё одна картинка на запись. На 2G его не грузим.
+    if (item.poster && !THIN) video.poster = item.poster;
 
     if (item.type === 'round'){
       // Кружочек: круглый кадр, играет по клику — как в Telegram.

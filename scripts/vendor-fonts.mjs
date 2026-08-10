@@ -2,12 +2,17 @@
 // Складывает шрифты рядом с сайтом. Внешний запрос к fonts.googleapis.com —
 // самое узкое место там, где интернет режут: пока ответа нет, страница стоит
 // пустая. Со своими файлами сайт зависит только от самого себя.
-import { mkdir, writeFile, readdir } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const OUT_DIR = path.join(ROOT, 'assets', 'fonts');
 const OUT_CSS = path.join(OUT_DIR, 'fonts.css');
+const PAGE = path.join(ROOT, 'index.html');
+// Описание шрифтов вставляется прямо в страницу между этими метками: на
+// медленном канале отдельный файл стоит лишнего обращения к серверу.
+const MARK_BEGIN = '/* ШРИФТЫ:НАЧАЛО */';
+const MARK_END = '/* ШРИФТЫ:КОНЕЦ */';
 
 const CSS_URL =
   'https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap';
@@ -77,6 +82,24 @@ for (const { subset, body } of blocks) {
 
 if (!saved) throw new Error('не удалось разобрать ответ Google Fonts');
 
-await writeFile(OUT_CSS, out.join('\n') + '\n');
+const fontCss = out.join('\n') + '\n';
+await writeFile(OUT_CSS, fontCss);
+
+// Те же правила вставляем в саму страницу: отдельный файл — это лишний поход
+// к серверу, а при большой задержке он стоит дороже собственного веса.
+const page = await readFile(PAGE, 'utf8');
+const from = page.indexOf(MARK_BEGIN);
+const to = page.indexOf(MARK_END);
+if (from === -1 || to === -1) {
+  console.warn('! меток для шрифтов в index.html нет — вставка пропущена');
+} else {
+  const inline = fontCss.replace(/url\('\.\//g, "url('/assets/fonts/");
+  const next = page.slice(0, from + MARK_BEGIN.length) + '\n' + inline + page.slice(to);
+  if (next !== page) {
+    await writeFile(PAGE, next);
+    console.log('Правила шрифтов вставлены в index.html');
+  }
+}
+
 console.log(`Сохранено ${saved} файлов шрифтов, ${Math.round(bytes / 1024)} КБ`);
 for (const f of (await readdir(OUT_DIR)).sort()) console.log('  ' + f);

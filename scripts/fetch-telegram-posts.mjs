@@ -6,6 +6,9 @@ import path from 'node:path';
 const CHANNEL = process.env.TG_CHANNEL || 'danilka2028k';
 const MAX_POSTS = Number(process.env.TG_MAX_POSTS || 40);
 const PAGES = Number(process.env.TG_PAGES || 3);
+const MAX_MEDIA_PER_POST = 6;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_VIDEO_BYTES = Number(process.env.TG_MAX_VIDEO_MB || 45) * 1024 * 1024;
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const DATA_FILE = path.join(ROOT, 'data', 'posts.json');
@@ -79,6 +82,45 @@ function extractTextHtml(block) {
   return block.slice(start);
 }
 
+// Photos, videos and round video notes all live in the same block. Walk the tags
+// in order: <video> carries the playable source, while the background-image on a
+// photo wrap is a picture and the one on a player is only that video's poster.
+function collectMedia(block) {
+  const items = [];
+  const posters = [];
+  const tagRe = /<(?:a|i|div|video)\b[^>]*>/g;
+  let tag;
+  while ((tag = tagRe.exec(block))) {
+    const html = tag[0];
+
+    if (html.startsWith('<video')) {
+      const src = decode(html.match(/\bsrc="([^"]+)"/)?.[1] || '');
+      if (src) items.push({ type: /roundvideo/.test(html) ? 'round' : 'video', src });
+      continue;
+    }
+
+    const bg = html.match(/background-image:\s*url\(['"]([^'"]+)['"]\)/);
+    if (!bg) continue;
+    const url = decode(bg[1]);
+    if (/emoji|\/i\/userpic\//.test(url)) continue;
+
+    if (/photo_wrap|link_preview_image/.test(html)) items.push({ type: 'photo', src: url });
+    else if (/video_thumb|video_player|roundvideo/.test(html)) posters.push(url);
+  }
+
+  // Posters appear alongside their players; hand them out in order.
+  let next = 0;
+  for (const item of items) {
+    if (item.type !== 'photo' && next < posters.length) item.poster = posters[next++];
+  }
+
+  // A grouped video Telegram refuses to inline has a poster but no source —
+  // keep the still so the card is not empty.
+  if (!items.length) for (const poster of posters) items.push({ type: 'photo', src: poster });
+
+  return items;
+}
+
 function parsePost(block) {
   const id = attr(block, /data-post="([^"]+)"/);
   if (!id) return null;
@@ -86,15 +128,7 @@ function parsePost(block) {
 
   const text = htmlToText(extractTextHtml(block));
 
-  const media = [];
-  const mediaRe = /background-image:\s*url\(['"]([^'"]+)['"]\)/g;
-  let m;
-  while ((m = mediaRe.exec(block))) {
-    const url = decode(m[1]);
-    if (/emoji|\/i\/userpic\//.test(url)) continue;
-    if (!media.includes(url)) media.push(url);
-  }
-
+  const media = collectMedia(block);
   const date = attr(block, /<time[^>]+datetime="([^"]+)"/);
   const tags = [...new Set((text.match(/#[\p{L}\p{N}_]{2,}/gu) || []).map((t) => t.slice(1)))];
 
@@ -110,29 +144,50 @@ function formatDate(iso) {
     .replace(/\s*г\.$/, '');
 }
 
-function mediaFileName(postId, index, url) {
-  const ext = (url.match(/\.(jpe?g|png|webp)(?:\?|$)/i)?.[1] || 'jpg').toLowerCase();
-  return `${postId.replace(/[^\w]+/g, '-')}-${index}.${ext === 'jpeg' ? 'jpg' : ext}`;
+function mediaFileName(postId, suffix, url, fallbackExt) {
+  const ext = (url.match(/\.(jpe?g|png|webp|mp4)(?:\?|$)/i)?.[1] || fallbackExt).toLowerCase();
+  return `${postId.replace(/[^\w]+/g, '-')}-${suffix}.${ext === 'jpeg' ? 'jpg' : ext}`;
 }
 
-async function downloadMedia(postId, urls) {
-  const saved = [];
-  for (let i = 0; i < urls.length && i < 4; i++) {
-    const file = mediaFileName(postId, i, urls[i]);
-    const dest = path.join(MEDIA_DIR, file);
-    if (!existsSync(dest)) {
-      try {
-        const res = await get(urls[i]);
-        const buf = Buffer.from(await res.arrayBuffer());
-        if (buf.length < 1024) continue;
-        await writeFile(dest, buf);
-        console.log(`  ↓ ${file} (${Math.round(buf.length / 1024)} KB)`);
-      } catch (err) {
-        console.warn(`  ! не скачалось ${urls[i]}: ${err.message}`);
-        continue;
-      }
+// Telegram's media URLs are signed and expire, so every file is mirrored into the
+// repository — that is also what keeps the site readable where Telegram is blocked.
+async function mirror(postId, suffix, url, fallbackExt, maxBytes) {
+  const file = mediaFileName(postId, suffix, url, fallbackExt);
+  const dest = path.join(MEDIA_DIR, file);
+  const publicPath = `${MEDIA_PUBLIC}/${file}`;
+  if (existsSync(dest)) return publicPath;
+
+  try {
+    const res = await get(url);
+    const declared = Number(res.headers.get('content-length') || 0);
+    if (declared > maxBytes) {
+      console.warn(`  ! ${file} слишком большой (${Math.round(declared / 1048576)} МБ) — оставляю ссылку на Telegram`);
+      return '';
     }
-    saved.push(`${MEDIA_PUBLIC}/${file}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length < 1024 || buf.length > maxBytes) return '';
+    await writeFile(dest, buf);
+    console.log(`  ↓ ${file} (${Math.round(buf.length / 1024)} KB)`);
+    return publicPath;
+  } catch (err) {
+    console.warn(`  ! не скачалось ${url.slice(0, 80)}: ${err.message}`);
+    return '';
+  }
+}
+
+async function downloadMedia(postId, items) {
+  const saved = [];
+  for (let i = 0; i < items.length && i < MAX_MEDIA_PER_POST; i++) {
+    const item = items[i];
+    if (item.type === 'photo') {
+      const src = await mirror(postId, i, item.src, 'jpg', MAX_IMAGE_BYTES);
+      if (src) saved.push({ type: 'photo', src });
+      continue;
+    }
+    const src = await mirror(postId, i, item.src, 'mp4', MAX_VIDEO_BYTES);
+    const poster = item.poster ? await mirror(postId, `${i}p`, item.poster, 'jpg', MAX_IMAGE_BYTES) : '';
+    if (src) saved.push({ type: item.type, src, poster });
+    else if (poster) saved.push({ type: 'photo', src: poster, unplayable: true });
   }
   return saved;
 }
@@ -183,9 +238,11 @@ await mkdir(path.dirname(DATA_FILE), { recursive: true });
 
 const posts = [];
 for (const post of raw) {
-  const photos = await downloadMedia(post.id, post.media);
+  const media = await downloadMedia(post.id, post.media);
   const text = post.text.trim();
-  if (!text && !photos.length) continue;
+  if (!text && !media.length) continue;
+  // photo/photos stay for older caches of the page that predate video support.
+  const photos = media.filter((m) => m.type === 'photo').map((m) => m.src);
   posts.push({
     id: post.id,
     date: formatDate(post.date),
@@ -195,10 +252,14 @@ for (const post of raw) {
     tags: [...new Set((text.match(/#[\p{L}\p{N}_]{2,}/gu) || []).map((t) => t.slice(1)))],
     photo: photos[0] || '',
     photos,
+    media,
   });
 }
 
-await pruneMedia(posts.flatMap((p) => p.photos));
+const counts = posts.flatMap((p) => p.media).reduce((acc, m) => ({ ...acc, [m.type]: (acc[m.type] || 0) + 1 }), {});
+console.log('Медиа:', counts);
+
+await pruneMedia(posts.flatMap((p) => p.media).flatMap((m) => [m.src, m.poster].filter(Boolean)));
 
 const payload = JSON.stringify(posts, null, 2) + '\n';
 const previous = existsSync(DATA_FILE) ? await readFile(DATA_FILE, 'utf8') : '';

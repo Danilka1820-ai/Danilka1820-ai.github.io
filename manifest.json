@@ -1,13 +1,13 @@
 {
-  "name": "Данил Сарыков — Вокруг меня · Дневник ритма",
+  "name": "Данил Сарыков — Вокруг меня",
   "short_name": "Вокруг меня",
   "description": "Личный дневник Данила Сарыкова: Москва и Подмосковье, танцы, волонтёрство, заметки о жизни вокруг.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "lang": "ru",
-  "background_color": "#F4EEE6",
-  "theme_color": "#1A1410",
+  "background_color": "#E8EAED",
+  "theme_color": "#E8EAED",
   "icons": [
     {
       "src": "/assets/icons/icon-192.png",

@@ -91,6 +91,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 /* ===== ВКЛАДКИ ===== */
 .topbar .w{position:relative}
 .navbar{background:var(--ink);border-bottom:1px solid rgba(244,238,230,.08);position:sticky;top:0;z-index:50}
+/* На узком экране вкладки прокручиваются — подсказываем это затемнением у края. */
+.navbar::after{content:"";position:absolute;right:0;top:0;bottom:0;width:44px;background:linear-gradient(to right,rgba(26,20,16,0),var(--ink));pointer-events:none}
+@media (min-width:760px){.navbar::after{display:none}}
 .navbar .w{display:flex;align-items:stretch;gap:8px;padding:0 clamp(16px,5vw,48px);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .navbar .w::-webkit-scrollbar{display:none}
 .tab{position:relative;flex:0 0 auto;padding:15px 4px 14px;color:rgba(244,238,230,.62);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;transition:color .25s ease;margin-right:22px}
@@ -106,10 +109,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 
 /* ===== ВИДЕО И КРУЖОЧКИ ===== */
 .post-video{width:100%;max-height:520px;border-radius:4px;border:1px solid var(--line);margin-bottom:20px;background:var(--ink);display:block}
-.post-round{width:min(280px,74%);aspect-ratio:1/1;border-radius:50%;object-fit:cover;border:1px solid var(--line);margin:0 auto 20px;background:var(--ink);display:block;cursor:pointer}
-.round-wrap{position:relative;width:min(280px,74%);margin:0 auto 20px}
-.round-wrap .post-round{width:100%;margin:0}
-.round-badge{position:absolute;right:6px;bottom:6px;background:rgba(26,20,16,.82);color:var(--cream);font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:5px 11px;border-radius:100px;pointer-events:none}
+.round-wrap{width:min(280px,76%);margin:0 auto 20px}
+.round-frame{position:relative;aspect-ratio:1/1;border-radius:50%;overflow:hidden;border:1px solid var(--line);background:var(--ink)}
+.post-round{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+.round-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(26,20,16,.3);color:#fff;transition:opacity .25s ease,background .25s ease;cursor:pointer;border-radius:50%}
+.round-play:hover{background:rgba(26,20,16,.42)}
+.round-play span{width:62px;height:62px;border-radius:50%;background:rgba(244,238,230,.94);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:21px;padding-left:5px;box-shadow:0 8px 30px -8px rgba(0,0,0,.5)}
+.round-wrap.is-playing .round-play{opacity:0;pointer-events:none}
+.round-cap{text-align:center;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:12px}
 .media-note{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft);font-style:italic;margin:-8px 0 18px}
 
 /* ===== ГЕРОЙ ===== */
@@ -765,6 +772,7 @@ footer a:hover{color:var(--terracotta)}
   var postListEl = document.getElementById('postList');
   var postFiltersEl = document.getElementById('postFilters');
   var latestListEl = document.getElementById('latestList');
+  var MAX_FILTERS = 10;
 
   function isSafeUrl(url){
     return /^https?:\/\//i.test(url);
@@ -790,16 +798,46 @@ footer a:hover{color:var(--terracotta)}
     if (item.poster) video.poster = item.poster;
 
     if (item.type === 'round'){
-      // Кружочек: круглый кадр, по клику играет со звуком, как в Telegram.
+      // Кружочек: круглый кадр без обрезанных кнопок — играет по клику, как в Telegram.
       video.className = 'post-round';
+      video.controls = false;
       video.loop = true;
+
       var wrap = document.createElement('div');
       wrap.className = 'round-wrap';
-      var badge = document.createElement('span');
-      badge.className = 'round-badge';
-      badge.textContent = 'кружочек';
-      wrap.appendChild(video);
-      wrap.appendChild(badge);
+      var frame = document.createElement('div');
+      frame.className = 'round-frame';
+
+      var play = document.createElement('button');
+      play.type = 'button';
+      play.className = 'round-play';
+      play.setAttribute('aria-label', 'Проиграть кружочек');
+      play.innerHTML = '<span aria-hidden="true">▶</span>';
+
+      var toggle = function(){
+        if (video.paused) video.play().catch(function(){});
+        else video.pause();
+      };
+      play.addEventListener('click', toggle);
+      video.addEventListener('click', toggle);
+      video.addEventListener('play', function(){
+        wrap.classList.add('is-playing');
+        play.setAttribute('aria-label', 'Остановить кружочек');
+      });
+      var stopped = function(){
+        wrap.classList.remove('is-playing');
+        play.setAttribute('aria-label', 'Проиграть кружочек');
+      };
+      video.addEventListener('pause', stopped);
+      video.addEventListener('ended', stopped);
+
+      frame.appendChild(video);
+      frame.appendChild(play);
+      wrap.appendChild(frame);
+      var cap = document.createElement('div');
+      cap.className = 'round-cap';
+      cap.textContent = 'кружочек';
+      wrap.appendChild(cap);
       return wrap;
     }
 
@@ -906,7 +944,7 @@ footer a:hover{color:var(--terracotta)}
     }
 
     postFiltersEl.appendChild(makeChip('Все записи', 'all', true));
-    tags.forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
+    tags.slice(0, MAX_FILTERS).forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
   }
 
   function normalize(post){
@@ -928,13 +966,13 @@ footer a:hover{color:var(--terracotta)}
     target.innerHTML = '';
     var frag = document.createDocumentFragment();
     var number = 0;
-    var allTags = [];
+    var tagCount = {};
     posts.forEach(function(raw){
       if (limit && number >= limit) return;
       var post = normalize(raw);
       if (!post.text.trim() && !post.media.length) return;
       number++;
-      post.tags.forEach(function(t){ if (allTags.indexOf(t) === -1) allTags.push(t); });
+      post.tags.forEach(function(t){ tagCount[t] = (tagCount[t] || 0) + 1; });
       var card = buildPostCard(number, post.date, post.text, post.link, post.tags, post.media);
       if (number === 1) card.classList.add('wide');
       frag.appendChild(card);
@@ -944,7 +982,10 @@ footer a:hover{color:var(--terracotta)}
       return null;
     }
     target.appendChild(frag);
-    return allTags;
+    // Тем набралось много — показываем те, что встречаются чаще всего.
+    return Object.keys(tagCount).sort(function(a, b){
+      return tagCount[b] - tagCount[a] || a.localeCompare(b, 'ru');
+    });
   }
 
   function renderPosts(posts){

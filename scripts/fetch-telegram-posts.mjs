@@ -18,7 +18,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v2-compressed';
+const MEDIA_RECIPE = 'v3-h264-only';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -53,10 +53,25 @@ async function keepIfSmaller(original, candidate, label) {
 // дочитывает хвост, потом качает мегабайты ради кружочка размером 260 пикселей.
 // Пережимаем под тот размер, в котором видео показывается, и переносим индекс
 // в начало, чтобы воспроизведение начиналось сразу.
+// Telegram иногда отдаёт AV1 или HEVC. Они компактнее, но не открываются на
+// старых iPhone и части Android — как раз там, где сайт и должен работать.
+function videoCodec(file) {
+  const res = spawnSync('ffprobe', [
+    '-v', 'error', '-select_streams', 'v:0',
+    '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', file,
+  ], { encoding: 'utf8' });
+  return res.status === 0 ? res.stdout.trim() : '';
+}
+
 async function optimizeVideo(file, kind) {
   if (!FFMPEG) return;
   const round = kind === 'round';
   const tmp = `${file}.tmp.mp4`;
+
+  const codec = videoCodec(file);
+  // H.264 понимают все браузеры; всё остальное переводим в него обязательно,
+  // даже если файл от этого немного потяжелеет.
+  const mustConvert = codec && codec !== 'h264';
 
   const ok = tool(FFMPEG, [
     '-y', '-loglevel', 'error', '-i', file,
@@ -66,6 +81,12 @@ async function optimizeVideo(file, kind) {
     '-c:a', 'aac', '-b:a', round ? '64k' : '96k', '-ac', '1',
     '-movflags', '+faststart', tmp,
   ]);
+  if (ok && mustConvert && (await sizeOf(tmp)) > 1024) {
+    const before = await sizeOf(file);
+    await rename(tmp, file);
+    console.log(`    перевёл ${codec} → h264: ${Math.round(before / 1024)} → ${Math.round((await sizeOf(file)) / 1024)} KB`);
+    return;
+  }
   if (ok && (await keepIfSmaller(file, tmp, 'сжал'))) return;
 
   // Пережать не вышло или стало только больше — хотя бы переносим индекс вперёд.

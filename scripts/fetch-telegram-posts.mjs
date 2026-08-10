@@ -40,7 +40,7 @@ function htmlToText(html) {
   return decode(
     html
       .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(p|div)>/gi, '\n')
+      .replace(/<\/?(p|div|blockquote|pre)\b[^>]*>/gi, '\n')
       .replace(/<[^>]+>/g, '')
   )
     .split('\n')
@@ -62,17 +62,29 @@ function attr(block, re) {
   return m ? decode(m[1]) : '';
 }
 
+// The caption sits in a div that itself contains nested divs (quotes, spoilers),
+// so walk the tags and stop at the matching close instead of the first one.
+function extractTextHtml(block) {
+  const open = block.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>/);
+  if (!open) return '';
+  let depth = 1;
+  const start = open.index + open[0].length;
+  const tagRe = /<(\/?)div\b[^>]*>/g;
+  tagRe.lastIndex = start;
+  let tag;
+  while ((tag = tagRe.exec(block))) {
+    depth += tag[1] ? -1 : 1;
+    if (depth === 0) return block.slice(start, tag.index);
+  }
+  return block.slice(start);
+}
+
 function parsePost(block) {
   const id = attr(block, /data-post="([^"]+)"/);
   if (!id) return null;
   if (/\bservice_message\b/.test(block)) return null;
 
-  const textMatch = block.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>\s*(?:<div class="tgme_widget_message_(?:footer|photo|video|poll|document|link_preview)|<time)/);
-  let text = textMatch ? htmlToText(textMatch[1]) : '';
-  if (!text) {
-    const loose = block.match(/<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*)/);
-    if (loose) text = htmlToText(loose[1].split('<div class="tgme_widget_message_footer')[0]);
-  }
+  const text = htmlToText(extractTextHtml(block));
 
   const media = [];
   const mediaRe = /background-image:\s*url\(['"]([^'"]+)['"]\)/g;

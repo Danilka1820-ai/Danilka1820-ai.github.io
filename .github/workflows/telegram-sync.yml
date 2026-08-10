@@ -1,0 +1,43 @@
+name: Telegram → сайт
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/fetch-telegram-posts.mjs'
+      - '.github/workflows/telegram-sync.yml'
+
+concurrency:
+  group: telegram-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: node scripts/fetch-telegram-posts.mjs
+        env:
+          TG_CHANNEL: danilka2028k
+
+      - name: Commit new posts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data assets/posts
+          if git diff --cached --quiet; then
+            echo "Нет новых записей."
+            exit 0
+          fi
+          git commit -m "Sync diary posts from Telegram"
+          for delay in 0 2 4 8 16; do
+            sleep $delay
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+          done
+          exit 1

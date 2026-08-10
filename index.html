@@ -175,6 +175,8 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .post .issue{font-family:"Instrument Serif",serif;font-style:italic;font-size:11.5px;color:var(--terracotta-text);letter-spacing:.15em;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px;word-break:break-word}
 .post .issue::before{content:"";width:20px;height:1px;background:var(--terracotta-text);flex-shrink:0}
 .post-photo{width:100%;max-height:420px;object-fit:cover;border-radius:4px;border:1px solid var(--line);margin-bottom:20px}
+.post-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:20px}
+.post-gallery .post-photo{margin-bottom:0;height:100%;max-height:240px}
 .post-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
 .post-tag{font-family:"Instrument Serif",serif;font-style:italic;font-size:12px;letter-spacing:.03em;color:var(--terracotta-text);background:rgba(200,85,61,.08);border:1px solid rgba(200,85,61,.2);border-radius:100px;padding:4px 14px;white-space:nowrap}
 .post h3{font-family:"Instrument Serif",serif;font-size:clamp(24px,3vw,32px);font-weight:400;line-height:1.15;margin-bottom:18px;letter-spacing:-.015em;word-break:break-word}
@@ -607,10 +609,14 @@ footer a:hover{color:var(--terracotta)}
     });
   }
 
-  /* записи дневника — Cloudflare Worker читает публичную страницу-превью
-     Telegram-канала (t.me/s/...) и отдаёт её сюда уже разобранной в JSON;
-     никакого бота, токена, Google Таблицы или отдельного хранилища не нужно */
-  var POSTS_URL = 'https://cool-butterfly-3969.dahytan22.workers.dev/';
+  /* записи дневника — GitHub Action каждые 15 минут читает публичную превью-страницу
+     Telegram-канала, складывает тексты в data/posts.json, а фотографии — в assets/posts,
+     поэтому и текст, и картинки отдаёт сам сайт: Telegram у читателя может быть закрыт */
+  var POSTS_SOURCES = [
+    '/data/posts.json',
+    'https://raw.githubusercontent.com/Danilka1820-ai/Danilka1820-ai.github.io/main/data/posts.json',
+    'https://cool-butterfly-3969.dahytan22.workers.dev/'
+  ];
   var postListEl = document.getElementById('postList');
   var postFiltersEl = document.getElementById('postFilters');
 
@@ -618,19 +624,27 @@ footer a:hover{color:var(--terracotta)}
     return /^https?:\/\//i.test(url);
   }
 
-  function buildPostCard(number, date, text, link, tags, photo){
+  function buildPostCard(number, date, text, link, tags, photos){
     var card = document.createElement('article');
     card.className = 'post post-enter';
     if (tags.length) card.setAttribute('data-tags', tags.join(','));
 
-    if (photo){
-      var img = document.createElement('img');
-      img.className = 'post-photo';
-      img.src = photo;
-      img.alt = '';
-      img.loading = 'lazy';
-      img.onerror = function(){ img.style.display = 'none'; };
-      card.appendChild(img);
+    if (photos.length){
+      var box = card;
+      if (photos.length > 1){
+        box = document.createElement('div');
+        box.className = 'post-gallery';
+        card.appendChild(box);
+      }
+      photos.forEach(function(src){
+        var img = document.createElement('img');
+        img.className = 'post-photo';
+        img.src = src;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.onerror = function(){ img.style.display = 'none'; };
+        box.appendChild(img);
+      });
     }
 
     var issue = document.createElement('div');
@@ -727,11 +741,11 @@ footer a:hover{color:var(--terracotta)}
     posts.forEach(function(post){
       var date = post.date || '', text = post.text || '', link = post.link || '';
       var tags = Array.isArray(post.tags) ? post.tags : [];
-      var photo = post.photo || '';
-      if (!text.trim()) return;
+      var photos = Array.isArray(post.photos) ? post.photos : (post.photo ? [post.photo] : []);
+      if (!text.trim() && !photos.length) return;
       number++;
       tags.forEach(function(t){ if (allTags.indexOf(t) === -1) allTags.push(t); });
-      var card = buildPostCard(number, date, text, link, tags, photo);
+      var card = buildPostCard(number, date, text, link, tags, photos);
       if (number === 1) card.classList.add('wide');
       frag.appendChild(card);
     });
@@ -746,11 +760,25 @@ footer a:hover{color:var(--terracotta)}
 
   if (postListEl){
     postListEl.innerHTML = '<p class="posts-loading">Загружаю записи…</p>';
-    fetch(POSTS_URL, { cache: 'no-store' })
-      .then(function(res){
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        return res.json();
-      })
+
+    var loadFrom = function(index){
+      if (index >= POSTS_SOURCES.length) throw new Error('источники недоступны');
+      return fetch(POSTS_SOURCES[index], { cache: 'no-store' })
+        .then(function(res){
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(posts){
+          if (!Array.isArray(posts) || !posts.length) throw new Error('пустой ответ');
+          return posts;
+        })
+        .catch(function(err){
+          if (index + 1 < POSTS_SOURCES.length) return loadFrom(index + 1);
+          throw err;
+        });
+    };
+
+    loadFrom(0)
       .then(function(posts){ renderPosts(Array.isArray(posts) ? posts : []); })
       .catch(function(err){
         postListEl.innerHTML = '';

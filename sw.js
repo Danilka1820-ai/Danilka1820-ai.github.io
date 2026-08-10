@@ -9,12 +9,13 @@
    — видео не трогаем вовсе: браузер запрашивает его кусками, а кэш с такими
      запросами не работает и ломает перемотку. */
 
-const CACHE = 'sarykov-v3';
+const CACHE = 'sarykov-v4';
 
 // Кладём заранее только то, без чего страница не покажется. Все тридцать два
 // файла шрифтов сюда не идут: на 2G это полмегабайта впустую.
 const SHELL = [
   '/',
+  '/assets/js/site.js',
   '/assets/fonts/spectral-200-normal-cyrillic.woff2',
   '/assets/fonts/spectral-300-normal-cyrillic.woff2',
   '/assets/fonts/spectral-400-normal-cyrillic.woff2',
@@ -52,6 +53,24 @@ function freshFirst(request) {
     .catch(() => caches.match(request).then((hit) => hit || caches.match('/')));
 }
 
+// Код и данные меняются: отдаём мгновенно из кэша, но тут же тихо обновляем,
+// чтобы следующий заход получил свежую версию. Без этого правка скрипта
+// никогда бы не доехала до читателя.
+function staleWhileFresh(request) {
+  return caches.match(request).then((hit) => {
+    const network = fetch(request)
+      .then((res) => {
+        if (res && res.ok && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, copy));
+        }
+        return res;
+      })
+      .catch(() => hit);
+    return hit || network;
+  });
+}
+
 function cacheFirst(request) {
   return caches.match(request).then((hit) => {
     if (hit) return hit;
@@ -77,6 +96,13 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate' || url.pathname.endsWith('/posts.json')) {
     event.respondWith(freshFirst(request));
+    return;
+  }
+
+  // Скрипты и стили обновляются в фоне; шрифты и картинки — из кэша навсегда,
+  // их не переспрашиваем, чтобы не тратить трафик на слабой связи.
+  if (/\.(js|css)$/.test(url.pathname)) {
+    event.respondWith(staleWhileFresh(request));
     return;
   }
 

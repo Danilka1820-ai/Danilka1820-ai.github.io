@@ -43,10 +43,21 @@
       document.documentElement.className += ' thin';
     }
   }catch(e){}
+
+  /* Записи начинают качаться сразу, не дожидаясь site.js. Иначе на медленном
+     канале лента ждёт сначала скрипт, потом данные — два ожидания подряд. */
+  try{
+    window.__posts = fetch('/data/posts.json', { cache:'no-store', priority:'high' })
+      .then(function(r){ return r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)); });
+    window.__posts.catch(function(){});
+  }catch(e){}
 })();
 </script>
 
-<style>/* ШРИФТЫ:НАЧАЛО */
+<!-- Шрифты подключаются не сразу: media="print" не даёт их скачивать, пока
+     не приедут записи. Иначе 174 КБ начертаний забирают узкий канал раньше
+     самого дневника. Переключает site.js, сразу после отрисовки ленты. -->
+<style id="fontStyles" media="print">/* ШРИФТЫ:НАЧАЛО */
 /* Шрифты лежат на самом сайте: внешних запросов при загрузке страницы нет.
    Файл собирается скриптом scripts/vendor-fonts.mjs, руками не правится. */
 
@@ -148,38 +159,6 @@
 }
 @font-face{
   font-family:'Spectral';
-  font-style:italic;
-  font-weight:400;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-400-italic-cyrillic-ext.woff2') format('woff2');
-  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:italic;
-  font-weight:400;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-400-italic-cyrillic.woff2') format('woff2');
-  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:italic;
-  font-weight:400;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-400-italic-latin-ext.woff2') format('woff2');
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:italic;
-  font-weight:400;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-400-italic-latin.woff2') format('woff2');
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face{
-  font-family:'Spectral';
   font-style:normal;
   font-weight:200;
   font-display:swap;
@@ -272,38 +251,6 @@
   font-weight:400;
   font-display:swap;
   src:url('/assets/fonts/spectral-400-normal-latin.woff2') format('woff2');
-  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:normal;
-  font-weight:600;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-600-normal-cyrillic-ext.woff2') format('woff2');
-  unicode-range:U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:normal;
-  font-weight:600;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-600-normal-cyrillic.woff2') format('woff2');
-  unicode-range:U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:normal;
-  font-weight:600;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-600-normal-latin-ext.woff2') format('woff2');
-  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face{
-  font-family:'Spectral';
-  font-style:normal;
-  font-weight:600;
-  font-display:swap;
-  src:url('/assets/fonts/spectral-600-normal-latin.woff2') format('woff2');
   unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 /* ШРИФТЫ:КОНЕЦ */</style>
@@ -455,7 +402,7 @@ a{ color:inherit; text-decoration:none; }
    с 2G они стоят и трафика, и кадров. Вид остаётся тот же, только плотный. */
 .thin body{ background-image:none; }
 .thin .top,.thin .top.is-stuck,.thin .glass,.thin .btn,.thin .nav__pill,
-.thin .top__nav,.thin .top__more,.thin .round__play span,.thin .up{
+.thin .top__nav,.thin .top__more,.thin .pl__big span,.thin .pl__bar,.thin .up{
   -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
 }
 .thin .top,.thin .top.is-stuck{ background:var(--paper); }
@@ -786,7 +733,7 @@ a{ color:inherit; text-decoration:none; }
 }
 .entry:hover::before{ background:var(--lamp); box-shadow:inset 0 0 0 1px var(--lamp); }
 
-.entry__meta{ text-align:right; }
+.entry__meta{ text-align:right; min-width:0; }
 .entry__date{
   font-family:var(--mono); font-size:14px; font-weight:500;
   font-variant-numeric:tabular-nums; letter-spacing:.02em; display:block;
@@ -801,7 +748,7 @@ a{ color:inherit; text-decoration:none; }
   text-transform:uppercase; color:var(--lamp-ink);
 }
 
-.entry__body{ max-width:var(--measure); }
+.entry__body{ max-width:var(--measure); min-width:0; }
 .entry__title{
   margin:0 0 var(--s2);
   font-weight:400; font-size:1.42rem; line-height:1.28; letter-spacing:-.012em;
@@ -838,39 +785,105 @@ a{ color:inherit; text-decoration:none; }
   background:var(--paper-lift);
   filter:grayscale(.1);
 }
-.entry__video{
-  width:100%; max-height:520px; display:block;
+/* Плеер: один и тот же для видео и кружочка, отличается только сцена. */
+.pl{ margin:0 0 var(--s3); max-width:100%; }
+.pl__stage{
+  position:relative; overflow:hidden;
   background:var(--ink); border:1px solid var(--rule);
 }
+.pl__video{ width:100%; height:100%; display:block; cursor:pointer; }
 
-.round{ width:min(260px,72%); }
-.round__frame{
-  position:relative; aspect-ratio:1/1; border-radius:50%;
-  overflow:hidden; background:var(--ink); border:1px solid var(--rule);
-}
-.round__video{ width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
-.round__play{
+.pl--round{ width:min(300px,80%); }
+.pl--round .pl__stage{ aspect-ratio:1/1; border-radius:50%; }
+.pl--round .pl__video{ object-fit:cover; }
+
+/* Большая кнопка поверх кадра — пока не играет. */
+.pl__big{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.22); border:0; border-radius:50%; cursor:pointer;
+  background:rgba(17,21,27,.22); border:0; cursor:pointer; padding:0;
   transition:opacity .25s, background .25s;
 }
-.round__play:hover{ background:rgba(17,21,27,.32); }
-.round__play span{
-  width:56px; height:56px; border-radius:50%;
-  background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,.62));
+.pl__big:hover{ background:rgba(17,21,27,.32); }
+.pl__big span{
+  width:58px; height:58px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:19px; padding-left:4px; color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.92), rgba(255,255,255,.66));
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
   border:1px solid rgba(255,255,255,.8);
   box-shadow:0 10px 26px -10px rgba(17,21,27,.7), inset 0 1px 0 rgba(255,255,255,.95);
-  color:var(--ink);
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px; padding-left:4px;
 }
-.round.is-playing .round__play{ opacity:0; pointer-events:none; }
-.round__cap{
-  margin-top:var(--s1);
+.pl.is-playing .pl__big{ opacity:0; pointer-events:none; }
+.pl.is-waiting .pl__big span{ animation:plWait 1s linear infinite; }
+@keyframes plWait{ 0%,100%{opacity:.5} 50%{opacity:1} }
+
+/* Панель под кадром: в круге её обрезало бы, а пультом по ней попадать проще. */
+.pl__bar{
+  display:flex; align-items:center; gap:8px;
+  min-width:0; max-width:100%;
+  margin-top:10px; padding:8px 10px;
+  border-radius:999px;
+  border:1px solid var(--glass-stroke);
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:0 6px 18px -14px rgba(17,21,27,.5), var(--glass-glow);
+}
+.pl__btn{
+  position:relative;
+  flex:0 0 auto; width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:0; background:transparent; cursor:pointer;
+  font-family:var(--mono); font-size:14px; line-height:1; color:var(--ink);
+  transition:background .2s, color .2s;
+}
+.pl__btn:hover{ background:rgba(17,21,27,.08); }
+.pl__play span{ font-size:13px; }
+
+.pl__track{
+  position:relative; flex:1 1 40px; min-width:0; height:22px;
+  cursor:pointer; touch-action:none;
+}
+.pl__track::before{
+  content:""; position:absolute; left:0; right:0; top:50%; height:3px;
+  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.16);
+}
+.pl__fill{
+  position:absolute; left:0; top:50%; height:3px; width:0;
+  margin-top:-1.5px; border-radius:3px; background:var(--lamp);
+}
+.pl__knob{
+  position:absolute; top:50%; left:0; width:11px; height:11px;
+  margin:-5.5px 0 0 -5.5px; border-radius:50%;
+  background:var(--paper); border:1px solid var(--lamp);
+  box-shadow:0 2px 6px rgba(17,21,27,.35);
+}
+.pl__time{
+  flex:0 0 auto;
+  font-family:var(--mono); font-size:11px; letter-spacing:.04em;
+  font-variant-numeric:tabular-nums; color:var(--ink-2); white-space:nowrap;
+}
+.pl__cap{
+  margin-top:8px;
   font-family:var(--mono); font-size:10px; letter-spacing:.18em;
   text-transform:uppercase; color:var(--ink-3); text-align:center;
+}
+
+/* На узком экране панель ужимается, иначе распирает всю запись. */
+/* Расширять область нажатия за края нельзя: кнопки стоят вплотную и начали бы
+   перехватывать нажатия друг у друга. Поэтому просто уменьшаем сам ряд. */
+@media (max-width:420px){
+  .pl__bar{ gap:4px; padding:6px 8px; }
+  .pl__btn{ width:32px; height:32px; font-size:13px; }
+  .pl__time{ font-size:10px; }
+}
+
+/* Фотографии */
+.entry__photo{
+  width:100%; aspect-ratio:3/2; object-fit:cover;
+  background:var(--paper-lift);
+  filter:grayscale(.1);
 }
 
 /* ─────────────────────────────────────────────
@@ -887,7 +900,7 @@ a{ color:inherit; text-decoration:none; }
 .about__body h2 em{ font-style:italic; }
 .about__body p{ margin:0 0 var(--s3); color:var(--ink-2); }
 .about__body p:last-child{ margin-bottom:0; }
-.about__body strong{ font-weight:600; color:var(--ink); }
+.about__body strong{ font-weight:400; color:var(--ink); }
 
 .facts{ list-style:none; margin:0; padding:0; }
 .facts li{ padding-block:var(--s2); border-bottom:1px solid var(--rule); }
@@ -1041,7 +1054,7 @@ a{ color:inherit; text-decoration:none; }
   .thesis,.feed,.feed--home,.about,.qa,.contact{ padding-block:var(--s6); }
   .top__nav{ gap:var(--s2); }
   .media--pair{ grid-template-columns:1fr; }
-  .round{ width:min(240px,80%); margin-inline:auto; }
+  .pl--round{ width:min(260px,86%); margin-inline:auto; }
 }
 </style>
 </head>
@@ -1227,527 +1240,8 @@ a{ color:inherit; text-decoration:none; }
 
 <button type="button" class="up" id="up" aria-label="Наверх страницы">↑</button>
 
-<script>
-(function(){
-  'use strict';
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var THIN = document.documentElement.classList.contains('thin');
-
-  /* ── повторный заход из кэша: мгновенно и даже без сети ── */
-  if ('serviceWorker' in navigator){
-    window.addEventListener('load', function(){
-      navigator.serviceWorker.register('/sw.js').catch(function(){});
-    });
-  }
-
-  /* ── год в подвале ── */
-  var yearEl = document.getElementById('year');
-  if (yearEl) yearEl.textContent = new Date().getFullYear();
-
-  /* ── город посетителя по часовому поясу ── */
-  var TZ_CITY = {
-    'Europe/Kaliningrad':'Калининград','Europe/Moscow':'Москва','Europe/Simferopol':'Симферополь',
-    'Europe/Volgograd':'Волгоград','Europe/Saratov':'Саратов','Europe/Astrakhan':'Астрахань',
-    'Europe/Ulyanovsk':'Ульяновск','Europe/Kirov':'Киров','Europe/Samara':'Самара',
-    'Asia/Yekaterinburg':'Екатеринбург','Asia/Omsk':'Омск','Asia/Novosibirsk':'Новосибирск',
-    'Asia/Barnaul':'Барнаул','Asia/Tomsk':'Томск','Asia/Krasnoyarsk':'Красноярск',
-    'Asia/Irkutsk':'Иркутск','Asia/Chita':'Чита','Asia/Yakutsk':'Якутск',
-    'Asia/Vladivostok':'Владивосток','Asia/Magadan':'Магадан','Asia/Sakhalin':'Сахалин',
-    'Asia/Kamchatka':'Камчатка','Asia/Anadyr':'Анадырь',
-    'Europe/Minsk':'Минск','Europe/Kyiv':'Киев','Europe/Kiev':'Киев','Europe/Chisinau':'Кишинёв',
-    'Asia/Almaty':'Алматы','Asia/Tashkent':'Ташкент','Asia/Bishkek':'Бишкек',
-    'Asia/Tbilisi':'Тбилиси','Asia/Yerevan':'Ереван','Asia/Baku':'Баку',
-    'Europe/Istanbul':'Стамбул','Asia/Dubai':'Дубай','Europe/Berlin':'Берлин',
-    'Europe/Warsaw':'Варшава','Europe/London':'Лондон','Europe/Paris':'Париж',
-    'America/New_York':'Нью-Йорк','Asia/Tokyo':'Токио'
-  };
-  var placeEl = document.getElementById('nowPlace');
-  if (placeEl){
-    try{
-      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
-      var city = TZ_CITY[tz] || (tz.split('/').pop() || '').replace(/_/g,' ');
-      if (city) placeEl.textContent = city;
-    }catch(e){}
-  }
-
-  /* ── часы и дата ── */
-  var timeEl = document.getElementById('nowTime');
-  var dateEl = document.getElementById('nowDate');
-  function tick(){
-    var d = new Date();
-    if (timeEl) timeEl.textContent = ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
-    if (dateEl) dateEl.textContent = ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + '.' + d.getFullYear();
-  }
-  tick();
-  setInterval(tick, 30000);
-
-  /* ── три точки: на телефоне под ними прячутся разделы ── */
-  var moreBtn = document.getElementById('moreBtn');
-  var navMenu = document.getElementById('navMenu');
-  var closeMenu = function(){};
-  if (moreBtn && navMenu){
-    var setOpen = function(open){
-      navMenu.classList.toggle('is-open', open);
-      moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    };
-    closeMenu = function(){ setOpen(false); };
-    moreBtn.addEventListener('click', function(e){
-      e.stopPropagation();
-      setOpen(moreBtn.getAttribute('aria-expanded') !== 'true');
-    });
-    // Выбрали раздел — меню закрывается, чтобы не перекрывать страницу.
-    navMenu.addEventListener('click', function(e){
-      if (e.target.closest('.tab')) setOpen(false);
-    });
-    document.addEventListener('click', function(e){
-      if (!navMenu.contains(e.target) && e.target !== moreBtn) setOpen(false);
-    });
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') setOpen(false);
-    });
-  }
-
-  /* ── линия под шапкой появляется при прокрутке ── */
-  var top = document.getElementById('top');
-  function stuck(){ if (top) top.classList.toggle('is-stuck', window.scrollY > 8); }
-  window.addEventListener('scroll', stuck, { passive:true });
-  stuck();
-
-  /* ── кнопка «наверх» ── */
-  var up = document.getElementById('up');
-  if (up){
-    var toggleUp = function(){ up.classList.toggle('is-on', window.scrollY > window.innerHeight * 0.7); };
-    window.addEventListener('scroll', toggleUp, { passive:true });
-    toggleUp();
-    up.addEventListener('click', function(){ window.scrollTo({ top:0, behavior: reduce ? 'auto' : 'smooth' }); });
-  }
-
-  /* ── «скопировать» ── */
-  var copyBtn = document.getElementById('copyBtn');
-  if (copyBtn){
-    copyBtn.addEventListener('click', function(){
-      var text = copyBtn.getAttribute('data-copy');
-      var done = function(){
-        var was = copyBtn.textContent;
-        copyBtn.textContent = 'Скопировано';
-        setTimeout(function(){ copyBtn.textContent = was; }, 1600);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(done, function(){});
-      } else {
-        var ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select();
-        try{ document.execCommand('copy'); done(); }catch(e){}
-        document.body.removeChild(ta);
-      }
-    });
-  }
-
-  /* ── появление блоков при прокрутке ── */
-  var io = null;
-  if ('IntersectionObserver' in window && !reduce){
-    io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
-      });
-    }, { threshold:.08, rootMargin:'0px 0px -40px 0px' });
-  }
-  function watch(el){
-    if (!el.classList.contains('rise')) return;
-    if (io) io.observe(el); else el.classList.add('in');
-  }
-  [].slice.call(document.querySelectorAll('.rise')).forEach(watch);
-
-  /* ── разделы: адрес вида #/dnevnik, чтобы на раздел можно было дать ссылку ── */
-  var TABS = [
-    { key:'home',     slug:'glavnaya', title:'Данил Сарыков — Вокруг меня' },
-    { key:'diary',    slug:'dnevnik',  title:'Записи — Данил Сарыков' },
-    { key:'about',    slug:'o-sebe',   title:'О дневнике — Данил Сарыков' },
-    { key:'faq',      slug:'voprosy',  title:'Вопросы — Данил Сарыков' },
-    { key:'contacts', slug:'kontakty', title:'Контакты — Данил Сарыков' }
-  ];
-  var OLD_ANCHORS = { posts:'diary', feed:'diary', main:'home', about:'about', hero:'home' };
-  var tabLinks = [].slice.call(document.querySelectorAll('.tab'));
-
-  function findTab(key){
-    for (var i=0;i<TABS.length;i++) if (TABS[i].key === key) return TABS[i];
-    return TABS[0];
-  }
-  function tabByHash(){
-    var raw = (location.hash || '').replace(/^#\/?/, '');
-    for (var i=0;i<TABS.length;i++) if (TABS[i].slug === raw) return TABS[i];
-    if (OLD_ANCHORS[raw]) return findTab(OLD_ANCHORS[raw]);
-    return TABS[0];
-  }
-
-  /* Капсула едет к выбранному разделу. На телефоне разделы лежат столбиком
-     в выпадающем меню — там она не нужна. */
-  var navPill = document.getElementById('navPill');
-  var pillPlaced = false;
-  function movePill(){
-    if (!navPill || !navMenu) return;
-    var narrow = window.matchMedia('(max-width:900px)').matches;
-    var active = navMenu.querySelector('.tab[aria-selected="true"]');
-    if (narrow || !active || !active.offsetWidth){
-      navMenu.classList.remove('has-pill');
-      pillPlaced = false;
-      return;
-    }
-    var pad = 14;
-    // Первую установку не анимируем, иначе капсула приезжает из угла.
-    if (!pillPlaced) navPill.classList.add('no-anim');
-    navPill.style.width = (active.offsetWidth + pad * 2) + 'px';
-    navPill.style.transform = 'translateX(' + (active.offsetLeft - pad) + 'px)';
-    navMenu.classList.add('has-pill');
-    if (!pillPlaced){
-      void navPill.offsetWidth;
-      navPill.classList.remove('no-anim');
-      pillPlaced = true;
-    }
-  }
-
-  window.addEventListener('resize', movePill);
-  // Ширина надписей меняется, когда доезжают шрифты — пересчитываем.
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(movePill);
-
-  function showTab(tab, keepScroll){
-    TABS.forEach(function(t){
-      var panel = document.getElementById('tab-' + t.key);
-      if (panel) panel.hidden = t.key !== tab.key;
-    });
-    tabLinks.forEach(function(link){
-      var active = link.getAttribute('data-tab') === tab.key;
-      link.setAttribute('aria-selected', active ? 'true' : 'false');
-      // Если строка разделов не помещается и прокручивается — подводим выбранный.
-      // В выпадающем меню на телефоне прокручивать нечего.
-      if (active && link.scrollIntoView && navMenu && navMenu.scrollWidth > navMenu.clientWidth + 1){
-        link.scrollIntoView({ block:'nearest', inline:'nearest', behavior: reduce ? 'auto' : 'smooth' });
-      }
-    });
-    movePill();
-    document.title = tab.title;
-    // Останавливаем всё, что играло на покинутой вкладке.
-    [].slice.call(document.querySelectorAll('video')).forEach(function(v){
-      if (!v.paused && !v.closest('.panel:not([hidden])')) v.pause();
-    });
-    if (!keepScroll) window.scrollTo({ top:0, behavior: reduce ? 'auto' : 'smooth' });
-  }
-
-  showTab(tabByHash(), true);
-  window.addEventListener('hashchange', function(){ showTab(tabByHash(), false); });
-
-  /* ── записи дневника ──
-     GitHub Action каждые 15 минут читает публичную превью-страницу Telegram-канала,
-     складывает тексты в data/posts.json, а фото и видео — в assets/posts. Поэтому
-     всё отдаёт сам сайт: Telegram у читателя может быть закрыт. */
-  var POSTS_SOURCES = [
-    '/data/posts.json',
-    'https://raw.githubusercontent.com/Danilka1820-ai/Danilka1820-ai.github.io/main/data/posts.json',
-    'https://cool-butterfly-3969.dahytan22.workers.dev/'
-  ];
-  var railEl = document.getElementById('rail');
-  var latestEl = document.getElementById('latestRail');
-  var filtersEl = document.getElementById('filters');
-  var MAX_FILTERS = 8;
-  var WEEKDAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-
-  function isSafeUrl(url){ return /^(https?:)?\/\//i.test(url) || url.charAt(0) === '/' || /^assets\//.test(url); }
-
-  function partsFromDate(post){
-    var out = { short:'', day:'', iso:'' };
-    var d = post.datetime ? new Date(post.datetime) : null;
-    if (d && !isNaN(d.getTime())){
-      out.iso = d.toISOString().slice(0,10);
-      try{
-        out.short = new Intl.DateTimeFormat('ru-RU', { day:'2-digit', month:'2-digit', timeZone:'Europe/Moscow' }).format(d);
-      }catch(e){
-        out.short = ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2);
-      }
-      out.day = WEEKDAYS[d.getDay()];
-    } else if (post.date){
-      out.short = post.date;
-    }
-    return out;
-  }
-
-  /* Заголовков в Telegram нет — берём первую строку, если она короткая. */
-  function splitTitle(text){
-    var lines = text.trim().split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
-    if (lines.length > 1 && lines[0].length <= 72 && !/[.!?]$/.test(lines[0])){
-      return { title: lines[0], body: lines.slice(1) };
-    }
-    return { title:'', body: lines };
-  }
-
-  function buildMedia(item){
-    if (item.type === 'photo'){
-      var img = document.createElement('img');
-      img.className = 'entry__photo';
-      img.src = item.src; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
-      img.onerror = function(){ img.style.display = 'none'; };
-      return img;
-    }
-
-    var video = document.createElement('video');
-    video.src = item.src;
-    // На слабом интернете видео не должно скачиваться само: до нажатия
-    // виден только постер, файл идёт по сети лишь по клику зрителя.
-    video.preload = 'none';
-    video.playsInline = true;
-    video.setAttribute('playsinline','');
-    // Постер — это ещё одна картинка на запись. На 2G его не грузим.
-    if (item.poster && !THIN) video.poster = item.poster;
-
-    if (item.type === 'round'){
-      // Кружочек: круглый кадр, играет по клику — как в Telegram.
-      video.className = 'round__video';
-      video.loop = true;
-
-      var wrap = document.createElement('div');
-      wrap.className = 'round';
-      var frame = document.createElement('div');
-      frame.className = 'round__frame';
-
-      var play = document.createElement('button');
-      play.type = 'button';
-      play.className = 'round__play';
-      play.setAttribute('aria-label','Проиграть кружочек');
-      play.innerHTML = '<span aria-hidden="true">▶</span>';
-
-      var toggle = function(){
-        if (video.paused) video.play().catch(function(){});
-        else video.pause();
-      };
-      play.addEventListener('click', toggle);
-      video.addEventListener('click', toggle);
-      video.addEventListener('play', function(){
-        wrap.classList.add('is-playing');
-        play.setAttribute('aria-label','Остановить кружочек');
-      });
-      var stopped = function(){
-        wrap.classList.remove('is-playing');
-        play.setAttribute('aria-label','Проиграть кружочек');
-      };
-      video.addEventListener('pause', stopped);
-      video.addEventListener('ended', stopped);
-
-      frame.appendChild(video);
-      frame.appendChild(play);
-      wrap.appendChild(frame);
-      var cap = document.createElement('div');
-      cap.className = 'round__cap';
-      cap.textContent = 'кружочек';
-      wrap.appendChild(cap);
-      return wrap;
-    }
-
-    video.className = 'entry__video';
-    video.controls = true;
-    return video;
-  }
-
-  function normalize(post){
-    var media = Array.isArray(post.media) ? post.media : null;
-    if (!media){
-      var legacy = Array.isArray(post.photos) ? post.photos : (post.photo ? [post.photo] : []);
-      media = legacy.map(function(src){ return { type:'photo', src:src }; });
-    }
-    return {
-      date: post.date || '',
-      datetime: post.datetime || '',
-      text: post.text || '',
-      link: post.link || '',
-      tags: Array.isArray(post.tags) ? post.tags : [],
-      media: media.filter(function(m){ return m && m.src && isSafeUrl(m.src); })
-    };
-  }
-
-  function buildEntry(post){
-    var art = document.createElement('article');
-    art.className = 'entry rise';
-    if (post.tags.length) art.setAttribute('data-tags', post.tags.join(','));
-
-    var when = partsFromDate(post);
-    var meta = document.createElement('div');
-    meta.className = 'entry__meta';
-
-    var time = document.createElement('time');
-    time.className = 'entry__date';
-    if (when.iso) time.setAttribute('datetime', when.iso);
-    time.textContent = when.short;
-    meta.appendChild(time);
-
-    if (when.day){
-      var day = document.createElement('span');
-      day.className = 'entry__day';
-      day.textContent = when.day;
-      meta.appendChild(day);
-    }
-    if (post.tags.length){
-      var tag = document.createElement('span');
-      tag.className = 'entry__tag';
-      tag.textContent = post.tags[0];
-      meta.appendChild(tag);
-    }
-    art.appendChild(meta);
-
-    var body = document.createElement('div');
-    body.className = 'entry__body';
-
-    var split = splitTitle(post.text);
-    if (split.title){
-      var h3 = document.createElement('h3');
-      h3.className = 'entry__title';
-      h3.textContent = split.title;
-      body.appendChild(h3);
-    }
-
-    if (post.media.length){
-      var box = document.createElement('div');
-      box.className = 'media';
-      var onlyPhotos = post.media.every(function(m){ return m.type === 'photo'; });
-      if (onlyPhotos && post.media.length > 1) box.className += ' media--pair';
-      post.media.forEach(function(item){ box.appendChild(buildMedia(item)); });
-      body.appendChild(box);
-    }
-
-    split.body.forEach(function(line){
-      var p = document.createElement('p');
-      p.textContent = line;
-      body.appendChild(p);
-    });
-
-    if (post.link && isSafeUrl(post.link)){
-      var more = document.createElement('a');
-      more.className = 'entry__more';
-      more.href = post.link;
-      more.target = '_blank';
-      more.rel = 'noopener noreferrer';
-      more.textContent = 'Оригинал в Telegram →';
-      body.appendChild(more);
-    }
-
-    art.appendChild(body);
-    return art;
-  }
-
-  function renderInto(target, posts, limit){
-    target.innerHTML = '';
-    var frag = document.createDocumentFragment();
-    var shown = 0;
-    var tagCount = {};
-    posts.forEach(function(raw){
-      if (limit && shown >= limit) return;
-      var post = normalize(raw);
-      if (!post.text.trim() && !post.media.length) return;
-      shown++;
-      post.tags.forEach(function(t){ tagCount[t] = (tagCount[t] || 0) + 1; });
-      frag.appendChild(buildEntry(post));
-    });
-    if (!shown){
-      target.innerHTML = '<p class="feed__empty">Записей пока нет.</p>';
-      return null;
-    }
-    target.appendChild(frag);
-    [].slice.call(target.querySelectorAll('.rise')).forEach(watch);
-    // Тем набирается много — показываем те, что встречаются чаще всего.
-    return Object.keys(tagCount).sort(function(a,b){
-      return tagCount[b] - tagCount[a] || a.localeCompare(b, 'ru');
-    });
-  }
-
-  function renderFilters(tags){
-    if (!filtersEl) return;
-    filtersEl.innerHTML = '';
-    if (!tags || !tags.length){ filtersEl.hidden = true; return; }
-    filtersEl.hidden = false;
-
-    var empty = document.createElement('p');
-    empty.className = 'feed__empty';
-    empty.hidden = true;
-    empty.textContent = 'В этой рубрике пока нет записей.';
-    railEl.appendChild(empty);
-
-    function chip(label, value, active){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.setAttribute('data-tag', value);
-      b.setAttribute('aria-pressed', active ? 'true' : 'false');
-      b.textContent = label;
-      b.addEventListener('click', function(){
-        [].slice.call(filtersEl.querySelectorAll('button')).forEach(function(x){
-          x.setAttribute('aria-pressed','false');
-        });
-        b.setAttribute('aria-pressed','true');
-        var visible = 0;
-        [].slice.call(railEl.querySelectorAll('.entry')).forEach(function(el){
-          var own = (el.getAttribute('data-tags') || '').split(',');
-          var show = value === 'all' || own.indexOf(value) !== -1;
-          el.hidden = !show;
-          if (show) visible++;
-        });
-        empty.hidden = visible > 0;
-      });
-      return b;
-    }
-
-    filtersEl.appendChild(chip('Все','all',true));
-    tags.slice(0, MAX_FILTERS).forEach(function(t){ filtersEl.appendChild(chip(t, t, false)); });
-  }
-
-  function failure(err){
-    var p = document.createElement('p');
-    p.className = 'feed__state';
-    p.appendChild(document.createTextNode('Не получилось загрузить записи. Загляните в '));
-    var a = document.createElement('a');
-    a.className = 'u';
-    a.href = 'https://t.me/danilka2028k';
-    a.target = '_blank'; a.rel = 'noopener noreferrer';
-    a.textContent = 'Telegram';
-    p.appendChild(a);
-    p.appendChild(document.createTextNode('.'));
-    if (err && err.message){
-      var small = document.createElement('small');
-      small.style.cssText = 'display:block;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--ink-3)';
-      small.textContent = String(err.message);
-      p.appendChild(small);
-    }
-    return p;
-  }
-
-  if (railEl){
-    var loadFrom = function(index){
-      if (index >= POSTS_SOURCES.length) throw new Error('источники недоступны');
-      return fetch(POSTS_SOURCES[index], { cache:'no-store' })
-        .then(function(res){
-          if (!res.ok) throw new Error('HTTP ' + res.status);
-          return res.json();
-        })
-        .then(function(posts){
-          if (!Array.isArray(posts) || !posts.length) throw new Error('пустой ответ');
-          return posts;
-        })
-        .catch(function(err){
-          if (index + 1 < POSTS_SOURCES.length) return loadFrom(index + 1);
-          throw err;
-        });
-    };
-
-    loadFrom(0)
-      .then(function(posts){
-        var tags = renderInto(railEl, posts, 0);
-        renderFilters(tags);
-        if (latestEl) renderInto(latestEl, posts, 3);
-      })
-      .catch(function(err){
-        railEl.innerHTML = '';
-        railEl.appendChild(failure(err));
-        if (latestEl){ latestEl.innerHTML = ''; latestEl.appendChild(failure(err)); }
-        if (filtersEl) filtersEl.hidden = true;
-      });
-  }
-})();
-</script>
+<noscript><style>#fontStyles{ }</style></noscript>
+<script src="/assets/js/site.js" defer></script>
 
 </body>
 </html>

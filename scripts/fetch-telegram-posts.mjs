@@ -18,7 +18,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v3-h264-only';
+const MEDIA_RECIPE = 'v4-lighter-photos';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -106,11 +106,11 @@ async function optimizeImage(file) {
   let ok = false;
 
   if (MAGICK) {
-    ok = tool(MAGICK, [file, '-auto-orient', '-strip', '-resize', '1400x1400>', '-quality', '80', '-interlace', 'Plane', tmp]);
+    ok = tool(MAGICK, [file, '-auto-orient', '-strip', '-resize', '1200x1200>', '-quality', '76', '-interlace', 'Plane', tmp]);
   } else if (FFMPEG) {
     ok = tool(FFMPEG, [
       '-y', '-loglevel', 'error', '-i', file,
-      '-vf', "scale='min(1400,iw)':-2", '-q:v', '4', tmp,
+      '-vf', "scale='min(1200,iw)':-2", '-q:v', '5', tmp,
     ]);
   }
 

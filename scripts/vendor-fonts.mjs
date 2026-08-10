@@ -14,8 +14,10 @@ const PAGE = path.join(ROOT, 'index.html');
 const MARK_BEGIN = '/* ШРИФТЫ:НАЧАЛО */';
 const MARK_END = '/* ШРИФТЫ:КОНЕЦ */';
 
+// Только то, что реально встречается в стилях: лишнее начертание — это два
+// файла (кириллица и латиница) и примерно 40 КБ на первом заходе.
 const CSS_URL =
-  'https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap';
+  'https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;1,300&family=IBM+Plex+Mono:wght@400;500&display=swap';
 
 // woff2 отдают только современным браузерам — представляемся именно им.
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';

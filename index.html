@@ -88,6 +88,37 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 .now-block .now-text{display:flex;gap:10px;align-items:center;white-space:nowrap;min-width:0}
 .now-block .sep{color:var(--terracotta);font-size:15px;line-height:1;opacity:.7;flex-shrink:0}
 
+/* ===== ВКЛАДКИ ===== */
+.topbar .w{position:relative}
+.navbar{background:var(--ink);border-bottom:1px solid rgba(244,238,230,.08);position:sticky;top:0;z-index:50}
+/* На узком экране вкладки прокручиваются — подсказываем это затемнением у края. */
+.navbar::after{content:"";position:absolute;right:0;top:0;bottom:0;width:44px;background:linear-gradient(to right,rgba(26,20,16,0),var(--ink));pointer-events:none}
+@media (min-width:760px){.navbar::after{display:none}}
+.navbar .w{display:flex;align-items:stretch;gap:8px;padding:0 clamp(16px,5vw,48px);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.navbar .w::-webkit-scrollbar{display:none}
+.tab{position:relative;flex:0 0 auto;padding:15px 4px 14px;color:rgba(244,238,230,.62);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;transition:color .25s ease;margin-right:22px}
+.tab:last-child{margin-right:0}
+.tab::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--terracotta);transform:scaleX(0);transform-origin:left;transition:transform .28s cubic-bezier(.4,0,.2,1)}
+.tab:hover{color:var(--cream)}
+.tab[aria-selected="true"]{color:var(--cream)}
+.tab[aria-selected="true"]::after{transform:scaleX(1)}
+.tab-panel[hidden]{display:none!important}
+.tab-panel{animation:panelIn .45s cubic-bezier(.22,1,.36,1)}
+@keyframes panelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.tab-panel{animation:none}.tab::after{transition:none}}
+
+/* ===== ВИДЕО И КРУЖОЧКИ ===== */
+.post-video{width:100%;max-height:520px;border-radius:4px;border:1px solid var(--line);margin-bottom:20px;background:var(--ink);display:block}
+.round-wrap{width:min(280px,76%);margin:0 auto 20px}
+.round-frame{position:relative;aspect-ratio:1/1;border-radius:50%;overflow:hidden;border:1px solid var(--line);background:var(--ink)}
+.post-round{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
+.round-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(26,20,16,.3);color:#fff;transition:opacity .25s ease,background .25s ease;cursor:pointer;border-radius:50%}
+.round-play:hover{background:rgba(26,20,16,.42)}
+.round-play span{width:62px;height:62px;border-radius:50%;background:rgba(244,238,230,.94);color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:21px;padding-left:5px;box-shadow:0 8px 30px -8px rgba(0,0,0,.5)}
+.round-wrap.is-playing .round-play{opacity:0;pointer-events:none}
+.round-cap{text-align:center;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--soft);margin-top:12px}
+.media-note{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--soft);font-style:italic;margin:-8px 0 18px}
+
 /* ===== ГЕРОЙ ===== */
 .hero{position:relative;padding:clamp(80px,14vw,160px) 0 clamp(60px,8vw,100px);overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%, rgba(200,85,61,.08) 0%, transparent 60%);pointer-events:none}
@@ -224,6 +255,9 @@ section.pane{padding:clamp(80px,10vw,120px) 0}
 .closing .btn-primary:hover{background:#fff;color:var(--ink)}
 .closing .btn-ghost{color:var(--cream);border-color:rgba(244,238,230,.22)}
 .closing .btn-ghost:hover{background:rgba(244,238,230,.1);border-color:rgba(244,238,230,.4)}
+.site-foot{padding:0}
+.site-foot::before{display:none}
+.site-foot footer{margin-top:0;padding:26px 0;border-top:1px solid rgba(244,238,230,.1)}
 footer{margin-top:60px;padding-top:32px;border-top:1px solid rgba(244,238,230,.1);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;font-size:12.5px;color:rgba(244,238,230,.62);letter-spacing:.05em}
 footer a{color:var(--cream);font-weight:500;transition:color .2s;word-break:break-word}
 footer a:hover{color:var(--terracotta)}
@@ -338,6 +372,18 @@ footer a:hover{color:var(--terracotta)}
   </div>
 </div>
 
+<nav class="navbar" aria-label="Разделы сайта">
+  <div class="w" role="tablist">
+    <a class="tab" role="tab" href="#/glavnaya" data-tab="home" aria-selected="true" aria-controls="tab-home">Главная</a>
+    <a class="tab" role="tab" href="#/dnevnik" data-tab="diary" aria-selected="false" aria-controls="tab-diary">Дневник</a>
+    <a class="tab" role="tab" href="#/o-sebe" data-tab="about" aria-selected="false" aria-controls="tab-about">О себе</a>
+    <a class="tab" role="tab" href="#/voprosy" data-tab="faq" aria-selected="false" aria-controls="tab-faq">Вопросы</a>
+    <a class="tab" role="tab" href="#/kontakty" data-tab="contacts" aria-selected="false" aria-controls="tab-contacts">Контакты</a>
+  </div>
+</nav>
+
+<div class="tab-panel" id="tab-home" role="tabpanel" aria-labelledby="tab-home">
+
 <header class="hero" id="hero">
   <div class="w">
     <div class="hero-label">Дневник ритма</div>
@@ -346,8 +392,8 @@ footer a:hover{color:var(--terracotta)}
       <div class="hero-side">Моя обычная жизнь — где бы я ни был. Мысли, моменты, то, что происходит вокруг. Без масок и ролей.</div>
     </div>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Читать в Telegram<span class="arrow" aria-hidden="true">→</span></a>
-      <a class="btn btn-ghost" href="#posts">К записям<span class="arrow" aria-hidden="true">↓</span></a>
+      <a class="btn btn-primary" href="#/dnevnik">Читать дневник<span class="arrow" aria-hidden="true">→</span></a>
+      <a class="btn btn-ghost" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Канал в Telegram<span class="arrow" aria-hidden="true">→</span></a>
     </div>
   </div>
 </header>
@@ -414,7 +460,41 @@ footer a:hover{color:var(--terracotta)}
   </div>
 </section>
 
-<main id="main">
+<section class="pane" style="background:var(--paper);border-block:1px solid var(--line)">
+  <div class="w">
+    <div class="section-header">
+      <span class="section-num">—</span>
+      <h2 class="section-title">Свежие <em>записи</em></h2>
+    </div>
+    <div class="plist" id="latestList" aria-live="polite"></div>
+    <div class="hero-actions">
+      <a class="btn btn-ghost" href="#/dnevnik">Все записи дневника<span class="arrow" aria-hidden="true">→</span></a>
+    </div>
+  </div>
+</section>
+
+</div><!-- /Главная -->
+
+<main class="tab-panel" id="tab-diary" role="tabpanel" hidden>
+  <section class="pane" id="posts">
+    <div class="w">
+      <div class="section-header">
+        <span class="section-num">I.</span>
+        <h2 class="section-title">Записи <em>дневника</em></h2>
+      </div>
+
+      <div class="posts-note">
+        <b>Записи можно читать прямо здесь.</b> Фотографии, видео и кружочки проигрываются на сайте. Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому всё продублировано здесь.
+      </div>
+
+      <div class="filters" id="postFilters" role="group" aria-label="Фильтры записей" hidden></div>
+
+      <div class="plist" id="postList" aria-live="polite"></div>
+    </div>
+  </section>
+</main>
+
+<div class="tab-panel" id="tab-about" role="tabpanel" hidden>
   <section class="pane">
     <div class="w">
       <div class="section-header">
@@ -431,23 +511,31 @@ footer a:hover{color:var(--terracotta)}
     </div>
   </section>
 
-  <section class="pane" id="posts" style="background:var(--paper);border-block:1px solid var(--line)">
+  <section class="pane" style="background:var(--paper);border-block:1px solid var(--line)">
     <div class="w">
       <div class="section-header">
         <span class="section-num">II.</span>
-        <h2 class="section-title">Записи <em>дневника</em></h2>
+        <h2 class="section-title">Что здесь <em>бывает</em></h2>
       </div>
-
-      <div class="posts-note">
-        <b>Записи можно читать прямо здесь.</b> Ссылка «Оригинал» ведёт в Telegram — в некоторых регионах он открывается только с VPN, поэтому тексты продублированы на сайте.
+      <div class="days-grid">
+        <div class="days-item">
+          <span class="days-num">Москва</span>
+          <div class="days-label">и Подмосковье — то, что вижу вокруг</div>
+        </div>
+        <div class="days-item">
+          <span class="days-num">Танцы</span>
+          <div class="days-label">клубы, встречи, живые эмоции</div>
+        </div>
+        <div class="days-item">
+          <span class="days-num">Добро</span>
+          <div class="days-label">волонтёрство и социальные проекты</div>
+        </div>
       </div>
-
-      <div class="filters" id="postFilters" role="group" aria-label="Фильтры записей" hidden></div>
-
-      <div class="plist" id="postList" aria-live="polite"></div>
     </div>
   </section>
+</div><!-- /О себе -->
 
+<div class="tab-panel" id="tab-faq" role="tabpanel" hidden>
   <section class="pane">
     <div class="w">
       <div class="section-header">
@@ -476,20 +564,43 @@ footer a:hover{color:var(--terracotta)}
           </summary>
           <div class="faq-a">В некоторых регионах Telegram работает только с VPN. Поэтому тексты записей продублированы здесь, на сайте.</div>
         </details>
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span class="q-text">Видео и кружочки тоже можно смотреть на сайте?</span>
+            <span class="plus" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-a">Да. Видео и видеосообщения-кружочки лежат на самом сайте — нажмите на них, и они проиграются прямо здесь, без Telegram.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-q">
+            <span class="q-text">Как быстро новая запись появляется на сайте?</span>
+            <span class="plus" aria-hidden="true">+</span>
+          </summary>
+          <div class="faq-a">В течение примерно пятнадцати минут после публикации в канале — сайт забирает записи сам.</div>
+        </details>
       </div>
     </div>
   </section>
-</main>
+</div><!-- /Вопросы -->
 
-<section class="closing">
+<div class="tab-panel" id="tab-contacts" role="tabpanel" hidden>
+  <section class="closing">
+    <div class="w">
+      <div class="closing-inner">
+        <h2>Проще и <em>честнее</em>.<br>Без лишнего.</h2>
+        <p>Если близко то, о чём я пишу — заходи в канал или читай прямо здесь.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Подписаться<span class="arrow" aria-hidden="true">→</span></a>
+          <button type="button" class="btn btn-ghost" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div><!-- /Контакты -->
+
+<section class="closing site-foot">
   <div class="w">
     <div class="closing-inner">
-      <h2>Проще и <em>честнее</em>.<br>Без лишнего.</h2>
-      <p>Если близко то, о чём я пишу — заходи в канал или читай прямо здесь.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="https://t.me/danilka2028k" target="_blank" rel="noopener noreferrer">Подписаться<span class="arrow" aria-hidden="true">→</span></a>
-        <button type="button" class="btn btn-ghost" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
-      </div>
       <footer>
         <span>© <span id="copyYear">2026</span> Данил Сарыков <a href="https://sarykov.ru/">sarykov.ru</a></span>
         <span class="foot-name">вокруг меня · дневник ритма</span>
@@ -505,6 +616,47 @@ footer a:hover{color:var(--terracotta)}
 (function(){
   'use strict';
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* вкладки: адрес вида #/dnevnik, чтобы на раздел можно было дать ссылку */
+  var TABS = [
+    { key:'home',     slug:'glavnaya', title:'Данил Сарыков — Вокруг меня · Дневник ритма' },
+    { key:'diary',    slug:'dnevnik',  title:'Записи дневника — Данил Сарыков' },
+    { key:'about',    slug:'o-sebe',   title:'О себе — Данил Сарыков' },
+    { key:'faq',      slug:'voprosy',  title:'Частые вопросы — Данил Сарыков' },
+    { key:'contacts', slug:'kontakty', title:'Контакты — Данил Сарыков' }
+  ];
+  var OLD_ANCHORS = { posts:'diary', hero:'home', main:'diary' };
+  var tabLinks = [].slice.call(document.querySelectorAll('.tab'));
+
+  function tabByHash(){
+    var raw = (location.hash || '').replace(/^#\/?/, '');
+    for (var i = 0; i < TABS.length; i++) if (TABS[i].slug === raw) return TABS[i];
+    if (OLD_ANCHORS[raw]) return findTab(OLD_ANCHORS[raw]);
+    return TABS[0];
+  }
+  function findTab(key){
+    for (var i = 0; i < TABS.length; i++) if (TABS[i].key === key) return TABS[i];
+    return TABS[0];
+  }
+
+  function showTab(tab, keepScroll){
+    TABS.forEach(function(t){
+      var panel = document.getElementById('tab-' + t.key);
+      if (panel) panel.hidden = t.key !== tab.key;
+    });
+    tabLinks.forEach(function(link){
+      link.setAttribute('aria-selected', link.getAttribute('data-tab') === tab.key ? 'true' : 'false');
+    });
+    document.title = tab.title;
+    // Останавливаем всё, что играло на покинутой вкладке.
+    [].slice.call(document.querySelectorAll('video')).forEach(function(v){
+      if (!v.paused && !v.closest('.tab-panel:not([hidden])')) v.pause();
+    });
+    if (!keepScroll) window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  showTab(tabByHash(), true);
+  window.addEventListener('hashchange', function(){ showTab(tabByHash(), false); });
 
   /* город посетителя по часовому поясу */
   var TZ_CITY = {
@@ -619,32 +771,94 @@ footer a:hover{color:var(--terracotta)}
   ];
   var postListEl = document.getElementById('postList');
   var postFiltersEl = document.getElementById('postFilters');
+  var latestListEl = document.getElementById('latestList');
+  var MAX_FILTERS = 10;
 
   function isSafeUrl(url){
     return /^https?:\/\//i.test(url);
   }
 
-  function buildPostCard(number, date, text, link, tags, photos){
+  function buildMedia(item){
+    if (item.type === 'photo'){
+      var img = document.createElement('img');
+      img.className = 'post-photo';
+      img.src = item.src;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onerror = function(){ img.style.display = 'none'; };
+      return img;
+    }
+
+    var video = document.createElement('video');
+    video.src = item.src;
+    video.controls = true;
+    video.preload = 'metadata';
+    video.playsInline = true;
+    video.setAttribute('playsinline', '');
+    if (item.poster) video.poster = item.poster;
+
+    if (item.type === 'round'){
+      // Кружочек: круглый кадр без обрезанных кнопок — играет по клику, как в Telegram.
+      video.className = 'post-round';
+      video.controls = false;
+      video.loop = true;
+
+      var wrap = document.createElement('div');
+      wrap.className = 'round-wrap';
+      var frame = document.createElement('div');
+      frame.className = 'round-frame';
+
+      var play = document.createElement('button');
+      play.type = 'button';
+      play.className = 'round-play';
+      play.setAttribute('aria-label', 'Проиграть кружочек');
+      play.innerHTML = '<span aria-hidden="true">▶</span>';
+
+      var toggle = function(){
+        if (video.paused) video.play().catch(function(){});
+        else video.pause();
+      };
+      play.addEventListener('click', toggle);
+      video.addEventListener('click', toggle);
+      video.addEventListener('play', function(){
+        wrap.classList.add('is-playing');
+        play.setAttribute('aria-label', 'Остановить кружочек');
+      });
+      var stopped = function(){
+        wrap.classList.remove('is-playing');
+        play.setAttribute('aria-label', 'Проиграть кружочек');
+      };
+      video.addEventListener('pause', stopped);
+      video.addEventListener('ended', stopped);
+
+      frame.appendChild(video);
+      frame.appendChild(play);
+      wrap.appendChild(frame);
+      var cap = document.createElement('div');
+      cap.className = 'round-cap';
+      cap.textContent = 'кружочек';
+      wrap.appendChild(cap);
+      return wrap;
+    }
+
+    video.className = 'post-video';
+    return video;
+  }
+
+  function buildPostCard(number, date, text, link, tags, media){
     var card = document.createElement('article');
     card.className = 'post post-enter';
     if (tags.length) card.setAttribute('data-tags', tags.join(','));
 
-    if (photos.length){
+    if (media.length){
+      var onlyPhotos = media.every(function(m){ return m.type === 'photo'; });
       var box = card;
-      if (photos.length > 1){
+      if (onlyPhotos && media.length > 1){
         box = document.createElement('div');
         box.className = 'post-gallery';
         card.appendChild(box);
       }
-      photos.forEach(function(src){
-        var img = document.createElement('img');
-        img.className = 'post-photo';
-        img.src = src;
-        img.alt = '';
-        img.loading = 'lazy';
-        img.onerror = function(){ img.style.display = 'none'; };
-        box.appendChild(img);
-      });
+      media.forEach(function(item){ box.appendChild(buildMedia(item)); });
     }
 
     var issue = document.createElement('div');
@@ -730,36 +944,62 @@ footer a:hover{color:var(--terracotta)}
     }
 
     postFiltersEl.appendChild(makeChip('Все записи', 'all', true));
-    tags.forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
+    tags.slice(0, MAX_FILTERS).forEach(function(tag){ postFiltersEl.appendChild(makeChip(tag, tag, false)); });
   }
 
-  function renderPosts(posts){
-    postListEl.innerHTML = '';
+  function normalize(post){
+    var media = Array.isArray(post.media) ? post.media : null;
+    if (!media){
+      var legacy = Array.isArray(post.photos) ? post.photos : (post.photo ? [post.photo] : []);
+      media = legacy.map(function(src){ return { type:'photo', src:src }; });
+    }
+    return {
+      date: post.date || '',
+      text: post.text || '',
+      link: post.link || '',
+      tags: Array.isArray(post.tags) ? post.tags : [],
+      media: media.filter(function(m){ return m && m.src; })
+    };
+  }
+
+  function renderInto(target, posts, limit){
+    target.innerHTML = '';
     var frag = document.createDocumentFragment();
     var number = 0;
-    var allTags = [];
-    posts.forEach(function(post){
-      var date = post.date || '', text = post.text || '', link = post.link || '';
-      var tags = Array.isArray(post.tags) ? post.tags : [];
-      var photos = Array.isArray(post.photos) ? post.photos : (post.photo ? [post.photo] : []);
-      if (!text.trim() && !photos.length) return;
+    var tagCount = {};
+    posts.forEach(function(raw){
+      if (limit && number >= limit) return;
+      var post = normalize(raw);
+      if (!post.text.trim() && !post.media.length) return;
       number++;
-      tags.forEach(function(t){ if (allTags.indexOf(t) === -1) allTags.push(t); });
-      var card = buildPostCard(number, date, text, link, tags, photos);
+      post.tags.forEach(function(t){ tagCount[t] = (tagCount[t] || 0) + 1; });
+      var card = buildPostCard(number, post.date, post.text, post.link, post.tags, post.media);
       if (number === 1) card.classList.add('wide');
       frag.appendChild(card);
     });
     if (!number){
-      postListEl.innerHTML = '<p class="posts-empty">Записей пока нет.</p>';
-      if (postFiltersEl) postFiltersEl.hidden = true;
-      return;
+      target.innerHTML = '<p class="posts-empty">Записей пока нет.</p>';
+      return null;
     }
-    postListEl.appendChild(frag);
-    if (postFiltersEl) renderFilters(allTags);
+    target.appendChild(frag);
+    // Тем набралось много — показываем те, что встречаются чаще всего.
+    return Object.keys(tagCount).sort(function(a, b){
+      return tagCount[b] - tagCount[a] || a.localeCompare(b, 'ru');
+    });
+  }
+
+  function renderPosts(posts){
+    var allTags = renderInto(postListEl, posts, 0);
+    if (postFiltersEl){
+      if (allTags) renderFilters(allTags);
+      else postFiltersEl.hidden = true;
+    }
+    if (latestListEl) renderInto(latestListEl, posts, 3);
   }
 
   if (postListEl){
     postListEl.innerHTML = '<p class="posts-loading">Загружаю записи…</p>';
+    if (latestListEl) latestListEl.innerHTML = '<p class="posts-loading">Загружаю записи…</p>';
 
     var loadFrom = function(index){
       if (index >= POSTS_SOURCES.length) throw new Error('источники недоступны');
@@ -799,6 +1039,7 @@ footer a:hover{color:var(--terracotta)}
           p.appendChild(small);
         }
         postListEl.appendChild(p);
+        if (latestListEl) latestListEl.appendChild(p.cloneNode(true));
         if (postFiltersEl) postFiltersEl.hidden = true;
       });
   }

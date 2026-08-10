@@ -6,9 +6,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/519",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-519-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-519-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-519-0.mp4",
+        "poster": "assets/posts/danilka2028k-519-0p.jpg"
+      }
     ]
   },
   {
@@ -18,9 +23,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/518",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-518-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-518-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-518-0.mp4",
+        "poster": "assets/posts/danilka2028k-518-0p.jpg"
+      }
     ]
   },
   {
@@ -36,6 +46,16 @@
     "photos": [
       "assets/posts/danilka2028k-516-0.jpg",
       "assets/posts/danilka2028k-516-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-516-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-516-1.jpg"
+      }
     ]
   },
   {
@@ -48,7 +68,8 @@
       "ДанилВокругМеня"
     ],
     "photo": "",
-    "photos": []
+    "photos": [],
+    "media": []
   },
   {
     "id": "danilka2028k/511",
@@ -60,7 +81,8 @@
       "ДанилВокругМеня"
     ],
     "photo": "",
-    "photos": []
+    "photos": [],
+    "media": []
   },
   {
     "id": "danilka2028k/508",
@@ -74,7 +96,8 @@
       "ЛицаРайона"
     ],
     "photo": "",
-    "photos": []
+    "photos": [],
+    "media": []
   },
   {
     "id": "danilka2028k/507",
@@ -86,6 +109,12 @@
     "photo": "assets/posts/danilka2028k-507-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-507-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-507-0.jpg"
+      }
     ]
   },
   {
@@ -95,9 +124,14 @@
     "text": "😱 Метро Москвы продлят до других планет.",
     "link": "https://t.me/danilka2028k/506",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-506-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-506-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "video",
+        "src": "assets/posts/danilka2028k-506-0.mp4",
+        "poster": "assets/posts/danilka2028k-506-0p.jpg"
+      }
     ]
   },
   {
@@ -124,6 +158,24 @@
       "assets/posts/danilka2028k-501-1.jpg",
       "assets/posts/danilka2028k-501-2.jpg",
       "assets/posts/danilka2028k-501-3.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-501-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-501-1.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-501-2.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-501-3.jpg"
+      }
     ]
   },
   {
@@ -145,6 +197,12 @@
     "photo": "assets/posts/danilka2028k-500-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-500-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-500-0.jpg"
+      }
     ]
   },
   {
@@ -162,8 +220,21 @@
     "photos": [
       "assets/posts/danilka2028k-496-0.jpg",
       "assets/posts/danilka2028k-496-1.jpg",
-      "assets/posts/danilka2028k-496-2.jpg",
-      "assets/posts/danilka2028k-496-3.jpg"
+      "assets/posts/danilka2028k-496-2.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-496-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-496-1.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-496-2.jpg"
+      }
     ]
   },
   {
@@ -180,8 +251,17 @@
     "photo": "assets/posts/danilka2028k-493-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-493-0.jpg",
-      "assets/posts/danilka2028k-493-1.jpg",
-      "assets/posts/danilka2028k-493-2.jpg"
+      "assets/posts/danilka2028k-493-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-493-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-493-1.jpg"
+      }
     ]
   },
   {
@@ -201,6 +281,24 @@
       "assets/posts/danilka2028k-488-1.jpg",
       "assets/posts/danilka2028k-488-2.jpg",
       "assets/posts/danilka2028k-488-3.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-488-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-488-1.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-488-2.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-488-3.jpg"
+      }
     ]
   },
   {
@@ -215,6 +313,12 @@
     "photo": "assets/posts/danilka2028k-487-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-487-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-487-0.jpg"
+      }
     ]
   },
   {
@@ -228,9 +332,14 @@
       "СарМск_Ритм",
       "ЮЗАО"
     ],
-    "photo": "assets/posts/danilka2028k-485-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-485-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "video",
+        "src": "assets/posts/danilka2028k-485-0.mp4",
+        "poster": "assets/posts/danilka2028k-485-0p.jpg"
+      }
     ]
   },
   {
@@ -248,6 +357,16 @@
     "photos": [
       "assets/posts/danilka2028k-482-0.jpg",
       "assets/posts/danilka2028k-482-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-482-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-482-1.jpg"
+      }
     ]
   },
   {
@@ -265,6 +384,16 @@
     "photos": [
       "assets/posts/danilka2028k-477-0.jpg",
       "assets/posts/danilka2028k-477-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-477-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-477-1.jpg"
+      }
     ]
   },
   {
@@ -280,6 +409,16 @@
     "photos": [
       "assets/posts/danilka2028k-475-0.jpg",
       "assets/posts/danilka2028k-475-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-475-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-475-1.jpg"
+      }
     ]
   },
   {
@@ -297,6 +436,20 @@
       "assets/posts/danilka2028k-472-0.jpg",
       "assets/posts/danilka2028k-472-1.jpg",
       "assets/posts/danilka2028k-472-2.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-472-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-472-1.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-472-2.jpg"
+      }
     ]
   },
   {
@@ -313,6 +466,16 @@
     "photos": [
       "assets/posts/danilka2028k-470-0.jpg",
       "assets/posts/danilka2028k-470-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-470-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-470-1.jpg"
+      }
     ]
   },
   {
@@ -331,6 +494,16 @@
     "photos": [
       "assets/posts/danilka2028k-467-0.jpg",
       "assets/posts/danilka2028k-467-1.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-467-0.jpg"
+      },
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-467-1.jpg"
+      }
     ]
   },
   {
@@ -340,9 +513,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/465",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-465-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-465-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-465-0.mp4",
+        "poster": "assets/posts/danilka2028k-465-0p.jpg"
+      }
     ]
   },
   {
@@ -360,6 +538,12 @@
     "photo": "assets/posts/danilka2028k-463-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-463-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-463-0.jpg"
+      }
     ]
   },
   {
@@ -372,7 +556,14 @@
       "СарМск_Ритм"
     ],
     "photo": "",
-    "photos": []
+    "photos": [],
+    "media": [
+      {
+        "type": "video",
+        "src": "assets/posts/danilka2028k-460-0.mp4",
+        "poster": ""
+      }
+    ]
   },
   {
     "id": "danilka2028k/457",
@@ -388,6 +579,12 @@
     "photo": "assets/posts/danilka2028k-457-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-457-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-457-0.jpg"
+      }
     ]
   },
   {
@@ -404,6 +601,12 @@
     "photo": "assets/posts/danilka2028k-456-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-456-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-456-0.jpg"
+      }
     ]
   },
   {
@@ -420,6 +623,12 @@
     "photo": "assets/posts/danilka2028k-455-0.jpg",
     "photos": [
       "assets/posts/danilka2028k-455-0.jpg"
+    ],
+    "media": [
+      {
+        "type": "photo",
+        "src": "assets/posts/danilka2028k-455-0.jpg"
+      }
     ]
   },
   {
@@ -429,9 +638,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/454",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-454-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-454-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-454-0.mp4",
+        "poster": "assets/posts/danilka2028k-454-0p.jpg"
+      }
     ]
   },
   {
@@ -441,9 +655,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/453",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-453-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-453-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-453-0.mp4",
+        "poster": "assets/posts/danilka2028k-453-0p.jpg"
+      }
     ]
   },
   {
@@ -453,9 +672,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/452",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-452-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-452-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-452-0.mp4",
+        "poster": "assets/posts/danilka2028k-452-0p.jpg"
+      }
     ]
   },
   {
@@ -465,9 +689,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/449",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-449-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-449-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-449-0.mp4",
+        "poster": "assets/posts/danilka2028k-449-0p.jpg"
+      }
     ]
   },
   {
@@ -477,9 +706,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/448",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-448-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-448-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-448-0.mp4",
+        "poster": "assets/posts/danilka2028k-448-0p.jpg"
+      }
     ]
   },
   {
@@ -489,9 +723,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/447",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-447-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-447-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-447-0.mp4",
+        "poster": "assets/posts/danilka2028k-447-0p.jpg"
+      }
     ]
   },
   {
@@ -501,9 +740,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/446",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-446-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-446-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-446-0.mp4",
+        "poster": "assets/posts/danilka2028k-446-0p.jpg"
+      }
     ]
   },
   {
@@ -513,9 +757,14 @@
     "text": " ",
     "link": "https://t.me/danilka2028k/445",
     "tags": [],
-    "photo": "assets/posts/danilka2028k-445-0.jpg",
-    "photos": [
-      "assets/posts/danilka2028k-445-0.jpg"
+    "photo": "",
+    "photos": [],
+    "media": [
+      {
+        "type": "round",
+        "src": "assets/posts/danilka2028k-445-0.mp4",
+        "poster": "assets/posts/danilka2028k-445-0p.jpg"
+      }
     ]
   }
 ]

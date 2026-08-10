@@ -22,6 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Без ffmpeg видео уезжает на сайт в том виде, в каком его отдал Telegram:
+      # индекс в конце файла и битрейт для полного экрана. На раннере его нет.
+      - name: Установить ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
       - run: node scripts/fetch-telegram-posts.mjs
         env:
           TG_CHANNEL: danilka2028k

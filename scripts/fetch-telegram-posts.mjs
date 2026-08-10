@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { mkdir, writeFile, readFile, readdir, unlink } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, readdir, unlink, stat, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
 const CHANNEL = process.env.TG_CHANNEL || 'danilka2028k';
@@ -15,7 +16,107 @@ const DATA_FILE = path.join(ROOT, 'data', 'posts.json');
 const MEDIA_DIR = path.join(ROOT, 'assets', 'posts');
 const MEDIA_PUBLIC = 'assets/posts';
 
+// Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
+// и проходят обработку заново.
+const MEDIA_RECIPE = 'v3-h264-only';
+const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
+
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+
+function tool(cmd, args) {
+  const res = spawnSync(cmd, args, { stdio: 'ignore' });
+  return res.status === 0;
+}
+
+const FFMPEG = tool('ffmpeg', ['-version']) ? 'ffmpeg' : '';
+const MAGICK = tool('magick', ['-version']) ? 'magick' : (tool('convert', ['-version']) ? 'convert' : '');
+
+async function sizeOf(file) {
+  try { return (await stat(file)).size; } catch { return 0; }
+}
+
+// Оставляем файл только если обработка реально уменьшила его.
+async function keepIfSmaller(original, candidate, label) {
+  const before = await sizeOf(original);
+  const after = await sizeOf(candidate);
+  if (after > 1024 && after < before) {
+    await rename(candidate, original);
+    console.log(`    ${label}: ${Math.round(before / 1024)} → ${Math.round(after / 1024)} KB`);
+    return true;
+  }
+  if (existsSync(candidate)) await unlink(candidate);
+  return false;
+}
+
+// Telegram иногда отдаёт AV1 или HEVC. Они компактнее, но не открываются на
+// старых iPhone и части Android — как раз там, где сайт и должен работать.
+function videoCodec(file) {
+  const res = spawnSync('ffprobe', [
+    '-v', 'error', '-select_streams', 'v:0',
+    '-show_entries', 'stream=codec_name', '-of', 'csv=p=0', file,
+  ], { encoding: 'utf8' });
+  return res.status === 0 ? res.stdout.trim() : '';
+}
+
+// Видео приходит с индексом в конце файла и с битрейтом под полный экран. На
+// слабом интернете это значит: браузер сначала дочитывает хвост, потом качает
+// мегабайты ради кружочка размером 260 пикселей. Пережимаем под тот размер, в
+// котором видео показывается, и переносим индекс в начало.
+async function optimizeVideo(file, kind) {
+  if (!FFMPEG) return;
+  const round = kind === 'round';
+  const tmp = `${file}.tmp.mp4`;
+
+  const codec = videoCodec(file);
+  // H.264 понимают все браузеры; всё остальное переводим в него обязательно,
+  // даже если файл от этого немного потяжелеет.
+  const mustConvert = codec && codec !== 'h264';
+
+  const ok = tool(FFMPEG, [
+    '-y', '-loglevel', 'error', '-i', file,
+    '-vf', `scale='min(${round ? 540 : 1280},iw)':-2`,
+    '-c:v', 'libx264', '-crf', round ? '32' : '28', '-preset', 'veryfast',
+    '-profile:v', 'main', '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-b:a', round ? '64k' : '96k', '-ac', '1',
+    '-movflags', '+faststart', tmp,
+  ]);
+  if (ok && mustConvert && (await sizeOf(tmp)) > 1024) {
+    const before = await sizeOf(file);
+    await rename(tmp, file);
+    console.log(`    перевёл ${codec} → h264: ${Math.round(before / 1024)} → ${Math.round((await sizeOf(file)) / 1024)} KB`);
+    return;
+  }
+  if (ok && (await keepIfSmaller(file, tmp, 'сжал'))) return;
+
+  // Пережать не вышло или стало только больше — хотя бы переносим индекс вперёд.
+  const remux = `${file}.tmp2.mp4`;
+  if (tool(FFMPEG, ['-y', '-loglevel', 'error', '-i', file, '-c', 'copy', '-movflags', '+faststart', remux])) {
+    const after = await sizeOf(remux);
+    if (after > 1024) {
+      await rename(remux, file);
+      console.log('    индекс перенесён в начало файла');
+      return;
+    }
+  }
+  if (existsSync(remux)) await unlink(remux);
+}
+
+async function optimizeImage(file) {
+  const tmp = `${file}.tmp.jpg`;
+  let ok = false;
+
+  if (MAGICK) {
+    ok = tool(MAGICK, [file, '-auto-orient', '-strip', '-resize', '1400x1400>', '-quality', '80', '-interlace', 'Plane', tmp]);
+  } else if (FFMPEG) {
+    ok = tool(FFMPEG, [
+      '-y', '-loglevel', 'error', '-i', file,
+      '-vf', "scale='min(1400,iw)':-2", '-q:v', '4', tmp,
+    ]);
+  }
+
+  if (ok) await keepIfSmaller(file, tmp, 'ужал');
+  else if (existsSync(tmp)) await unlink(tmp);
+}
 
 async function get(url) {
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -151,7 +252,7 @@ function mediaFileName(postId, suffix, url, fallbackExt) {
 
 // Telegram's media URLs are signed and expire, so every file is mirrored into the
 // repository — that is also what keeps the site readable where Telegram is blocked.
-async function mirror(postId, suffix, url, fallbackExt, maxBytes) {
+async function mirror(postId, suffix, url, fallbackExt, maxBytes, kind) {
   const file = mediaFileName(postId, suffix, url, fallbackExt);
   const dest = path.join(MEDIA_DIR, file);
   const publicPath = `${MEDIA_PUBLIC}/${file}`;
@@ -168,6 +269,8 @@ async function mirror(postId, suffix, url, fallbackExt, maxBytes) {
     if (buf.length < 1024 || buf.length > maxBytes) return '';
     await writeFile(dest, buf);
     console.log(`  ↓ ${file} (${Math.round(buf.length / 1024)} KB)`);
+    if (kind === 'photo') await optimizeImage(dest);
+    else await optimizeVideo(dest, kind);
     return publicPath;
   } catch (err) {
     console.warn(`  ! не скачалось ${url.slice(0, 80)}: ${err.message}`);
@@ -180,12 +283,12 @@ async function downloadMedia(postId, items) {
   for (let i = 0; i < items.length && i < MAX_MEDIA_PER_POST; i++) {
     const item = items[i];
     if (item.type === 'photo') {
-      const src = await mirror(postId, i, item.src, 'jpg', MAX_IMAGE_BYTES);
+      const src = await mirror(postId, i, item.src, 'jpg', MAX_IMAGE_BYTES, 'photo');
       if (src) saved.push({ type: 'photo', src });
       continue;
     }
-    const src = await mirror(postId, i, item.src, 'mp4', MAX_VIDEO_BYTES);
-    const poster = item.poster ? await mirror(postId, `${i}p`, item.poster, 'jpg', MAX_IMAGE_BYTES) : '';
+    const src = await mirror(postId, i, item.src, 'mp4', MAX_VIDEO_BYTES, item.type);
+    const poster = item.poster ? await mirror(postId, `${i}p`, item.poster, 'jpg', MAX_IMAGE_BYTES, 'photo') : '';
     if (src) saved.push({ type: item.type, src, poster });
     else if (poster) saved.push({ type: 'photo', src: poster, unplayable: true });
   }
@@ -236,6 +339,17 @@ console.log(`Найдено постов: ${raw.length}`);
 await mkdir(MEDIA_DIR, { recursive: true });
 await mkdir(path.dirname(DATA_FILE), { recursive: true });
 
+console.log(`Обработка медиа: ffmpeg ${FFMPEG ? 'есть' : 'НЕТ'}, ImageMagick ${MAGICK ? 'есть' : 'НЕТ'}`);
+
+// Настройки сжатия сменились — старое зеркало сбрасываем, чтобы файлы
+// перекачались и прошли обработку заново.
+const savedRecipe = existsSync(RECIPE_FILE) ? (await readFile(RECIPE_FILE, 'utf8')).trim() : '';
+if (savedRecipe !== MEDIA_RECIPE && FFMPEG) {
+  const stale = (await readdir(MEDIA_DIR)).filter((f) => !f.startsWith('.'));
+  if (stale.length) console.log(`Настройки сжатия обновились — переобрабатываю ${stale.length} файлов`);
+  for (const f of stale) await unlink(path.join(MEDIA_DIR, f));
+}
+
 const posts = [];
 for (const post of raw) {
   const media = await downloadMedia(post.id, post.media);
@@ -260,6 +374,14 @@ const counts = posts.flatMap((p) => p.media).reduce((acc, m) => ({ ...acc, [m.ty
 console.log('Медиа:', counts);
 
 await pruneMedia(posts.flatMap((p) => p.media).flatMap((m) => [m.src, m.poster].filter(Boolean)));
+if (FFMPEG) await writeFile(RECIPE_FILE, `${MEDIA_RECIPE}\n`);
+
+const totals = { фото: 0, видео: 0 };
+for (const f of (await readdir(MEDIA_DIR)).filter((x) => !x.startsWith('.'))) {
+  const bytes = await sizeOf(path.join(MEDIA_DIR, f));
+  totals[f.endsWith('.mp4') ? 'видео' : 'фото'] += bytes;
+}
+console.log(`Вес медиа: фото ${(totals.фото / 1048576).toFixed(1)} МБ, видео ${(totals.видео / 1048576).toFixed(1)} МБ`);
 
 const payload = JSON.stringify(posts, null, 2) + '\n';
 const previous = existsSync(DATA_FILE) ? await readFile(DATA_FILE, 'utf8') : '';

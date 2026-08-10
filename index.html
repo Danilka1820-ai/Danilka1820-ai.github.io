@@ -15,11 +15,33 @@
 <meta property="og:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
 <meta property="og:url" content="https://sarykov.ru/">
 <meta property="og:image" content="https://sarykov.ru/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Данил Сарыков — Вокруг меня">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Данил Сарыков — Вокруг меня">
+<meta name="twitter:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
+<meta name="twitter:image" content="https://sarykov.ru/og-image.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2311151B'/><circle cx='32' cy='32' r='12' fill='%23B0791C'/></svg>">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,200;0,300;0,400;0,600;1,300;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Шрифты лежат на самом сайте: ни одного обращения к чужим серверам при
+     загрузке. Там, где интернет режут, страница больше не ждёт Google. -->
+<link rel="stylesheet" href="/assets/fonts/fonts.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Данил Сарыков",
+  "url": "https://sarykov.ru/",
+  "image": "https://sarykov.ru/assets/images/profile.jpg",
+  "description": "Автор личного дневника о жизни в Москве и Подмосковье: танцы, волонтёрство, заметки о том, что происходит вокруг.",
+  "sameAs": ["https://t.me/danilka2028k"]
+}
+</script>
 
 <style>
 /* ─────────────────────────────────────────────
@@ -41,7 +63,7 @@
 
   /* вертикальный ритм — строго кратно 8 */
   --s1: 8px;  --s2: 16px; --s3: 24px; --s4: 32px;
-  --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px; --s9: 176px;
+  --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px;
 
   --measure: 34rem;      /* ширина колонки чтения */
   --rail: 96px;          /* левый рельс с датами */
@@ -63,11 +85,12 @@ body{
   line-height:1.72;
   font-feature-settings:"liga" 1,"kern" 1;
   -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
 
 img{ max-width:100%; display:block; }
-
 a{ color:inherit; text-decoration:none; }
+[hidden]{ display:none !important; }
 
 :focus-visible{
   outline:2px solid var(--lamp-ink);
@@ -88,7 +111,6 @@ a{ color:inherit; text-decoration:none; }
 }
 .skip:focus{ left:16px; top:16px; }
 
-/* утилита: подпись/метка */
 .label{
   font-family:var(--mono);
   font-size:11px;
@@ -99,7 +121,7 @@ a{ color:inherit; text-decoration:none; }
 }
 
 /* ─────────────────────────────────────────────
-   ШАПКА
+   ШАПКА — имя, разделы и часы в одной строке
    ───────────────────────────────────────────── */
 .top{
   position:sticky; top:0; z-index:20;
@@ -112,37 +134,92 @@ a{ color:inherit; text-decoration:none; }
 .top.is-stuck{ border-bottom-color:var(--rule); }
 
 .top__in{
+  position:relative;
   max-width:var(--page); margin-inline:auto;
-  padding:14px 24px;
-  display:flex; align-items:baseline; gap:var(--s3);
+  padding:0 24px;
+  display:flex; align-items:stretch; gap:var(--s3);
+  flex-wrap:nowrap;
 }
 .top__name{
   font-family:var(--mono); font-size:12px; font-weight:500;
   letter-spacing:.18em; text-transform:uppercase;
+  flex:0 0 auto; display:flex; align-items:center;
+  padding-block:16px;
 }
-.top__nav{ margin-left:auto; display:flex; gap:var(--s3); }
-.top__nav a{
+.top__nav{
+  display:flex; align-items:stretch; gap:var(--s3);
+  flex:0 1 auto; min-width:0;
+  overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
+}
+.top__nav::-webkit-scrollbar{ display:none; }
+
+.tab{
+  position:relative; flex:0 0 auto;
+  display:flex; align-items:center;
   font-family:var(--mono); font-size:12px; letter-spacing:.08em;
-  color:var(--ink-2);
-  padding-bottom:2px;
-  border-bottom:1px solid transparent;
-  transition:color .2s, border-color .2s;
+  color:var(--ink-2); white-space:nowrap;
+  padding-block:16px;
+  transition:color .2s;
 }
-.top__nav a:hover{ color:var(--ink); border-bottom-color:var(--lamp); }
+.tab::after{
+  content:""; position:absolute; left:0; right:0; bottom:12px;
+  height:1px; background:var(--lamp);
+  transform:scaleX(0); transform-origin:left;
+  transition:transform .28s cubic-bezier(.2,.7,.3,1);
+}
+.tab:hover{ color:var(--ink); }
+.tab[aria-selected="true"]{ color:var(--ink); }
+.tab[aria-selected="true"]::after{ transform:scaleX(1); }
+
+/* Контакты — целевое действие, поэтому отделены рамкой */
+.tab--cta{
+  align-self:center; padding:7px 14px; padding-block:7px;
+  border:1px solid var(--rule); color:var(--ink-2);
+}
+.tab--cta::after{ display:none; }
+.tab--cta:hover{ border-color:var(--ink); color:var(--ink); }
+.tab--cta[aria-selected="true"]{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+
+.top__now{
+  margin-left:auto; flex:0 0 auto;
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.1em;
+  color:var(--ink-3); white-space:nowrap;
+}
+.top__now .dot{
+  width:6px; height:6px; border-radius:50%; background:var(--lamp);
+  animation:pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+
+@media (max-width:1080px){ .top__now .now-date, .top__now .sep-date{ display:none; } }
+@media (max-width:900px){
+  .top__now{ display:none; }
+  .top__in::after{
+    content:""; position:absolute; right:0; top:0; bottom:0; width:32px;
+    background:linear-gradient(to right, rgba(232,234,237,0), var(--paper));
+    pointer-events:none;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   РАЗДЕЛЫ
+   ───────────────────────────────────────────── */
+.panel{ animation:panelIn .5s cubic-bezier(.2,.7,.3,1); }
+@keyframes panelIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+@media (prefers-reduced-motion: reduce){ .panel{ animation:none; } }
 
 /* ─────────────────────────────────────────────
    ГЕРОЙ
    ───────────────────────────────────────────── */
 .hero{
-  padding-block:var(--s8) var(--s7);
+  padding-block:var(--s6) var(--s7);
   display:grid;
   grid-template-columns:minmax(0,1fr) minmax(0,.72fr);
   gap:var(--s6);
   align-items:end;
 }
-
 .hero__place{ margin:0 0 var(--s3); }
-
 .hero__title{
   margin:0;
   font-weight:200;
@@ -150,43 +227,32 @@ a{ color:inherit; text-decoration:none; }
   line-height:.92;
   letter-spacing:-.03em;
 }
-.hero__title em{
-  font-style:italic;
-  font-weight:300;
-  display:block;
-  padding-left:.12em;
-}
-
+.hero__title em{ font-style:italic; font-weight:300; display:block; padding-left:.12em; }
 .hero__lede{
-  margin:var(--s4) 0 0;
-  max-width:30rem;
-  font-size:1.06rem;
-  color:var(--ink-2);
-  line-height:1.66;
+  margin:var(--s4) 0 0; max-width:30rem;
+  font-size:1.06rem; color:var(--ink-2); line-height:1.66;
 }
-
-.hero__acts{
-  margin-top:var(--s5);
-  display:flex; flex-wrap:wrap; gap:var(--s2);
-}
+.hero__acts{ margin-top:var(--s5); display:flex; flex-wrap:wrap; gap:var(--s2); }
 
 .btn{
   font-family:var(--mono); font-size:12px; letter-spacing:.1em;
   text-transform:uppercase;
   padding:13px 22px;
   border:1px solid var(--ink);
-  transition:background .22s, color .22s, transform .22s;
+  background:none; color:var(--ink); cursor:pointer;
+  transition:background .22s, color .22s, transform .22s, border-color .22s;
 }
 .btn:hover{ background:var(--ink); color:var(--paper); transform:translateY(-1px); }
 .btn--ghost{ border-color:var(--rule); color:var(--ink-2); }
 .btn--ghost:hover{ background:transparent; color:var(--ink); border-color:var(--ink); }
 
-/* портрет — уходит за правый край, без карточки и теней */
-.hero__fig{ margin:0; position:relative; }
-.hero__fig img{ background:var(--paper-lift); }
+/* В профиле пока не фотография, а знак — поэтому небольшой квадрат
+   в нейтральном тоне, а не портрет во всю колонку. */
+.hero__fig{ margin:0 0 0 auto; position:relative; max-width:300px; width:100%; }
 .hero__fig img{
-  width:100%; aspect-ratio:4/5; object-fit:cover;
-  filter:grayscale(.28) contrast(1.04);
+  width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;
+  background:var(--paper-lift);
+  filter:grayscale(1) contrast(1.03);
 }
 .hero__fig figcaption{
   margin-top:var(--s2);
@@ -197,10 +263,7 @@ a{ color:inherit; text-decoration:none; }
 /* ─────────────────────────────────────────────
    ТЕЗИС
    ───────────────────────────────────────────── */
-.thesis{
-  border-top:1px solid var(--rule);
-  padding-block:var(--s7);
-}
+.thesis{ border-top:1px solid var(--rule); padding-block:var(--s7); }
 .thesis blockquote{
   margin:0; max-width:26ch;
   font-size:clamp(1.7rem,4.4vw,2.9rem);
@@ -212,25 +275,20 @@ a{ color:inherit; text-decoration:none; }
 /* ─────────────────────────────────────────────
    ЛЕНТА — рельс с датами
    ───────────────────────────────────────────── */
-.feed{ border-top:1px solid var(--rule); padding-block:var(--s7) var(--s8); }
+.feed{ padding-block:var(--s6) var(--s8); }
+.feed--home{ border-top:1px solid var(--rule); padding-block:var(--s7); }
 
 .feed__head{
   display:flex; flex-wrap:wrap; align-items:baseline;
   gap:var(--s3); margin-bottom:var(--s5);
 }
-.feed__head h2{
-  margin:0; font-weight:300; font-size:1.5rem; letter-spacing:-.01em;
-}
+.feed__head h2{ margin:0; font-weight:300; font-size:1.5rem; letter-spacing:-.01em; }
 .feed__note{
   flex-basis:100%; max-width:var(--measure);
   margin:0; font-size:.92rem; color:var(--ink-2);
 }
 
-/* фильтры — бывшая бегущая строка, теперь рубрики */
-.filters{
-  display:flex; flex-wrap:wrap; gap:var(--s1);
-  margin:var(--s4) 0 var(--s6);
-}
+.filters{ display:flex; flex-wrap:wrap; gap:var(--s1); margin:var(--s4) 0 var(--s6); }
 .filters button{
   font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-2);
@@ -239,9 +297,7 @@ a{ color:inherit; text-decoration:none; }
   transition:color .2s, border-color .2s, background .2s;
 }
 .filters button:hover{ color:var(--ink); border-color:var(--ink-3); }
-.filters button[aria-pressed="true"]{
-  color:var(--paper); background:var(--ink); border-color:var(--ink);
-}
+.filters button[aria-pressed="true"]{ color:var(--paper); background:var(--ink); border-color:var(--ink); }
 
 .rail{ position:relative; }
 .rail::before{
@@ -258,10 +314,8 @@ a{ color:inherit; text-decoration:none; }
   padding-block:var(--s5);
   border-bottom:1px solid var(--rule);
 }
-.entry:last-child{ border-bottom:0; }
-.entry[hidden]{ display:none; }
+.entry:last-of-type{ border-bottom:0; }
 
-/* точка на рельсе */
 .entry::before{
   content:""; position:absolute;
   left:calc(var(--rail) + 21px); top:calc(var(--s5) + 13px);
@@ -275,13 +329,11 @@ a{ color:inherit; text-decoration:none; }
 .entry__meta{ text-align:right; }
 .entry__date{
   font-family:var(--mono); font-size:14px; font-weight:500;
-  font-variant-numeric:tabular-nums; letter-spacing:.02em;
-  display:block;
+  font-variant-numeric:tabular-nums; letter-spacing:.02em; display:block;
 }
 .entry__day{
   font-family:var(--mono); font-size:11px; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--ink-3);
-  display:block; margin-top:2px;
+  text-transform:uppercase; color:var(--ink-3); display:block; margin-top:2px;
 }
 .entry__tag{
   display:inline-block; margin-top:var(--s2);
@@ -292,130 +344,144 @@ a{ color:inherit; text-decoration:none; }
 .entry__body{ max-width:var(--measure); }
 .entry__title{
   margin:0 0 var(--s2);
-  font-weight:400; font-size:1.42rem; line-height:1.28;
-  letter-spacing:-.012em;
+  font-weight:400; font-size:1.42rem; line-height:1.28; letter-spacing:-.012em;
 }
 .entry__body p{ margin:0 0 var(--s2); }
 .entry__body p:last-of-type{ margin-bottom:0; }
-
-.entry__photo{
-  margin:var(--s3) 0 0;
-  aspect-ratio:3/2; object-fit:cover; width:100%;
-  filter:grayscale(.1);
-}
-
-/* Видео и кружочки — стили в духе нового дизайна */
-.post-video{
-  width:100%; max-height:520px; border-radius:4px;
-  border:1px solid var(--rule); margin:var(--s3) 0;
-  background:var(--paper-lift); display:block;
-}
-.round-wrap{
-  width:min(280px,76%); margin:var(--s3) auto;
-}
-.round-frame{
-  position:relative; aspect-ratio:1/1; border-radius:50%;
-  overflow:hidden; border:1px solid var(--rule);
-  background:var(--paper-lift);
-}
-.post-round{
-  width:100%; height:100%; object-fit:cover;
-  display:block; cursor:pointer;
-}
-.round-play{
-  position:absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.3);
-  color:var(--paper);
-  transition:opacity .25s ease, background .25s ease;
-  cursor:pointer; border-radius:50%;
-}
-.round-play:hover{ background:rgba(17,21,27,.42); }
-.round-play span{
-  width:62px; height:62px; border-radius:50%;
-  background:var(--paper);
-  color:var(--ink);
-  display:flex; align-items:center; justify-content:center;
-  font-size:21px; padding-left:5px;
-  box-shadow:0 8px 30px -8px rgba(0,0,0,.5);
-}
-.round-wrap.is-playing .round-play{ opacity:0; pointer-events:none; }
-.round-cap{
-  text-align:center;
-  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--ink-3);
-  margin-top:var(--s2);
-}
-.media-note{
-  display:inline-flex; align-items:center; gap:8px;
-  font-size:12px; color:var(--ink-2); font-style:italic;
-  margin:var(--s2) 0 var(--s3);
-}
 
 .entry__more{
   display:inline-flex; align-items:center; gap:6px;
   margin-top:var(--s3);
   font-family:var(--mono); font-size:11px; letter-spacing:.12em;
   text-transform:uppercase; color:var(--ink-2);
-  border-bottom:1px solid var(--rule);
-  padding-bottom:2px;
+  border-bottom:1px solid var(--rule); padding-bottom:2px;
   transition:color .2s, border-color .2s;
 }
 .entry__more:hover{ color:var(--lamp-ink); border-bottom-color:var(--lamp); }
 
 .feed__foot{ margin-top:var(--s6); padding-left:calc(var(--rail) + var(--s5)); }
-.feed__empty{
+.feed__empty,.feed__state{
   padding-left:calc(var(--rail) + var(--s5));
   color:var(--ink-2); font-size:.95rem;
 }
 
 /* ─────────────────────────────────────────────
-   ОБ АВТОРЕ
+   МЕДИА В ЗАПИСЯХ — фото, видео, кружочки
+   ───────────────────────────────────────────── */
+.media{ margin:0 0 var(--s3); display:grid; gap:var(--s1); }
+.media--pair{ grid-template-columns:1fr 1fr; }
+
+.entry__photo{
+  width:100%; aspect-ratio:3/2; object-fit:cover;
+  background:var(--paper-lift);
+  filter:grayscale(.1);
+}
+.entry__video{
+  width:100%; max-height:520px; display:block;
+  background:var(--ink); border:1px solid var(--rule);
+}
+
+.round{ width:min(260px,72%); }
+.round__frame{
+  position:relative; aspect-ratio:1/1; border-radius:50%;
+  overflow:hidden; background:var(--ink); border:1px solid var(--rule);
+}
+.round__video{ width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
+.round__play{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(17,21,27,.28); border:0; border-radius:50%; cursor:pointer;
+  transition:opacity .25s, background .25s;
+}
+.round__play:hover{ background:rgba(17,21,27,.4); }
+.round__play span{
+  width:56px; height:56px; border-radius:50%;
+  background:var(--paper); color:var(--ink);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; padding-left:4px;
+}
+.round.is-playing .round__play{ opacity:0; pointer-events:none; }
+.round__cap{
+  margin-top:var(--s1);
+  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--ink-3); text-align:center;
+}
+
+/* ─────────────────────────────────────────────
+   О ДНЕВНИКЕ
    ───────────────────────────────────────────── */
 .about{
-  border-top:1px solid var(--rule);
   padding-block:var(--s7);
-  display:grid;
-  grid-template-columns:var(--rail) minmax(0,1fr);
-  gap:var(--s5);
+  display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5);
 }
+.about + .about{ border-top:1px solid var(--rule); }
 .about > .label{ text-align:right; margin:0; }
 .about__body{ max-width:var(--measure); }
-.about__body h2{
-  margin:0 0 var(--s3);
-  font-weight:300; font-size:1.9rem; letter-spacing:-.015em;
-}
+.about__body h2{ margin:0 0 var(--s3); font-weight:300; font-size:1.9rem; letter-spacing:-.015em; }
 .about__body h2 em{ font-style:italic; }
 .about__body p{ margin:0 0 var(--s3); color:var(--ink-2); }
 .about__body p:last-child{ margin-bottom:0; }
 .about__body strong{ font-weight:600; color:var(--ink); }
 
+.facts{ list-style:none; margin:0; padding:0; }
+.facts li{ padding-block:var(--s2); border-bottom:1px solid var(--rule); }
+.facts li:last-child{ border-bottom:0; }
+.facts b{ display:block; font-weight:400; font-size:1.15rem; }
+.facts span{ color:var(--ink-2); font-size:.95rem; }
+
 /* ─────────────────────────────────────────────
-   ПОДВАЛ
+   ВОПРОСЫ
    ───────────────────────────────────────────── */
-.foot{
-  border-top:1px solid var(--rule);
-  padding-block:var(--s6) var(--s7);
+.qa{ padding-block:var(--s7); display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5); }
+.qa > .label{ text-align:right; margin:0; }
+.qa__list{ max-width:var(--measure); }
+.qa__item{ border-bottom:1px solid var(--rule); }
+.qa__item:first-child{ border-top:1px solid var(--rule); }
+.qa__q{
+  display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3);
+  padding-block:var(--s3); cursor:pointer; list-style:none;
+  font-size:1.1rem; line-height:1.4;
 }
-.foot__cta{
-  font-weight:300; font-size:clamp(1.5rem,3.6vw,2.2rem);
-  line-height:1.24; letter-spacing:-.015em;
-  margin:0 0 var(--s4); max-width:20ch;
+.qa__q::-webkit-details-marker{ display:none; }
+.qa__q .pm{ font-family:var(--mono); font-size:16px; color:var(--ink-3); flex:0 0 auto; }
+.qa__item[open] .pm{ color:var(--lamp-ink); }
+.qa__a{ padding-bottom:var(--s3); color:var(--ink-2); font-size:1rem; max-width:32rem; }
+
+/* ─────────────────────────────────────────────
+   КОНТАКТЫ И ПОДВАЛ
+   ───────────────────────────────────────────── */
+.contact{ padding-block:var(--s7); }
+.contact__cta{
+  font-weight:300; font-size:clamp(1.6rem,4vw,2.6rem);
+  line-height:1.22; letter-spacing:-.015em;
+  margin:0 0 var(--s3); max-width:20ch;
 }
-.foot__cta em{ font-style:italic; color:var(--lamp-ink); }
+.contact__cta em{ font-style:italic; color:var(--lamp-ink); }
+.contact p{ margin:0 0 var(--s5); max-width:32rem; color:var(--ink-2); }
+
+.foot{ border-top:1px solid var(--rule); }
 .foot__row{
-  margin-top:var(--s6);
   display:flex; flex-wrap:wrap; gap:var(--s3);
-  align-items:baseline;
-  border-top:1px solid var(--rule);
-  padding-top:var(--s3);
+  align-items:baseline; padding-block:var(--s3);
 }
 .foot__row .label:last-child{ margin-left:auto; }
 .foot a.u{ border-bottom:1px solid var(--rule); }
 .foot a.u:hover{ border-bottom-color:var(--lamp); }
 
+/* наверх */
+.up{
+  position:fixed; right:20px; bottom:20px;
+  width:44px; height:44px;
+  border:1px solid var(--rule); background:var(--paper); color:var(--ink);
+  font-family:var(--mono); font-size:15px; cursor:pointer;
+  opacity:0; pointer-events:none; transform:translateY(8px);
+  transition:opacity .3s, transform .3s, border-color .2s;
+  z-index:15;
+}
+.up.is-on{ opacity:1; pointer-events:auto; transform:none; }
+.up:hover{ border-color:var(--ink); }
+
 /* ─────────────────────────────────────────────
-   ПОЯВЛЕНИЕ — шаг за шагом
+   ПОЯВЛЕНИЕ
    ───────────────────────────────────────────── */
 .rise{ opacity:0; transform:translateY(14px); }
 .rise.in{
@@ -439,7 +505,7 @@ a{ color:inherit; text-decoration:none; }
    ───────────────────────────────────────────── */
 @media (max-width:900px){
   .hero{ grid-template-columns:1fr; gap:var(--s5); padding-block:var(--s6) var(--s6); }
-  .hero__fig{ order:-1; max-width:260px; }
+  .hero__fig{ order:-1; max-width:220px; margin-inline:0; }
   .hero__fig img{ aspect-ratio:1/1; }
 }
 
@@ -448,340 +514,658 @@ a{ color:inherit; text-decoration:none; }
   .wrap{ padding-inline:20px; }
   :root{ --rail:0px; }
 
+  .top__in{ padding-inline:20px; }
+  .top__name{ padding-block:14px; }
+  .tab{ padding-block:14px; }
+
   .rail::before{ display:none; }
-  .entry{
-    grid-template-columns:1fr; gap:var(--s2);
-    padding-block:var(--s4);
-  }
+  .entry{ grid-template-columns:1fr; gap:var(--s2); padding-block:var(--s4); }
   .entry::before{ display:none; }
-  .entry__meta{
-    display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap;
-    text-align:left;
-  }
-  .about > .label{ text-align:left; }
-  .entry__day{ margin-top:0; }
-  .entry__tag{ margin-top:0; }
-  .about{ grid-template-columns:1fr; gap:var(--s3); }
-  .feed__foot,.feed__empty{ padding-left:0; }
-  .thesis,.feed,.about,.foot{ padding-block:var(--s6); }
+  .entry__meta{ display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap; text-align:left; }
+  .entry__day,.entry__tag{ margin-top:0; }
+  .about,.qa{ grid-template-columns:1fr; gap:var(--s3); }
+  .about > .label,.qa > .label{ text-align:left; }
+  .feed__foot,.feed__empty,.feed__state{ padding-left:0; }
+  .thesis,.feed,.feed--home,.about,.qa,.contact{ padding-block:var(--s6); }
   .top__nav{ gap:var(--s2); }
+  .media--pair{ grid-template-columns:1fr; }
+  .round{ width:min(240px,80%); margin-inline:auto; }
 }
 </style>
 </head>
 
 <body>
-<a class="skip" href="#feed">К записям</a>
+<a class="skip" href="#main">К основному содержанию</a>
 
 <header class="top" id="top">
   <div class="top__in">
-    <a class="top__name" href="/">Данил Сарыков</a>
-    <nav class="top__nav" aria-label="Основная навигация">
-      <a href="#feed">Записи</a>
-      <a href="#about">О дневнике</a>
-      <a href="https://t.me/danilka2028k" rel="me noopener">Telegram</a>
+    <a class="top__name" href="#/glavnaya">Данил Сарыков</a>
+    <nav class="top__nav" role="tablist" aria-label="Разделы сайта">
+      <a class="tab" role="tab" href="#/glavnaya" data-tab="home"     aria-selected="true"  aria-controls="tab-home">Главная</a>
+      <a class="tab" role="tab" href="#/dnevnik"  data-tab="diary"    aria-selected="false" aria-controls="tab-diary">Записи</a>
+      <a class="tab" role="tab" href="#/o-sebe"   data-tab="about"    aria-selected="false" aria-controls="tab-about">О дневнике</a>
+      <a class="tab" role="tab" href="#/voprosy"  data-tab="faq"      aria-selected="false" aria-controls="tab-faq">Вопросы</a>
+      <a class="tab tab--cta" role="tab" href="#/kontakty" data-tab="contacts" aria-selected="false" aria-controls="tab-contacts">Контакты</a>
     </nav>
+    <div class="top__now">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="nowPlace">Москва</span>
+      <span class="sep" aria-hidden="true">·</span>
+      <span id="nowTime">—</span>
+      <span class="sep sep-date" aria-hidden="true">·</span>
+      <span class="now-date" id="nowDate">—</span>
+    </div>
   </div>
 </header>
 
 <main class="wrap" id="main">
 
-  <!-- ГЕРОЙ -->
-  <section class="hero">
-    <div>
-      <p class="label hero__place lead-1">Москва · Подмосковье · с 2024 года</p>
-      <h1 class="hero__title lead-2">Вокруг<em>меня</em></h1>
-      <p class="hero__lede lead-3">
-        Дневник обычной жизни. Танцы, волонтёрство, люди и улицы — то, что происходит
-        вокруг, записанное по горячим следам. Без масок и ролей.
-      </p>
-      <div class="hero__acts lead-4">
-        <a class="btn" href="#feed">Читать записи</a>
-        <a class="btn btn--ghost" href="https://t.me/danilka2028k" rel="noopener">Канал в Telegram</a>
+  <!-- ══════════ ГЛАВНАЯ ══════════ -->
+  <div class="panel" id="tab-home" role="tabpanel">
+
+    <section class="hero">
+      <div>
+        <p class="label hero__place lead-1">Москва · Подмосковье · с 2024 года</p>
+        <h1 class="hero__title lead-2">Вокруг<em>меня</em></h1>
+        <p class="hero__lede lead-3">
+          Дневник обычной жизни. Танцы, волонтёрство, люди и улицы — то, что происходит
+          вокруг, записанное по горячим следам. Без масок и ролей.
+        </p>
+        <div class="hero__acts lead-4">
+          <a class="btn" href="#/dnevnik">Читать записи</a>
+          <a class="btn btn--ghost" href="https://t.me/danilka2028k" rel="noopener" target="_blank">Канал в Telegram</a>
+        </div>
       </div>
-    </div>
 
-    <figure class="hero__fig lead-3">
-      <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="640" height="800" loading="eager">
-      <figcaption>Данил · автор дневника</figcaption>
-    </figure>
-  </section>
+      <figure class="hero__fig lead-3">
+        <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="600" height="600" loading="eager" decoding="async">
+        <figcaption>Данил · автор дневника</figcaption>
+      </figure>
+    </section>
 
-  <!-- ТЕЗИС -->
-  <section class="thesis rise">
-    <figure style="margin:0">
-      <blockquote>Идёшь — и слышишь только шаги. <em>И свой ритм.</em></blockquote>
-      <figcaption class="label">из записи об утренней Москве</figcaption>
-    </figure>
-  </section>
+    <section class="thesis rise">
+      <figure style="margin:0">
+        <blockquote>Идёшь — и слышишь только шаги. <em>И свой ритм.</em></blockquote>
+        <figcaption class="label">из записи об утренней Москве</figcaption>
+      </figure>
+    </section>
 
-  <!-- ЛЕНТА -->
-  <section class="feed" id="feed">
-    <div class="feed__head rise">
-      <h2>Записи</h2>
-      <span class="label">Обновляется из Telegram</span>
-      <p class="feed__note">
-        Тексты продублированы здесь целиком — в некоторых регионах Telegram
-        открывается только с VPN.
-      </p>
-    </div>
+    <section class="feed feed--home">
+      <div class="feed__head rise">
+        <h2>Последнее</h2>
+        <span class="label">Обновляется из Telegram</span>
+      </div>
+      <div class="rail" id="latestRail">
+        <p class="feed__state">Загружаю записи…</p>
+      </div>
+      <div class="feed__foot rise">
+        <a class="btn btn--ghost" href="#/dnevnik">Все записи →</a>
+      </div>
+    </section>
+  </div>
 
-    <div class="filters rise" role="group" aria-label="Рубрики" id="filters">
-      <button type="button" data-tag="all" aria-pressed="true">Все</button>
-      <button type="button" data-tag="Утро" aria-pressed="false">Утро</button>
-      <button type="button" data-tag="Люди" aria-pressed="false">Люди</button>
-      <button type="button" data-tag="Добро" aria-pressed="false">Добро</button>
-      <button type="button" data-tag="Тишина" aria-pressed="false">Тишина</button>
-      <button type="button" data-tag="Лёд" aria-pressed="false">Лёд</button>
-      <button type="button" data-tag="Свет" aria-pressed="false">Свет</button>
-    </div>
+  <!-- ══════════ ЗАПИСИ ══════════ -->
+  <div class="panel" id="tab-diary" role="tabpanel" hidden>
+    <section class="feed">
+      <div class="feed__head">
+        <h2>Записи</h2>
+        <span class="label">Обновляется из Telegram</span>
+        <p class="feed__note">
+          Тексты, фотографии, видео и кружочки продублированы здесь целиком — в некоторых
+          регионах Telegram открывается только с VPN. Видео проигрываются прямо на странице.
+        </p>
+      </div>
 
-    <div class="rail" id="rail">
-      <!-- ══ СЮДА ПОДСТАВЛЯЮТСЯ ЗАПИСИ ИЗ TELEGRAM ══ -->
-      <div id="posts-container"></div>
-      <p class="feed__empty" id="empty" hidden>В этой рубрике пока нет записей.</p>
-    </div>
+      <div class="filters" id="filters" role="group" aria-label="Рубрики" hidden></div>
 
-    <div class="feed__foot rise">
-      <a class="btn btn--ghost" href="/archive/">Весь архив →</a>
-    </div>
-  </section>
+      <div class="rail" id="rail" aria-live="polite">
+        <p class="feed__state">Загружаю записи…</p>
+      </div>
+    </section>
+  </div>
 
-  <!-- ОБ АВТОРЕ -->
-  <section class="about" id="about">
-    <p class="label rise">О дневнике</p>
-    <div class="about__body rise">
-      <h2>Пишу про то, что <em>происходит вокруг</em></h2>
-      <p>
-        Меня зовут <strong>Данил Сарыков</strong>. Живу между Москвой и Подмосковьем,
-        танцую, езжу на волонтёрские смены, много хожу пешком и много смотрю по сторонам.
-      </p>
-      <p>
-        Этот дневник — попытка сохранить момент. Не отполированную версию событий,
-        а то, как оно есть: с дрожью в коленях перед выходом, с молчаливым пониманием
-        на волонтёрских сменах, с внезапной тишиной в переполненной электричке.
-      </p>
-      <p>
-        Записи приходят из Telegram-канала <a class="u" href="https://t.me/danilka2028k" rel="noopener">@danilka2028k</a>.
-        Здесь они живут в полном виде — с фото, видео и кружочками.
-      </p>
-    </div>
-  </section>
+  <!-- ══════════ О ДНЕВНИКЕ ══════════ -->
+  <div class="panel" id="tab-about" role="tabpanel" hidden>
+    <section class="about">
+      <p class="label">О дневнике</p>
+      <div class="about__body">
+        <h2>Пишу про то, что <em>происходит вокруг</em></h2>
+        <p>
+          Меня зовут <strong>Данил Сарыков</strong>. Живу между Москвой и Подмосковьем,
+          танцую, езжу на волонтёрские смены, много хожу пешком и много смотрю по сторонам.
+        </p>
+        <p>
+          Этот дневник — не блог с полезными советами и не витрина. Скорее записная книжка,
+          которую видно со стороны: что случилось за день, кого встретил, о чём подумал
+          по дороге домой. Без масок и ролей — всё по-настоящему.
+        </p>
+        <p>
+          Записи сначала выходят в Telegram, а сюда попадают сами, в течение
+          примерно пятнадцати минут.
+        </p>
+      </div>
+    </section>
 
-  <!-- ПОДВАЛ -->
-  <footer class="foot">
-    <p class="foot__cta rise">
-      Если узнаёте себя — <em>напишите мне</em>.
-    </p>
-    <div class="foot__row rise">
-      <span class="label">© 2024–2026 Данил Сарыков</span>
-      <a class="label u" href="mailto:hello@sarykov.ru">hello@sarykov.ru</a>
-      <a class="label u" href="https://t.me/danilka2028k" rel="me noopener">Telegram</a>
-    </div>
-  </footer>
+    <section class="about">
+      <p class="label">Что здесь бывает</p>
+      <ul class="facts about__body">
+        <li><b>Москва и Подмосковье</b><span>Улицы, электрички, утро и то, что вокруг</span></li>
+        <li><b>Танцы</b><span>Репетиции, клубы, встречи, живые эмоции</span></li>
+        <li><b>Волонтёрство</b><span>Смены, социальные проекты, общее дело</span></li>
+        <li><b>Люди</b><span>Случайные попутчики и разговоры без повода</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- ══════════ ВОПРОСЫ ══════════ -->
+  <div class="panel" id="tab-faq" role="tabpanel" hidden>
+    <section class="qa">
+      <p class="label">Часто спрашивают</p>
+      <div class="qa__list">
+        <details class="qa__item">
+          <summary class="qa__q">Как часто выходят записи?<span class="pm" aria-hidden="true">+</span></summary>
+          <div class="qa__a">Без строгого графика — когда случается что-то стоящее. Обычно несколько раз в неделю.</div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Как быстро запись появляется на сайте?<span class="pm" aria-hidden="true">+</span></summary>
+          <div class="qa__a">В течение примерно пятнадцати минут после публикации в канале — сайт забирает записи сам.</div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Видео и кружочки можно смотреть здесь?<span class="pm" aria-hidden="true">+</span></summary>
+          <div class="qa__a">Да. Видео и видеосообщения-кружочки лежат на самом сайте — нажмите, и они проиграются прямо на странице, без Telegram.</div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Почему ссылки на Telegram могут не открываться?<span class="pm" aria-hidden="true">+</span></summary>
+          <div class="qa__a">В некоторых регионах Telegram работает только с VPN. Поэтому всё продублировано здесь, на сайте.</div>
+        </details>
+        <details class="qa__item">
+          <summary class="qa__q">Как связаться?<span class="pm" aria-hidden="true">+</span></summary>
+          <div class="qa__a">Проще всего — в Telegram, <a class="u" href="https://t.me/danilka2028k" target="_blank" rel="noopener">@danilka2028k</a>. Открыт к разговору и новым проектам.</div>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <!-- ══════════ КОНТАКТЫ ══════════ -->
+  <div class="panel" id="tab-contacts" role="tabpanel" hidden>
+    <section class="contact">
+      <p class="label" style="margin:0 0 var(--s3)">Связь</p>
+      <h2 class="contact__cta">Проще и <em>честнее</em>. Без лишнего.</h2>
+      <p>Если близко то, о чём я пишу — заходите в канал или читайте прямо здесь.</p>
+      <div class="hero__acts" style="margin-top:0">
+        <a class="btn" href="https://t.me/danilka2028k" target="_blank" rel="noopener">Подписаться</a>
+        <button type="button" class="btn btn--ghost" id="copyBtn" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
+      </div>
+    </section>
+  </div>
 
 </main>
 
+<footer class="foot">
+  <div class="wrap foot__row">
+    <span class="label">© <span id="year">2026</span> Данил Сарыков</span>
+    <a class="label u" href="https://sarykov.ru/">sarykov.ru</a>
+    <a class="label u" href="https://t.me/danilka2028k" target="_blank" rel="noopener">@danilka2028k</a>
+    <span class="label">Вокруг меня</span>
+  </div>
+</footer>
+
+<button type="button" class="up" id="up" aria-label="Наверх страницы">↑</button>
+
 <script>
-/* ─────────────────────────────────────────────
-   ЗАГРУЗКА ПОСТОВ ИЗ TELEGRAM
-   ───────────────────────────────────────────── */
-(async function loadPosts(){
-  const container = document.getElementById('posts-container');
-  const emptyEl = document.getElementById('empty');
-  
-  try {
-    const res = await fetch('/data/posts.json');
-    if (!res.ok) throw new Error('Нет данных');
-    const posts = await res.json();
-    
-    if (!Array.isArray(posts) || posts.length === 0) {
-      emptyEl.hidden = false;
-      return;
-    }
-    
-    // Очистим контейнер от демо-записей (если есть)
-    container.innerHTML = '';
-    
-    const dayNames = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-    
-    posts.forEach(post => {
-      // Парсим дату из datetime или date
-      let dateObj;
-      if (post.datetime) {
-        dateObj = new Date(post.datetime);
+(function(){
+  'use strict';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── год в подвале ── */
+  var yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  /* ── город посетителя по часовому поясу ── */
+  var TZ_CITY = {
+    'Europe/Kaliningrad':'Калининград','Europe/Moscow':'Москва','Europe/Simferopol':'Симферополь',
+    'Europe/Volgograd':'Волгоград','Europe/Saratov':'Саратов','Europe/Astrakhan':'Астрахань',
+    'Europe/Ulyanovsk':'Ульяновск','Europe/Kirov':'Киров','Europe/Samara':'Самара',
+    'Asia/Yekaterinburg':'Екатеринбург','Asia/Omsk':'Омск','Asia/Novosibirsk':'Новосибирск',
+    'Asia/Barnaul':'Барнаул','Asia/Tomsk':'Томск','Asia/Krasnoyarsk':'Красноярск',
+    'Asia/Irkutsk':'Иркутск','Asia/Chita':'Чита','Asia/Yakutsk':'Якутск',
+    'Asia/Vladivostok':'Владивосток','Asia/Magadan':'Магадан','Asia/Sakhalin':'Сахалин',
+    'Asia/Kamchatka':'Камчатка','Asia/Anadyr':'Анадырь',
+    'Europe/Minsk':'Минск','Europe/Kyiv':'Киев','Europe/Kiev':'Киев','Europe/Chisinau':'Кишинёв',
+    'Asia/Almaty':'Алматы','Asia/Tashkent':'Ташкент','Asia/Bishkek':'Бишкек',
+    'Asia/Tbilisi':'Тбилиси','Asia/Yerevan':'Ереван','Asia/Baku':'Баку',
+    'Europe/Istanbul':'Стамбул','Asia/Dubai':'Дубай','Europe/Berlin':'Берлин',
+    'Europe/Warsaw':'Варшава','Europe/London':'Лондон','Europe/Paris':'Париж',
+    'America/New_York':'Нью-Йорк','Asia/Tokyo':'Токио'
+  };
+  var placeEl = document.getElementById('nowPlace');
+  if (placeEl){
+    try{
+      var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
+      var city = TZ_CITY[tz] || (tz.split('/').pop() || '').replace(/_/g,' ');
+      if (city) placeEl.textContent = city;
+    }catch(e){}
+  }
+
+  /* ── часы и дата ── */
+  var timeEl = document.getElementById('nowTime');
+  var dateEl = document.getElementById('nowDate');
+  function tick(){
+    var d = new Date();
+    if (timeEl) timeEl.textContent = ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+    if (dateEl) dateEl.textContent = ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2) + '.' + d.getFullYear();
+  }
+  tick();
+  setInterval(tick, 30000);
+
+  /* ── линия под шапкой появляется при прокрутке ── */
+  var top = document.getElementById('top');
+  function stuck(){ if (top) top.classList.toggle('is-stuck', window.scrollY > 8); }
+  window.addEventListener('scroll', stuck, { passive:true });
+  stuck();
+
+  /* ── кнопка «наверх» ── */
+  var up = document.getElementById('up');
+  if (up){
+    var toggleUp = function(){ up.classList.toggle('is-on', window.scrollY > window.innerHeight * 0.7); };
+    window.addEventListener('scroll', toggleUp, { passive:true });
+    toggleUp();
+    up.addEventListener('click', function(){ window.scrollTo({ top:0, behavior: reduce ? 'auto' : 'smooth' }); });
+  }
+
+  /* ── «скопировать» ── */
+  var copyBtn = document.getElementById('copyBtn');
+  if (copyBtn){
+    copyBtn.addEventListener('click', function(){
+      var text = copyBtn.getAttribute('data-copy');
+      var done = function(){
+        var was = copyBtn.textContent;
+        copyBtn.textContent = 'Скопировано';
+        setTimeout(function(){ copyBtn.textContent = was; }, 1600);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, function(){});
       } else {
-        // Пробуем распарсить "10 апреля 2026"
-        const months = {'января':0,'февраля':1,'марта':2,'апреля':3,'мая':4,'июня':5,'июля':6,'августа':7,'сентября':8,'октября':9,'ноября':10,'декабря':11};
-        const parts = post.date.match(/(\d+)\s+(\w+)\s+(\d+)/);
-        if (parts) {
-          dateObj = new Date(parts[3], months[parts[2]], parseInt(parts[1]));
-        } else {
-          dateObj = new Date();
-        }
+        var ta = document.createElement('textarea');
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); done(); }catch(e){}
+        document.body.removeChild(ta);
       }
-      
-      const dayNum = String(dateObj.getDate()).padStart(2,'0');
-      const monthNum = String(dateObj.getMonth()+1).padStart(2,'0');
-      const dayName = dayNames[dateObj.getDay()];
-      
-      // Берём первый тег или ставим дефолтный
-      const tag = (post.tags && post.tags.length > 0) ? post.tags[0] : 'Все';
-      
-      const article = document.createElement('article');
-      article.className = 'entry rise';
-      article.dataset.tag = tag;
-      
-      let mediaHtml = '';
-      
-      // Обрабатываем media массив
-      if (post.media && post.media.length > 0) {
-        const m = post.media[0];
-        if (m.type === 'round') {
-          // Кружочек
-          mediaHtml = `
-            <div class="round-wrap">
-              <div class="round-frame">
-                <video class="post-round" src="${m.src}" loop playsinline preload="metadata" poster="${m.poster || ''}"></video>
-                <button class="round-play" type="button" aria-label="Воспроизвести видео">
-                  <span>▶</span>
-                </button>
-              </div>
-              <div class="round-cap">Кружочек</div>
-            </div>
-          `;
-        } else if (m.type === 'video') {
-          // Обычное видео
-          mediaHtml = `<video class="post-video" src="${m.src}" controls playsinline preload="metadata" poster="${m.poster || ''}"></video>`;
-        } else if (m.type === 'photo' && m.src) {
-          // Фото из media
-          mediaHtml = `<img class="entry__photo" src="${m.src}" alt="" loading="lazy" width="800" height="533">`;
-        }
-      }
-      // Если нет media, пробуем photo
-      else if (post.photo) {
-        mediaHtml = `<img class="entry__photo" src="${post.photo}" alt="" loading="lazy" width="800" height="533">`;
-      }
-      
-      // Формируем текст с разбивкой на абзацы
-      let textHtml = '';
-      if (post.text && post.text.trim()) {
-        const paragraphs = post.text.trim().split(/\n\n+/);
-        textHtml = paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-      }
-      
-      article.innerHTML = `
-        <div class="entry__meta">
-          <time class="entry__date" datetime="${post.datetime || post.date}">${dayNum}.${monthNum}</time>
-          <span class="entry__day">${dayName}</span>
-          <span class="entry__tag">${tag}</span>
-        </div>
-        <div class="entry__body">
-          ${mediaHtml}
-          ${textHtml}
-          <a class="entry__more" href="${post.link || '#'}" rel="noopener" target="_blank">Оригинал в Telegram →</a>
-        </div>
-      `;
-      
-      container.appendChild(article);
     });
-    
-    // Инициализация кружочков
-    initRoundVideos();
-    // Анимация появления
-    initRise();
-    
-  } catch(err) {
-    console.error('Ошибка загрузки постов:', err);
-    emptyEl.textContent = 'Не удалось загрузить записи.';
-    emptyEl.hidden = false;
+  }
+
+  /* ── появление блоков при прокрутке ── */
+  var io = null;
+  if ('IntersectionObserver' in window && !reduce){
+    io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold:.08, rootMargin:'0px 0px -40px 0px' });
+  }
+  function watch(el){
+    if (!el.classList.contains('rise')) return;
+    if (io) io.observe(el); else el.classList.add('in');
+  }
+  [].slice.call(document.querySelectorAll('.rise')).forEach(watch);
+
+  /* ── разделы: адрес вида #/dnevnik, чтобы на раздел можно было дать ссылку ── */
+  var TABS = [
+    { key:'home',     slug:'glavnaya', title:'Данил Сарыков — Вокруг меня' },
+    { key:'diary',    slug:'dnevnik',  title:'Записи — Данил Сарыков' },
+    { key:'about',    slug:'o-sebe',   title:'О дневнике — Данил Сарыков' },
+    { key:'faq',      slug:'voprosy',  title:'Вопросы — Данил Сарыков' },
+    { key:'contacts', slug:'kontakty', title:'Контакты — Данил Сарыков' }
+  ];
+  var OLD_ANCHORS = { posts:'diary', feed:'diary', main:'home', about:'about', hero:'home' };
+  var tabLinks = [].slice.call(document.querySelectorAll('.tab'));
+
+  function findTab(key){
+    for (var i=0;i<TABS.length;i++) if (TABS[i].key === key) return TABS[i];
+    return TABS[0];
+  }
+  function tabByHash(){
+    var raw = (location.hash || '').replace(/^#\/?/, '');
+    for (var i=0;i<TABS.length;i++) if (TABS[i].slug === raw) return TABS[i];
+    if (OLD_ANCHORS[raw]) return findTab(OLD_ANCHORS[raw]);
+    return TABS[0];
+  }
+
+  function showTab(tab, keepScroll){
+    TABS.forEach(function(t){
+      var panel = document.getElementById('tab-' + t.key);
+      if (panel) panel.hidden = t.key !== tab.key;
+    });
+    tabLinks.forEach(function(link){
+      var active = link.getAttribute('data-tab') === tab.key;
+      link.setAttribute('aria-selected', active ? 'true' : 'false');
+      // На узком экране строка разделов прокручивается — показываем выбранный.
+      if (active && link.scrollIntoView){
+        link.scrollIntoView({ block:'nearest', inline:'nearest', behavior: reduce ? 'auto' : 'smooth' });
+      }
+    });
+    document.title = tab.title;
+    // Останавливаем всё, что играло на покинутой вкладке.
+    [].slice.call(document.querySelectorAll('video')).forEach(function(v){
+      if (!v.paused && !v.closest('.panel:not([hidden])')) v.pause();
+    });
+    if (!keepScroll) window.scrollTo({ top:0, behavior: reduce ? 'auto' : 'smooth' });
+  }
+
+  showTab(tabByHash(), true);
+  window.addEventListener('hashchange', function(){ showTab(tabByHash(), false); });
+
+  /* ── записи дневника ──
+     GitHub Action каждые 15 минут читает публичную превью-страницу Telegram-канала,
+     складывает тексты в data/posts.json, а фото и видео — в assets/posts. Поэтому
+     всё отдаёт сам сайт: Telegram у читателя может быть закрыт. */
+  var POSTS_SOURCES = [
+    '/data/posts.json',
+    'https://raw.githubusercontent.com/Danilka1820-ai/Danilka1820-ai.github.io/main/data/posts.json',
+    'https://cool-butterfly-3969.dahytan22.workers.dev/'
+  ];
+  var railEl = document.getElementById('rail');
+  var latestEl = document.getElementById('latestRail');
+  var filtersEl = document.getElementById('filters');
+  var MAX_FILTERS = 8;
+  var WEEKDAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+  function isSafeUrl(url){ return /^(https?:)?\/\//i.test(url) || url.charAt(0) === '/' || /^assets\//.test(url); }
+
+  function partsFromDate(post){
+    var out = { short:'', day:'', iso:'' };
+    var d = post.datetime ? new Date(post.datetime) : null;
+    if (d && !isNaN(d.getTime())){
+      out.iso = d.toISOString().slice(0,10);
+      try{
+        out.short = new Intl.DateTimeFormat('ru-RU', { day:'2-digit', month:'2-digit', timeZone:'Europe/Moscow' }).format(d);
+      }catch(e){
+        out.short = ('0'+d.getDate()).slice(-2) + '.' + ('0'+(d.getMonth()+1)).slice(-2);
+      }
+      out.day = WEEKDAYS[d.getDay()];
+    } else if (post.date){
+      out.short = post.date;
+    }
+    return out;
+  }
+
+  /* Заголовков в Telegram нет — берём первую строку, если она короткая. */
+  function splitTitle(text){
+    var lines = text.trim().split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+    if (lines.length > 1 && lines[0].length <= 72 && !/[.!?]$/.test(lines[0])){
+      return { title: lines[0], body: lines.slice(1) };
+    }
+    return { title:'', body: lines };
+  }
+
+  function buildMedia(item){
+    if (item.type === 'photo'){
+      var img = document.createElement('img');
+      img.className = 'entry__photo';
+      img.src = item.src; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async';
+      img.onerror = function(){ img.style.display = 'none'; };
+      return img;
+    }
+
+    var video = document.createElement('video');
+    video.src = item.src;
+    // На слабом интернете видео не должно скачиваться само: до нажатия
+    // виден только постер, файл идёт по сети лишь по клику зрителя.
+    video.preload = 'none';
+    video.playsInline = true;
+    video.setAttribute('playsinline','');
+    if (item.poster) video.poster = item.poster;
+
+    if (item.type === 'round'){
+      // Кружочек: круглый кадр, играет по клику — как в Telegram.
+      video.className = 'round__video';
+      video.loop = true;
+
+      var wrap = document.createElement('div');
+      wrap.className = 'round';
+      var frame = document.createElement('div');
+      frame.className = 'round__frame';
+
+      var play = document.createElement('button');
+      play.type = 'button';
+      play.className = 'round__play';
+      play.setAttribute('aria-label','Проиграть кружочек');
+      play.innerHTML = '<span aria-hidden="true">▶</span>';
+
+      var toggle = function(){
+        if (video.paused) video.play().catch(function(){});
+        else video.pause();
+      };
+      play.addEventListener('click', toggle);
+      video.addEventListener('click', toggle);
+      video.addEventListener('play', function(){
+        wrap.classList.add('is-playing');
+        play.setAttribute('aria-label','Остановить кружочек');
+      });
+      var stopped = function(){
+        wrap.classList.remove('is-playing');
+        play.setAttribute('aria-label','Проиграть кружочек');
+      };
+      video.addEventListener('pause', stopped);
+      video.addEventListener('ended', stopped);
+
+      frame.appendChild(video);
+      frame.appendChild(play);
+      wrap.appendChild(frame);
+      var cap = document.createElement('div');
+      cap.className = 'round__cap';
+      cap.textContent = 'кружочек';
+      wrap.appendChild(cap);
+      return wrap;
+    }
+
+    video.className = 'entry__video';
+    video.controls = true;
+    return video;
+  }
+
+  function normalize(post){
+    var media = Array.isArray(post.media) ? post.media : null;
+    if (!media){
+      var legacy = Array.isArray(post.photos) ? post.photos : (post.photo ? [post.photo] : []);
+      media = legacy.map(function(src){ return { type:'photo', src:src }; });
+    }
+    return {
+      date: post.date || '',
+      datetime: post.datetime || '',
+      text: post.text || '',
+      link: post.link || '',
+      tags: Array.isArray(post.tags) ? post.tags : [],
+      media: media.filter(function(m){ return m && m.src && isSafeUrl(m.src); })
+    };
+  }
+
+  function buildEntry(post){
+    var art = document.createElement('article');
+    art.className = 'entry rise';
+    if (post.tags.length) art.setAttribute('data-tags', post.tags.join(','));
+
+    var when = partsFromDate(post);
+    var meta = document.createElement('div');
+    meta.className = 'entry__meta';
+
+    var time = document.createElement('time');
+    time.className = 'entry__date';
+    if (when.iso) time.setAttribute('datetime', when.iso);
+    time.textContent = when.short;
+    meta.appendChild(time);
+
+    if (when.day){
+      var day = document.createElement('span');
+      day.className = 'entry__day';
+      day.textContent = when.day;
+      meta.appendChild(day);
+    }
+    if (post.tags.length){
+      var tag = document.createElement('span');
+      tag.className = 'entry__tag';
+      tag.textContent = post.tags[0];
+      meta.appendChild(tag);
+    }
+    art.appendChild(meta);
+
+    var body = document.createElement('div');
+    body.className = 'entry__body';
+
+    var split = splitTitle(post.text);
+    if (split.title){
+      var h3 = document.createElement('h3');
+      h3.className = 'entry__title';
+      h3.textContent = split.title;
+      body.appendChild(h3);
+    }
+
+    if (post.media.length){
+      var box = document.createElement('div');
+      box.className = 'media';
+      var onlyPhotos = post.media.every(function(m){ return m.type === 'photo'; });
+      if (onlyPhotos && post.media.length > 1) box.className += ' media--pair';
+      post.media.forEach(function(item){ box.appendChild(buildMedia(item)); });
+      body.appendChild(box);
+    }
+
+    split.body.forEach(function(line){
+      var p = document.createElement('p');
+      p.textContent = line;
+      body.appendChild(p);
+    });
+
+    if (post.link && isSafeUrl(post.link)){
+      var more = document.createElement('a');
+      more.className = 'entry__more';
+      more.href = post.link;
+      more.target = '_blank';
+      more.rel = 'noopener noreferrer';
+      more.textContent = 'Оригинал в Telegram →';
+      body.appendChild(more);
+    }
+
+    art.appendChild(body);
+    return art;
+  }
+
+  function renderInto(target, posts, limit){
+    target.innerHTML = '';
+    var frag = document.createDocumentFragment();
+    var shown = 0;
+    var tagCount = {};
+    posts.forEach(function(raw){
+      if (limit && shown >= limit) return;
+      var post = normalize(raw);
+      if (!post.text.trim() && !post.media.length) return;
+      shown++;
+      post.tags.forEach(function(t){ tagCount[t] = (tagCount[t] || 0) + 1; });
+      frag.appendChild(buildEntry(post));
+    });
+    if (!shown){
+      target.innerHTML = '<p class="feed__empty">Записей пока нет.</p>';
+      return null;
+    }
+    target.appendChild(frag);
+    [].slice.call(target.querySelectorAll('.rise')).forEach(watch);
+    // Тем набирается много — показываем те, что встречаются чаще всего.
+    return Object.keys(tagCount).sort(function(a,b){
+      return tagCount[b] - tagCount[a] || a.localeCompare(b, 'ru');
+    });
+  }
+
+  function renderFilters(tags){
+    if (!filtersEl) return;
+    filtersEl.innerHTML = '';
+    if (!tags || !tags.length){ filtersEl.hidden = true; return; }
+    filtersEl.hidden = false;
+
+    var empty = document.createElement('p');
+    empty.className = 'feed__empty';
+    empty.hidden = true;
+    empty.textContent = 'В этой рубрике пока нет записей.';
+    railEl.appendChild(empty);
+
+    function chip(label, value, active){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.setAttribute('data-tag', value);
+      b.setAttribute('aria-pressed', active ? 'true' : 'false');
+      b.textContent = label;
+      b.addEventListener('click', function(){
+        [].slice.call(filtersEl.querySelectorAll('button')).forEach(function(x){
+          x.setAttribute('aria-pressed','false');
+        });
+        b.setAttribute('aria-pressed','true');
+        var visible = 0;
+        [].slice.call(railEl.querySelectorAll('.entry')).forEach(function(el){
+          var own = (el.getAttribute('data-tags') || '').split(',');
+          var show = value === 'all' || own.indexOf(value) !== -1;
+          el.hidden = !show;
+          if (show) visible++;
+        });
+        empty.hidden = visible > 0;
+      });
+      return b;
+    }
+
+    filtersEl.appendChild(chip('Все','all',true));
+    tags.slice(0, MAX_FILTERS).forEach(function(t){ filtersEl.appendChild(chip(t, t, false)); });
+  }
+
+  function failure(err){
+    var p = document.createElement('p');
+    p.className = 'feed__state';
+    p.appendChild(document.createTextNode('Не получилось загрузить записи. Загляните в '));
+    var a = document.createElement('a');
+    a.className = 'u';
+    a.href = 'https://t.me/danilka2028k';
+    a.target = '_blank'; a.rel = 'noopener noreferrer';
+    a.textContent = 'Telegram';
+    p.appendChild(a);
+    p.appendChild(document.createTextNode('.'));
+    if (err && err.message){
+      var small = document.createElement('small');
+      small.style.cssText = 'display:block;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--ink-3)';
+      small.textContent = String(err.message);
+      p.appendChild(small);
+    }
+    return p;
+  }
+
+  if (railEl){
+    var loadFrom = function(index){
+      if (index >= POSTS_SOURCES.length) throw new Error('источники недоступны');
+      return fetch(POSTS_SOURCES[index], { cache:'no-store' })
+        .then(function(res){
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
+        .then(function(posts){
+          if (!Array.isArray(posts) || !posts.length) throw new Error('пустой ответ');
+          return posts;
+        })
+        .catch(function(err){
+          if (index + 1 < POSTS_SOURCES.length) return loadFrom(index + 1);
+          throw err;
+        });
+    };
+
+    loadFrom(0)
+      .then(function(posts){
+        var tags = renderInto(railEl, posts, 0);
+        renderFilters(tags);
+        if (latestEl) renderInto(latestEl, posts, 3);
+      })
+      .catch(function(err){
+        railEl.innerHTML = '';
+        railEl.appendChild(failure(err));
+        if (latestEl){ latestEl.innerHTML = ''; latestEl.appendChild(failure(err)); }
+        if (filtersEl) filtersEl.hidden = true;
+      });
   }
 })();
-
-/* ─────────────────────────────────────────────
-   КРУЖОЧКИ — play/pause по клику
-   ───────────────────────────────────────────── */
-function initRoundVideos(){
-  document.querySelectorAll('.round-wrap').forEach(wrap => {
-    const video = wrap.querySelector('.post-round');
-    const btn = wrap.querySelector('.round-play');
-    if (!video || !btn) return;
-    
-    btn.addEventListener('click', () => {
-      const isPlaying = !video.paused;
-      if (isPlaying) {
-        video.pause();
-        wrap.classList.remove('is-playing');
-      } else {
-        video.currentTime = 0;
-        video.play();
-        wrap.classList.add('is-playing');
-        video.onended = () => {
-          wrap.classList.remove('is-playing');
-        };
-      }
-    });
-  });
-}
-
-/* ─────────────────────────────────────────────
-   ФИЛЬТРЫ ПО РУБРИКАМ
-   ───────────────────────────────────────────── */
-document.getElementById('filters')?.addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-tag]');
-  if (!btn) return;
-  
-  const tag = btn.dataset.tag;
-  
-  // Обновляем состояние кнопок
-  document.querySelectorAll('#filters button').forEach(b => {
-    b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
-  });
-  
-  // Фильтруем записи
-  const entries = document.querySelectorAll('.entry');
-  let visibleCount = 0;
-  
-  entries.forEach(entry => {
-    const match = tag === 'all' || entry.dataset.tag === tag;
-    entry.hidden = !match;
-    if (match) visibleCount++;
-  });
-  
-  // Показываем "пусто" если нужно
-  const emptyEl = document.getElementById('empty');
-  if (emptyEl) emptyEl.hidden = visibleCount > 0;
-});
-
-/* ─────────────────────────────────────────────
-   АНИМАЦИЯ ПОЯВЛЕНИЯ (rise)
-   ───────────────────────────────────────────── */
-function initRise(){
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-  
-  document.querySelectorAll('.rise').forEach(el => observer.observe(el));
-}
-
-/* ─────────────────────────────────────────────
-   ЛИПКАЯ ШАПКА
-   ───────────────────────────────────────────── */
-const topEl = document.getElementById('top');
-let lastScroll = 0;
-window.addEventListener('scroll', () => {
-  const scrolled = window.scrollY;
-  if (scrolled > 50) {
-    topEl.classList.add('is-stuck');
-  } else {
-    topEl.classList.remove('is-stuck');
-  }
-  lastScroll = scrolled;
-}, { passive: true });
 </script>
+
 </body>
 </html>

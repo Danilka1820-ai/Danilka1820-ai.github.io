@@ -1,0 +1,38 @@
+name: Разведка разметки Telegram
+
+on:
+  push:
+    paths:
+      - '.github/workflows/inspect.yml'
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump video markup
+        run: |
+          cat > /tmp/inspect.mjs <<'EOF'
+          const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+          let all = '';
+          for (const u of ['https://t.me/s/danilka2028k', 'https://t.me/s/danilka2028k?before=470']) {
+            all += await (await fetch(u, { headers: { 'user-agent': UA } })).text();
+          }
+          console.log('=== длина html:', all.length);
+          for (const key of ['<video', 'roundvideo', 'tgme_widget_message_video', 'js-message_video', 'duration', 'document_wrap', 'voice']) {
+            console.log(`--- вхождений "${key}":`, all.split(key).length - 1);
+          }
+          const re = /<(?:a|div|video)[^>]*(?:video|roundvideo)[^>]*>/g;
+          const seen = new Set();
+          let m, n = 0;
+          while ((m = re.exec(all)) && n < 25) {
+            const tag = m[0].slice(0, 400);
+            const sig = tag.replace(/https?:\/\/[^"' )]+/g, 'URL').slice(0, 160);
+            if (seen.has(sig)) continue;
+            seen.add(sig);
+            n++;
+            console.log('\n>>>', tag);
+          }
+          const wrapIdx = all.indexOf('roundvideo');
+          if (wrapIdx > 0) console.log('\n=== КОНТЕКСТ КРУЖКА ===\n' + all.slice(wrapIdx - 1200, wrapIdx + 1200));
+          EOF
+          node /tmp/inspect.mjs

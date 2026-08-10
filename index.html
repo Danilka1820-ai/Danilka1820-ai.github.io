@@ -72,6 +72,11 @@
   /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
      текст и лента остаются плоскими, иначе читать тяжело. */
   --glass-tint:   linear-gradient(160deg, rgba(255,255,255,.72), rgba(255,255,255,.34));
+  /* Плотный вариант — для поверхностей с текстом. Размытие не спасает: под
+     меню может оказаться почти чёрная картинка, и даже несколько процентов
+     просвета превращаются в призрак под надписями. Стекло здесь держится на
+     кромке, блике и тени, а не на прозрачности. */
+  --glass-panel:  linear-gradient(160deg, rgba(251,252,253,.985), rgba(238,241,245,.975));
   --glass-blur:   blur(20px) saturate(1.8);
   --glass-stroke: rgba(255,255,255,.7);
   --glass-glow:   inset 0 1px 0 rgba(255,255,255,.9);
@@ -211,11 +216,33 @@ a{ color:inherit; text-decoration:none; }
   padding-block:16px;
 }
 .top__nav{
+  position:relative;
   display:flex; align-items:stretch; gap:var(--s3);
   flex:0 1 auto; min-width:0;
+  /* Запас по краям, чтобы капсула на крайних разделах не срезалась;
+     отрицательные поля возвращают полосу на прежнее место. */
+  padding-inline:14px; margin-inline:-14px;
   overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
 }
 .top__nav::-webkit-scrollbar{ display:none; }
+
+/* Стеклянная капсула переезжает к выбранному разделу. */
+.nav__pill{
+  position:absolute; left:0; top:50%; height:34px; margin-top:-17px; width:0;
+  border-radius:999px;
+  border:1px solid var(--glass-stroke);
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:0 6px 18px -12px rgba(17,21,27,.5), var(--glass-glow);
+  opacity:0; pointer-events:none; z-index:0;
+  transition:transform .45s cubic-bezier(.2,.7,.3,1), width .45s cubic-bezier(.2,.7,.3,1), opacity .3s ease;
+}
+.top__nav.has-pill .nav__pill{ opacity:1; }
+.nav__pill.no-anim{ transition:none; }
+/* Пока капсулы нет — подчёркивание; с ней оно лишнее. */
+.top__nav.has-pill .tab::after{ display:none; }
+@media (prefers-reduced-motion: reduce){ .nav__pill{ transition:opacity .3s ease; } }
 
 .tab{
   position:relative; flex:0 0 auto;
@@ -235,20 +262,10 @@ a{ color:inherit; text-decoration:none; }
 .tab[aria-selected="true"]{ color:var(--ink); }
 .tab[aria-selected="true"]::after{ transform:scaleX(1); }
 
-/* Контакты — целевое действие, поэтому отделены рамкой */
-.tab--cta{
-  align-self:center; padding:7px 14px; padding-block:7px;
-  border-radius:999px;
-  border:1px solid var(--glass-stroke);
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:0 6px 18px -12px rgba(17,21,27,.5), var(--glass-glow);
-  color:var(--ink-2);
-}
+/* На широком экране «Контакты» — обычный раздел: их отмечает та же
+   переезжающая капсула, что и остальные. Отдельная рамка только в меню
+   на телефоне, где капсулы нет. */
 .tab--cta::after{ display:none; }
-.tab--cta:hover{ border-color:var(--ink); color:var(--ink); }
-.tab--cta[aria-selected="true"]{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
 
 .top__now{
   margin-left:auto; flex:0 0 auto;
@@ -280,34 +297,49 @@ a{ color:inherit; text-decoration:none; }
 
 @media (max-width:1080px){ .top__now .now-date, .top__now .sep-date{ display:none; } }
 
+/* На телефоне разделы прячутся под три точки, а их место в строке занимают
+   часы: так и время видно, и список разделов не режется по краю экрана. */
 @media (max-width:900px){
   .top__more{ display:flex; }
-  .top__in::after{
-    content:""; position:absolute; right:0; top:0; bottom:0; width:32px;
-    background:linear-gradient(to right, rgba(232,234,237,0), var(--paper));
-    pointer-events:none; z-index:0;
-  }
-  /* Часы уезжают под шапку и выпадают по трём точкам — на узком экране
-     они не помещались в строку и просто пропадали. */
-  .top__now{
-    position:absolute; top:calc(100% + 8px); left:16px; margin:0;
-    padding:10px 16px; border-radius:999px;
-    font-size:12px; letter-spacing:.12em;
-    color:var(--ink);
+
+  .top__nav{
+    position:absolute; top:calc(100% + 10px); left:16px; min-width:220px;
+    flex-direction:column; align-items:stretch; gap:2px;
+    padding:8px; margin:0; border-radius:20px;
+    overflow:visible;
     border:1px solid var(--glass-stroke);
-    background:var(--glass-tint);
+    background:var(--glass-panel);
     -webkit-backdrop-filter:var(--glass-blur);
     backdrop-filter:var(--glass-blur);
     box-shadow:var(--glass-drop), var(--glass-glow);
-    opacity:0; transform:translateY(-6px) scale(.97);
-    pointer-events:none; z-index:2;
+    opacity:0; transform:translateY(-8px) scale(.97);
+    pointer-events:none; z-index:3;
     transition:opacity .22s ease, transform .22s cubic-bezier(.2,.7,.3,1);
   }
-  .top__now.is-open{ opacity:1; transform:none; pointer-events:auto; }
-  .top__now .now-date,.top__now .sep-date{ display:inline; }
+  .top__nav.is-open{ opacity:1; transform:none; pointer-events:auto; }
+
+  .tab{
+    padding:11px 14px; border-radius:12px;
+    font-size:12.5px; letter-spacing:.1em;
+  }
+  .tab::after{ display:none; }
+  .tab[aria-selected="true"]{ background:rgba(17,21,27,.07); color:var(--ink); }
+  .tab--cta{
+    align-self:stretch; margin-top:4px; text-align:left;
+    background:rgba(17,21,27,.06); border-color:rgba(255,255,255,.55);
+    box-shadow:none;
+  }
+  .tab--cta[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
+
+  /* Часы встают в строку — туда, где на широком экране стоят разделы. */
+  .top__now{ display:flex; margin-left:auto; color:var(--ink-2); }
+}
+@media (max-width:560px){
+  .top__name{ font-size:11px; letter-spacing:.12em; }
+  .top__now{ font-size:10.5px; letter-spacing:.06em; gap:6px; }
 }
 @media (max-width:900px) and (prefers-reduced-motion: reduce){
-  .top__now{ transition:none; transform:none; }
+  .top__nav{ transition:none; transform:none; }
 }
 
 /* ─────────────────────────────────────────────
@@ -670,8 +702,9 @@ a{ color:inherit; text-decoration:none; }
   <div class="top__in">
     <a class="top__name" href="#/glavnaya">Данил Сарыков</a>
     <button type="button" class="top__more" id="moreBtn"
-            aria-expanded="false" aria-controls="nowBlock" aria-label="Показать время и город">⋯</button>
-    <nav class="top__nav" role="tablist" aria-label="Разделы сайта">
+            aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
+    <nav class="top__nav" id="navMenu" role="tablist" aria-label="Разделы сайта">
+      <span class="nav__pill" id="navPill" aria-hidden="true"></span>
       <a class="tab" role="tab" href="#/glavnaya" data-tab="home"     aria-selected="true"  aria-controls="tab-home">Главная</a>
       <a class="tab" role="tab" href="#/dnevnik"  data-tab="diary"    aria-selected="false" aria-controls="tab-diary">Записи</a>
       <a class="tab" role="tab" href="#/o-sebe"   data-tab="about"    aria-selected="false" aria-controls="tab-about">О дневнике</a>
@@ -889,20 +922,26 @@ a{ color:inherit; text-decoration:none; }
   tick();
   setInterval(tick, 30000);
 
-  /* ── три точки: на телефоне показывают город и время ── */
+  /* ── три точки: на телефоне под ними прячутся разделы ── */
   var moreBtn = document.getElementById('moreBtn');
-  var nowBlock = document.getElementById('nowBlock');
-  if (moreBtn && nowBlock){
+  var navMenu = document.getElementById('navMenu');
+  var closeMenu = function(){};
+  if (moreBtn && navMenu){
     var setOpen = function(open){
-      nowBlock.classList.toggle('is-open', open);
+      navMenu.classList.toggle('is-open', open);
       moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     };
+    closeMenu = function(){ setOpen(false); };
     moreBtn.addEventListener('click', function(e){
       e.stopPropagation();
       setOpen(moreBtn.getAttribute('aria-expanded') !== 'true');
     });
+    // Выбрали раздел — меню закрывается, чтобы не перекрывать страницу.
+    navMenu.addEventListener('click', function(e){
+      if (e.target.closest('.tab')) setOpen(false);
+    });
     document.addEventListener('click', function(e){
-      if (!nowBlock.contains(e.target)) setOpen(false);
+      if (!navMenu.contains(e.target) && e.target !== moreBtn) setOpen(false);
     });
     document.addEventListener('keydown', function(e){
       if (e.key === 'Escape') setOpen(false);
@@ -982,6 +1021,36 @@ a{ color:inherit; text-decoration:none; }
     return TABS[0];
   }
 
+  /* Капсула едет к выбранному разделу. На телефоне разделы лежат столбиком
+     в выпадающем меню — там она не нужна. */
+  var navPill = document.getElementById('navPill');
+  var pillPlaced = false;
+  function movePill(){
+    if (!navPill || !navMenu) return;
+    var narrow = window.matchMedia('(max-width:900px)').matches;
+    var active = navMenu.querySelector('.tab[aria-selected="true"]');
+    if (narrow || !active || !active.offsetWidth){
+      navMenu.classList.remove('has-pill');
+      pillPlaced = false;
+      return;
+    }
+    var pad = 14;
+    // Первую установку не анимируем, иначе капсула приезжает из угла.
+    if (!pillPlaced) navPill.classList.add('no-anim');
+    navPill.style.width = (active.offsetWidth + pad * 2) + 'px';
+    navPill.style.transform = 'translateX(' + (active.offsetLeft - pad) + 'px)';
+    navMenu.classList.add('has-pill');
+    if (!pillPlaced){
+      void navPill.offsetWidth;
+      navPill.classList.remove('no-anim');
+      pillPlaced = true;
+    }
+  }
+
+  window.addEventListener('resize', movePill);
+  // Ширина надписей меняется, когда доезжают шрифты — пересчитываем.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(movePill);
+
   function showTab(tab, keepScroll){
     TABS.forEach(function(t){
       var panel = document.getElementById('tab-' + t.key);
@@ -990,11 +1059,13 @@ a{ color:inherit; text-decoration:none; }
     tabLinks.forEach(function(link){
       var active = link.getAttribute('data-tab') === tab.key;
       link.setAttribute('aria-selected', active ? 'true' : 'false');
-      // На узком экране строка разделов прокручивается — показываем выбранный.
-      if (active && link.scrollIntoView){
+      // Если строка разделов не помещается и прокручивается — подводим выбранный.
+      // В выпадающем меню на телефоне прокручивать нечего.
+      if (active && link.scrollIntoView && navMenu && navMenu.scrollWidth > navMenu.clientWidth + 1){
         link.scrollIntoView({ block:'nearest', inline:'nearest', behavior: reduce ? 'auto' : 'smooth' });
       }
     });
+    movePill();
     document.title = tab.title;
     // Останавливаем всё, что играло на покинутой вкладке.
     [].slice.call(document.querySelectorAll('video')).forEach(function(v){

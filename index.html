@@ -68,6 +68,14 @@
   --measure: 34rem;      /* ширина колонки чтения */
   --rail: 96px;          /* левый рельс с датами */
   --page: 1160px;
+
+  /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
+     текст и лента остаются плоскими, иначе читать тяжело. */
+  --glass-tint:   linear-gradient(160deg, rgba(255,255,255,.72), rgba(255,255,255,.34));
+  --glass-blur:   blur(20px) saturate(1.8);
+  --glass-stroke: rgba(255,255,255,.7);
+  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.9);
+  --glass-drop:   0 10px 30px -14px rgba(17,21,27,.35);
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
@@ -79,6 +87,12 @@ body{
   margin:0;
   background:var(--paper);
   color:var(--ink);
+  /* Едва заметный свет, чтобы стеклу было что преломлять: на ровной заливке
+     эффект не читается вовсе. */
+  background-image:
+    radial-gradient(60rem 40rem at 12% -10%, rgba(176,121,28,.09), transparent 60%),
+    radial-gradient(50rem 36rem at 92% 8%, rgba(84,92,107,.13), transparent 62%);
+  background-attachment:fixed;
   font-family:var(--serif);
   font-weight:400;
   font-size:19px;
@@ -111,6 +125,39 @@ a{ color:inherit; text-decoration:none; }
 }
 .skip:focus{ left:16px; top:16px; }
 
+/* ─────────────────────────────────────────────
+   ЖИДКОЕ СТЕКЛО
+   ───────────────────────────────────────────── */
+.glass{
+  position:relative;
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-stroke);
+  box-shadow:var(--glass-drop), var(--glass-glow);
+}
+/* Блик по верхней кромке — то, что и делает стекло стеклом. */
+.glass::before{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background:linear-gradient(180deg, rgba(255,255,255,.55), transparent 42%);
+  opacity:.9; pointer-events:none;
+}
+.glass > *{ position:relative; z-index:1; }
+
+/* Там, где размытия нет, стекло превращается в плотную заливку — иначе
+   надписи лягут прямо на контент. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  .glass{ background:color-mix(in srgb, var(--paper) 94%, white); }
+}
+/* Уважаем системную просьбу убрать прозрачность. */
+@media (prefers-reduced-transparency: reduce){
+  .glass{
+    background:color-mix(in srgb, var(--paper) 94%, white);
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+  .glass::before{ display:none; }
+}
+
 .label{
   font-family:var(--mono);
   font-size:11px;
@@ -124,14 +171,31 @@ a{ color:inherit; text-decoration:none; }
    ШАПКА — имя, разделы и часы в одной строке
    ───────────────────────────────────────────── */
 .top{
-  position:sticky; top:0; z-index:20;
-  background:var(--paper);
-  background:color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter:saturate(1.4) blur(10px);
+  position:sticky; top:0; z-index:30;
+  background:color-mix(in srgb, var(--paper) 72%, transparent);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
   border-bottom:1px solid transparent;
-  transition:border-color .3s ease;
+  box-shadow:none;
+  transition:border-color .3s ease, box-shadow .3s ease, background .3s ease;
 }
-.top.is-stuck{ border-bottom-color:var(--rule); }
+/* Пока страница вверху, шапка почти незаметна; со скроллом под ней появляется
+   содержимое — и она проявляется как стекло. */
+.top.is-stuck{
+  border-bottom-color:var(--glass-stroke);
+  background:var(--glass-tint);
+  box-shadow:0 10px 30px -18px rgba(17,21,27,.4), var(--glass-glow);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  .top{ background:var(--paper); }
+  .top.is-stuck{ background:var(--paper); border-bottom-color:var(--rule); }
+}
+@media (prefers-reduced-transparency: reduce){
+  .top,.top.is-stuck{
+    background:var(--paper);
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+}
 
 .top__in{
   position:relative;
@@ -174,7 +238,13 @@ a{ color:inherit; text-decoration:none; }
 /* Контакты — целевое действие, поэтому отделены рамкой */
 .tab--cta{
   align-self:center; padding:7px 14px; padding-block:7px;
-  border:1px solid var(--rule); color:var(--ink-2);
+  border-radius:999px;
+  border:1px solid var(--glass-stroke);
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:0 6px 18px -12px rgba(17,21,27,.5), var(--glass-glow);
+  color:var(--ink-2);
 }
 .tab--cta::after{ display:none; }
 .tab--cta:hover{ border-color:var(--ink); color:var(--ink); }
@@ -192,14 +262,52 @@ a{ color:inherit; text-decoration:none; }
 }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
 
+/* Три точки рядом с именем — на широком экране не нужны, часы и так видны. */
+.top__more{
+  display:none; flex:0 0 auto; align-self:center;
+  width:30px; height:30px; border-radius:50%; cursor:pointer;
+  align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:15px; line-height:1;
+  color:var(--ink-2);
+  border:1px solid var(--glass-stroke);
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:0 6px 16px -12px rgba(17,21,27,.6), var(--glass-glow);
+  transition:color .2s, background .2s;
+}
+.top__more[aria-expanded="true"]{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+
 @media (max-width:1080px){ .top__now .now-date, .top__now .sep-date{ display:none; } }
+
 @media (max-width:900px){
-  .top__now{ display:none; }
+  .top__more{ display:flex; }
   .top__in::after{
     content:""; position:absolute; right:0; top:0; bottom:0; width:32px;
     background:linear-gradient(to right, rgba(232,234,237,0), var(--paper));
-    pointer-events:none;
+    pointer-events:none; z-index:0;
   }
+  /* Часы уезжают под шапку и выпадают по трём точкам — на узком экране
+     они не помещались в строку и просто пропадали. */
+  .top__now{
+    position:absolute; top:calc(100% + 8px); left:16px; margin:0;
+    padding:10px 16px; border-radius:999px;
+    font-size:12px; letter-spacing:.12em;
+    color:var(--ink);
+    border:1px solid var(--glass-stroke);
+    background:var(--glass-tint);
+    -webkit-backdrop-filter:var(--glass-blur);
+    backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-drop), var(--glass-glow);
+    opacity:0; transform:translateY(-6px) scale(.97);
+    pointer-events:none; z-index:2;
+    transition:opacity .22s ease, transform .22s cubic-bezier(.2,.7,.3,1);
+  }
+  .top__now.is-open{ opacity:1; transform:none; pointer-events:auto; }
+  .top__now .now-date,.top__now .sep-date{ display:inline; }
+}
+@media (max-width:900px) and (prefers-reduced-motion: reduce){
+  .top__now{ transition:none; transform:none; }
 }
 
 /* ─────────────────────────────────────────────
@@ -238,13 +346,22 @@ a{ color:inherit; text-decoration:none; }
   font-family:var(--mono); font-size:12px; letter-spacing:.1em;
   text-transform:uppercase;
   padding:13px 22px;
-  border:1px solid var(--ink);
-  background:none; color:var(--ink); cursor:pointer;
-  transition:background .22s, color .22s, transform .22s, border-color .22s;
+  border-radius:999px;
+  border:1px solid var(--glass-stroke);
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-drop), var(--glass-glow);
+  color:var(--ink); cursor:pointer;
+  transition:background .22s, color .22s, transform .22s, border-color .22s, box-shadow .22s;
 }
-.btn:hover{ background:var(--ink); color:var(--paper); transform:translateY(-1px); }
-.btn--ghost{ border-color:var(--rule); color:var(--ink-2); }
-.btn--ghost:hover{ background:transparent; color:var(--ink); border-color:var(--ink); }
+.btn:hover{
+  background:var(--ink); color:var(--paper); border-color:var(--ink);
+  transform:translateY(-1px);
+  box-shadow:0 14px 30px -14px rgba(17,21,27,.55);
+}
+.btn--ghost{ background:rgba(255,255,255,.28); color:var(--ink-2); border-color:rgba(255,255,255,.5); }
+.btn--ghost:hover{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
 
 /* В профиле пока не фотография, а знак — поэтому небольшой квадрат
    в нейтральном тоне, а не портрет во всю колонку. */
@@ -292,11 +409,13 @@ a{ color:inherit; text-decoration:none; }
 .filters button{
   font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-2);
-  background:none; border:1px solid var(--rule);
+  background:rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.6);
+  border-radius:999px;
+  box-shadow:0 4px 14px -10px rgba(17,21,27,.5), inset 0 1px 0 rgba(255,255,255,.8);
   padding:8px 14px; cursor:pointer;
-  transition:color .2s, border-color .2s, background .2s;
+  transition:color .2s, border-color .2s, background .2s, box-shadow .2s;
 }
-.filters button:hover{ color:var(--ink); border-color:var(--ink-3); }
+.filters button:hover{ color:var(--ink); background:rgba(255,255,255,.72); }
 .filters button[aria-pressed="true"]{ color:var(--paper); background:var(--ink); border-color:var(--ink); }
 
 .rail{ position:relative; }
@@ -389,13 +508,18 @@ a{ color:inherit; text-decoration:none; }
 .round__video{ width:100%; height:100%; object-fit:cover; display:block; cursor:pointer; }
 .round__play{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.28); border:0; border-radius:50%; cursor:pointer;
+  background:rgba(17,21,27,.22); border:0; border-radius:50%; cursor:pointer;
   transition:opacity .25s, background .25s;
 }
-.round__play:hover{ background:rgba(17,21,27,.4); }
+.round__play:hover{ background:rgba(17,21,27,.32); }
 .round__play span{
   width:56px; height:56px; border-radius:50%;
-  background:var(--paper); color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,.62));
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:1px solid rgba(255,255,255,.8);
+  box-shadow:0 10px 26px -10px rgba(17,21,27,.7), inset 0 1px 0 rgba(255,255,255,.95);
+  color:var(--ink);
   display:flex; align-items:center; justify-content:center;
   font-size:18px; padding-left:4px;
 }
@@ -470,15 +594,20 @@ a{ color:inherit; text-decoration:none; }
 /* наверх */
 .up{
   position:fixed; right:20px; bottom:20px;
-  width:44px; height:44px;
-  border:1px solid var(--rule); background:var(--paper); color:var(--ink);
+  width:46px; height:46px; border-radius:50%;
+  border:1px solid var(--glass-stroke);
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:var(--glass-drop), var(--glass-glow);
+  color:var(--ink);
   font-family:var(--mono); font-size:15px; cursor:pointer;
   opacity:0; pointer-events:none; transform:translateY(8px);
   transition:opacity .3s, transform .3s, border-color .2s;
   z-index:15;
 }
 .up.is-on{ opacity:1; pointer-events:auto; transform:none; }
-.up:hover{ border-color:var(--ink); }
+.up:hover{ border-color:var(--ink); background:var(--ink); color:var(--paper); }
 
 /* ─────────────────────────────────────────────
    ПОЯВЛЕНИЕ
@@ -540,6 +669,8 @@ a{ color:inherit; text-decoration:none; }
 <header class="top" id="top">
   <div class="top__in">
     <a class="top__name" href="#/glavnaya">Данил Сарыков</a>
+    <button type="button" class="top__more" id="moreBtn"
+            aria-expanded="false" aria-controls="nowBlock" aria-label="Показать время и город">⋯</button>
     <nav class="top__nav" role="tablist" aria-label="Разделы сайта">
       <a class="tab" role="tab" href="#/glavnaya" data-tab="home"     aria-selected="true"  aria-controls="tab-home">Главная</a>
       <a class="tab" role="tab" href="#/dnevnik"  data-tab="diary"    aria-selected="false" aria-controls="tab-diary">Записи</a>
@@ -547,7 +678,7 @@ a{ color:inherit; text-decoration:none; }
       <a class="tab" role="tab" href="#/voprosy"  data-tab="faq"      aria-selected="false" aria-controls="tab-faq">Вопросы</a>
       <a class="tab tab--cta" role="tab" href="#/kontakty" data-tab="contacts" aria-selected="false" aria-controls="tab-contacts">Контакты</a>
     </nav>
-    <div class="top__now">
+    <div class="top__now" id="nowBlock">
       <span class="dot" aria-hidden="true"></span>
       <span id="nowPlace">Москва</span>
       <span class="sep" aria-hidden="true">·</span>
@@ -757,6 +888,26 @@ a{ color:inherit; text-decoration:none; }
   }
   tick();
   setInterval(tick, 30000);
+
+  /* ── три точки: на телефоне показывают город и время ── */
+  var moreBtn = document.getElementById('moreBtn');
+  var nowBlock = document.getElementById('nowBlock');
+  if (moreBtn && nowBlock){
+    var setOpen = function(open){
+      nowBlock.classList.toggle('is-open', open);
+      moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+    moreBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      setOpen(moreBtn.getAttribute('aria-expanded') !== 'true');
+    });
+    document.addEventListener('click', function(e){
+      if (!nowBlock.contains(e.target)) setOpen(false);
+    });
+    document.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') setOpen(false);
+    });
+  }
 
   /* ── линия под шапкой появляется при прокрутке ── */
   var top = document.getElementById('top');

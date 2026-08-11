@@ -879,6 +879,100 @@ a{ color:inherit; text-decoration:none; }
   .pl__time{ font-size:10px; }
 }
 
+/* ─── Окно просмотра ───
+   Полноэкранное окно поверх страницы: крупный кадр, полная панель и
+   переключение между всеми роликами ленты. */
+.tv{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
+.tv__backdrop{ position:absolute; inset:0; background:rgba(11,14,19,.93); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
+.tv__win{
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  max-width:min(1100px, 92vw); width:100%;
+  padding:0 clamp(8px,4vw,56px);
+}
+.tv__stage{
+  position:relative; width:100%; max-height:70vh;
+  display:flex; align-items:center; justify-content:center;
+  background:#000; border-radius:6px; overflow:hidden;
+}
+.tv__video{ max-width:100%; max-height:70vh; display:block; cursor:pointer; }
+/* Кружочек и в окне остаётся кружочком. */
+.tv__win--round .tv__stage{
+  width:min(70vh,76vw); aspect-ratio:1/1; border-radius:50%; background:#000;
+}
+.tv__win--round .tv__video{ width:100%; height:100%; object-fit:cover; }
+
+.tv__big{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(17,21,27,.2); border:0; cursor:pointer; padding:0;
+  transition:opacity .25s;
+}
+.tv__big span{
+  width:70px; height:70px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:23px; padding-left:5px; color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
+  border:1px solid rgba(255,255,255,.85);
+  box-shadow:0 12px 30px -10px rgba(0,0,0,.8);
+}
+.tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
+.tv.is-waiting .tv__big span{ animation:plWait 1s linear infinite; }
+
+.tv__close,.tv__nav{
+  position:absolute; z-index:2;
+  width:46px; height:46px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:18px; line-height:1;
+  color:var(--paper); cursor:pointer;
+  background:rgba(244,246,248,.14);
+  border:1px solid rgba(244,246,248,.28);
+  transition:background .2s, opacity .2s;
+}
+.tv__close:hover,.tv__nav:hover{ background:rgba(244,246,248,.28); }
+.tv__close{ top:-58px; right:clamp(8px,4vw,56px); }
+.tv__nav{ top:50%; margin-top:-23px; font-size:26px; }
+.tv__prev{ left:-4px; }
+.tv__next{ right:-4px; }
+.tv__nav[disabled]{ opacity:.25; cursor:default; }
+
+.tv__cap{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:rgba(244,246,248,.66); text-align:center;
+}
+
+/* Панель в окне — светлая на тёмном, поэтому свои цвета поверх общих правил. */
+.tv__bar{
+  display:flex; align-items:center; gap:8px;
+  width:100%; max-width:760px; min-width:0;
+  padding:8px 12px; border-radius:999px;
+  background:rgba(244,246,248,.1);
+  border:1px solid rgba(244,246,248,.2);
+}
+.tv__bar .pl__btn{ color:var(--paper); }
+.tv__bar .pl__btn:hover{ background:rgba(244,246,248,.16); }
+.tv__bar .pl__time{ color:rgba(244,246,248,.75); }
+.tv__bar .pl__track::before{ background:rgba(244,246,248,.22); }
+.pl__buffer{
+  position:absolute; left:0; top:50%; height:3px; width:0;
+  margin-top:-1.5px; border-radius:3px; background:rgba(244,246,248,.34);
+}
+.tv__vol{ flex:0 0 76px; accent-color:var(--lamp); background:transparent; }
+.tv__rate span{ font-size:11px; }
+
+@media (max-width:720px){
+  .tv__win{ gap:10px; }
+  .tv__close{ top:-52px; }
+  .tv__nav{ width:40px; height:40px; margin-top:-20px; }
+  .tv__prev{ left:-6px; }
+  .tv__next{ right:-6px; }
+  .tv__vol{ display:none; }
+  .tv__bar{ gap:4px; padding:6px 8px; }
+  .tv__bar .pl__btn{ width:32px; height:32px; }
+}
+@media (prefers-reduced-transparency: reduce){
+  .tv__backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none; background:rgba(17,21,27,.96); }
+}
+
 /* Фотографии */
 .entry__photo{
   width:100%; aspect-ratio:3/2; object-fit:cover;

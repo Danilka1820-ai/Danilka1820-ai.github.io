@@ -282,6 +282,227 @@
 
   var SKIP = 10; // на сколько секунд прыгают кнопки перемотки
 
+  /* ─── Окно просмотра ───
+     Одно на всю страницу: ролик в нём один и тот же элемент, меняется только
+     источник. Так в памяти не висят четырнадцать плееров, а переключение
+     между роликами получается мгновенным. */
+
+  var SPEEDS = [1, 1.25, 1.5, 2, 0.5];
+
+  var tv = null;         // разметка окна, создаётся при первом открытии
+  var tvList = null;     // список роликов, по которому листаем
+  var tvIndex = -1;
+  var tvReturn = null;   // куда вернуть фокус после закрытия
+
+  function buildTheater(){
+    var root = document.createElement('div');
+    root.className = 'tv';
+    root.hidden = true;
+    root.innerHTML =
+      '<div class="tv__backdrop"></div>' +
+      '<div class="tv__win" role="dialog" aria-modal="true" aria-label="Просмотр видео">' +
+        '<button type="button" class="tv__close" aria-label="Закрыть">✕</button>' +
+        '<button type="button" class="tv__nav tv__prev" aria-label="Предыдущее видео">‹</button>' +
+        '<button type="button" class="tv__nav tv__next" aria-label="Следующее видео">›</button>' +
+        '<div class="tv__stage"><video class="tv__video" playsinline preload="metadata"></video>' +
+          '<button type="button" class="tv__big" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
+        '</div>' +
+        '<div class="tv__cap"></div>' +
+        '<div class="tv__bar">' +
+          '<button type="button" class="pl__btn tv__back" aria-label="Назад на 10 секунд"><span aria-hidden="true">↺</span></button>' +
+          '<button type="button" class="pl__btn tv__play" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
+          '<button type="button" class="pl__btn tv__fwd" aria-label="Вперёд на 10 секунд"><span aria-hidden="true">↻</span></button>' +
+          '<div class="pl__track tv__track" role="slider" tabindex="0" aria-label="Перемотка" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
+            '<div class="pl__buffer"></div><div class="pl__fill"></div><div class="pl__knob"></div>' +
+          '</div>' +
+          '<span class="pl__time tv__time">0:00</span>' +
+          '<button type="button" class="pl__btn tv__rate" aria-label="Скорость воспроизведения"><span aria-hidden="true">1×</span></button>' +
+          '<button type="button" class="pl__btn tv__sound" aria-label="Выключить звук"><span aria-hidden="true">♪</span></button>' +
+          '<input class="tv__vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Громкость">' +
+          '<button type="button" class="pl__btn tv__full" aria-label="Во весь экран"><span aria-hidden="true">⛶</span></button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(root);
+
+    var v = root.querySelector('.tv__video');
+    var track = root.querySelector('.tv__track');
+    var fill = root.querySelector('.pl__fill');
+    var buffer = root.querySelector('.pl__buffer');
+    var knob = root.querySelector('.pl__knob');
+    var timeEl = root.querySelector('.tv__time');
+    var playBtn = root.querySelector('.tv__play');
+    var bigBtn = root.querySelector('.tv__big');
+    var rateBtn = root.querySelector('.tv__rate');
+    var soundBtn = root.querySelector('.tv__sound');
+    var volEl = root.querySelector('.tv__vol');
+
+    function paint(){
+      var dur = v.duration;
+      var known = isFinite(dur) && dur > 0;
+      var part = known ? v.currentTime / dur : 0;
+      fill.style.width = (part * 100) + '%';
+      knob.style.left = (part * 100) + '%';
+      track.setAttribute('aria-valuenow', Math.round(part * 100));
+      timeEl.textContent = clockText(v.currentTime) + (known ? ' / ' + clockText(dur) : '');
+      // Полоска закачанного: видно, докуда ролик уже доехал по сети.
+      if (known && v.buffered.length){
+        buffer.style.width = ((v.buffered.end(v.buffered.length - 1) / dur) * 100) + '%';
+      } else {
+        buffer.style.width = '0%';
+      }
+    }
+
+    function toggle(){ if (v.paused) v.play().catch(function(){}); else v.pause(); }
+    function nudge(sec){
+      if (!isFinite(v.duration) || !v.duration) return;
+      v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + sec));
+      paint();
+    }
+    function seekPart(part){
+      if (!isFinite(v.duration) || !v.duration) return;
+      v.currentTime = Math.max(0, Math.min(1, part)) * v.duration;
+      paint();
+    }
+    function partFromEvent(e){
+      var box = track.getBoundingClientRect();
+      var x = (e.touches ? e.touches[0].clientX : e.clientX) - box.left;
+      return box.width ? x / box.width : 0;
+    }
+
+    bigBtn.addEventListener('click', toggle);
+    playBtn.addEventListener('click', toggle);
+    v.addEventListener('click', toggle);
+    root.querySelector('.tv__back').addEventListener('click', function(){ nudge(-SKIP); });
+    root.querySelector('.tv__fwd').addEventListener('click', function(){ nudge(SKIP); });
+
+    rateBtn.addEventListener('click', function(){
+      var i = SPEEDS.indexOf(v.playbackRate);
+      var next = SPEEDS[(i + 1) % SPEEDS.length];
+      v.playbackRate = next;
+      rateBtn.querySelector('span').textContent = next + '×';
+    });
+
+    soundBtn.addEventListener('click', function(){
+      v.muted = !v.muted;
+      soundBtn.querySelector('span').textContent = v.muted ? '✕' : '♪';
+      soundBtn.setAttribute('aria-label', v.muted ? 'Включить звук' : 'Выключить звук');
+    });
+    volEl.addEventListener('input', function(){
+      v.volume = Number(volEl.value);
+      v.muted = v.volume === 0;
+    });
+
+    root.querySelector('.tv__full').addEventListener('click', function(){
+      var win = root.querySelector('.tv__win');
+      if (document.fullscreenElement) document.exitFullscreen();
+      else if (win.requestFullscreen) win.requestFullscreen().catch(function(){});
+    });
+
+    var dragging = false;
+    track.addEventListener('pointerdown', function(e){
+      dragging = true;
+      if (track.setPointerCapture) track.setPointerCapture(e.pointerId);
+      seekPart(partFromEvent(e));
+    });
+    track.addEventListener('pointermove', function(e){ if (dragging) seekPart(partFromEvent(e)); });
+    track.addEventListener('pointerup', function(){ dragging = false; });
+    track.addEventListener('pointercancel', function(){ dragging = false; });
+
+    v.addEventListener('play', function(){
+      root.classList.add('is-playing');
+      playBtn.querySelector('span').textContent = '❚❚';
+      playBtn.setAttribute('aria-label', 'Пауза');
+    });
+    var stopped = function(){
+      root.classList.remove('is-playing');
+      playBtn.querySelector('span').textContent = '▶';
+      playBtn.setAttribute('aria-label', 'Проиграть');
+    };
+    v.addEventListener('pause', stopped);
+    v.addEventListener('ended', stopped);
+    v.addEventListener('loadedmetadata', paint);
+    v.addEventListener('timeupdate', paint);
+    v.addEventListener('progress', paint);
+    v.addEventListener('waiting', function(){ root.classList.add('is-waiting'); });
+    v.addEventListener('playing', function(){ root.classList.remove('is-waiting'); });
+
+    root.querySelector('.tv__close').addEventListener('click', closeTheater);
+    root.querySelector('.tv__backdrop').addEventListener('click', closeTheater);
+    root.querySelector('.tv__prev').addEventListener('click', function(){ step(-1); });
+    root.querySelector('.tv__next').addEventListener('click', function(){ step(1); });
+
+    root.video = v;
+    root.paint = paint;
+    root.nudge = nudge;
+    root.toggle = toggle;
+    return root;
+  }
+
+  function step(dir){
+    if (!tvList) return;
+    var next = tvIndex + dir;
+    if (next < 0 || next >= tvList.length) return;
+    showInTheater(next);
+  }
+
+  function showInTheater(index){
+    var entry = tvList[index];
+    if (!entry) return;
+    tvIndex = index;
+
+    var v = tv.video;
+    v.pause();
+    v.src = entry.item.src;
+    v.poster = entry.item.poster || '';
+    v.loop = entry.item.type === 'round';
+    tv.querySelector('.tv__win').classList.toggle('tv__win--round', entry.item.type === 'round');
+    tv.querySelector('.tv__cap').textContent =
+      (entry.item.type === 'round' ? 'Кружочек' : 'Видео') +
+      (entry.date ? ' · ' + entry.date : '') +
+      ' · ' + (index + 1) + ' из ' + tvList.length;
+    tv.querySelector('.tv__prev').disabled = index === 0;
+    tv.querySelector('.tv__next').disabled = index === tvList.length - 1;
+    tv.paint();
+    v.play().catch(function(){});
+  }
+
+  function onTheaterKey(e){
+    if (tv.hidden) return;
+    var k = e.key;
+    if (k === 'Escape'){ closeTheater(); e.preventDefault(); }
+    else if (k === 'ArrowRight'){ tv.nudge(5); e.preventDefault(); }
+    else if (k === 'ArrowLeft'){ tv.nudge(-5); e.preventDefault(); }
+    else if (k === ' '){ tv.toggle(); e.preventDefault(); }
+    else if (k === 'n' || k === 'N'){ step(1); }
+    else if (k === 'p' || k === 'P'){ step(-1); }
+  }
+
+  function openTheater(list, index, opener){
+    if (!tv){
+      tv = buildTheater();
+      document.addEventListener('keydown', onTheaterKey);
+    }
+    tvList = list;
+    tvReturn = opener || null;
+    // Всё, что играло в ленте, замолкает — иначе звук наложится.
+    [].slice.call(document.querySelectorAll('.pl__video')).forEach(function(o){ o.pause(); });
+    tv.hidden = false;
+    document.body.style.overflow = 'hidden';
+    showInTheater(index);
+    tv.querySelector('.tv__close').focus();
+  }
+
+  function closeTheater(){
+    if (!tv || tv.hidden) return;
+    tv.video.pause();
+    tv.video.removeAttribute('src');
+    tv.video.load();
+    tv.hidden = true;
+    document.body.style.overflow = '';
+    if (tvReturn && tvReturn.focus) tvReturn.focus();
+  }
+
+
   function clockText(sec){
     if (!isFinite(sec) || sec < 0) sec = 0;
     var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
@@ -297,7 +518,7 @@
     return b;
   }
 
-  function buildPlayer(item){
+  function buildPlayer(item, list, date){
     var round = item.type === 'round';
 
     var video = document.createElement('video');
@@ -313,6 +534,10 @@
 
     var root = document.createElement('div');
     root.className = 'pl' + (round ? ' pl--round' : '');
+
+    // Место этого ролика в списке — по нему окно листает соседние.
+    var slot = -1;
+    if (list){ slot = list.length; list.push({ item:item, date:date }); }
 
     var stage = document.createElement('div');
     stage.className = 'pl__stage';
@@ -362,14 +587,12 @@
     bar.appendChild(time);
     bar.appendChild(sound);
 
-    if (!round && document.fullscreenEnabled){
-      var full = iconButton('pl__full', 'Во весь экран', '⛶');
-      full.addEventListener('click', function(){
-        if (document.fullscreenElement) document.exitFullscreen();
-        else if (root.requestFullscreen) root.requestFullscreen().catch(function(){});
-      });
-      bar.appendChild(full);
-    }
+    // Развернуть в окно просмотра: там полная панель и переключение роликов.
+    var expand = iconButton('pl__expand', 'Открыть в окне', '⛶');
+    expand.addEventListener('click', function(){
+      if (list && slot >= 0) openTheater(list, slot, expand);
+    });
+    bar.appendChild(expand);
 
     root.appendChild(bar);
 
@@ -437,7 +660,12 @@
       }
     }
 
-    big.addEventListener('click', toggle);
+    // Нажатие на кадр открывает окно — так и просили: полноценное окно,
+    // а не проигрывание в углу страницы. Мелкая кнопка в панели играет тут же.
+    big.addEventListener('click', function(){
+      if (list && slot >= 0) openTheater(list, slot, big);
+      else toggle();
+    });
     play.addEventListener('click', toggle);
     video.addEventListener('click', toggle);
     back.addEventListener('click', function(){ nudge(-SKIP); });
@@ -504,7 +732,7 @@
     return root;
   }
 
-  function buildMedia(item){
+  function buildMedia(item, list, date){
     if (item.type === 'photo'){
       var img = document.createElement('img');
       img.className = 'entry__photo';
@@ -516,7 +744,7 @@
       img.onerror = function(){ img.style.display = 'none'; };
       return img;
     }
-    return buildPlayer(item);
+    return buildPlayer(item, list, date);
   }
 
   function normalize(post){
@@ -535,7 +763,7 @@
     };
   }
 
-  function buildEntry(post){
+  function buildEntry(post, mediaList){
     var art = document.createElement('article');
     art.className = 'entry rise';
     if (post.tags.length) art.setAttribute('data-tags', post.tags.join(','));
@@ -580,7 +808,7 @@
       box.className = 'media';
       var onlyPhotos = post.media.every(function(m){ return m.type === 'photo'; });
       if (onlyPhotos && post.media.length > 1) box.className += ' media--pair';
-      post.media.forEach(function(item){ box.appendChild(buildMedia(item)); });
+      post.media.forEach(function(item){ box.appendChild(buildMedia(item, mediaList, post.date)); });
       body.appendChild(box);
     }
 
@@ -609,13 +837,14 @@
     var frag = document.createDocumentFragment();
     var shown = 0;
     var tagCount = {};
+    var mediaList = [];   // ролики этой ленты — по ним листает окно просмотра
     posts.forEach(function(raw){
       if (limit && shown >= limit) return;
       var post = normalize(raw);
       if (!post.text.trim() && !post.media.length) return;
       shown++;
       post.tags.forEach(function(t){ tagCount[t] = (tagCount[t] || 0) + 1; });
-      frag.appendChild(buildEntry(post));
+      frag.appendChild(buildEntry(post, mediaList));
     });
     if (!shown){
       target.innerHTML = '<p class="feed__empty">Записей пока нет.</p>';

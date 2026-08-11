@@ -1961,6 +1961,26 @@ a{ color:inherit; text-decoration:none; }
     function fsElement(){
       return document.fullscreenElement || document.webkitFullscreenElement || null;
     }
+    /* Развёрнуто ли хоть что-то наше. На iPhone система разворачивает сам
+       видеоэлемент своим плеером, и в документе его при этом может не быть. */
+    function inFullscreen(){
+      return fsElement() === win || fsElement() === v || !!v.webkitDisplayingFullscreen;
+    }
+    /* Выход. Раньше его звала только кнопка — и окно, закрытое крестиком из
+       полного экрана, оставляло браузер развёрнутым: страница видна, а выйти
+       можно лишь кнопкой браузера или свайпом. */
+    function leaveFullscreen(){
+      try{
+        if (fsElement()){
+          var exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document);
+        } else if (v.webkitDisplayingFullscreen && v.webkitExitFullscreen){
+          v.webkitExitFullscreen();
+        }
+      }catch(e){}
+      root.classList.remove('is-fs');
+      unlockTurn();
+    }
     function markFullscreen(){
       var on = fsElement() === win;
       root.classList.toggle('is-fs', on);
@@ -1984,10 +2004,7 @@ a{ color:inherit; text-decoration:none; }
     document.addEventListener('webkitfullscreenchange', markFullscreen);
 
     root.querySelector('.tv__full').addEventListener('click', function(){
-      if (fsElement()){
-        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-        return;
-      }
+      if (inFullscreen()){ leaveFullscreen(); return; }
       var request = win.requestFullscreen || win.webkitRequestFullscreen;
       var onVideo = function(){
         // Запасной путь для iPhone и старых браузеров.
@@ -2085,7 +2102,9 @@ a{ color:inherit; text-decoration:none; }
     }
 
     root.querySelector('.tv__close').addEventListener('click', closeTheater);
-    root.querySelector('.tv__backdrop').addEventListener('click', closeTheater);
+    root.querySelector('.tv__backdrop').addEventListener('click', function(){
+      if (!inFullscreen()) closeTheater();
+    });
     root.querySelector('.tv__prev').addEventListener('click', function(){ step(-1); });
     root.querySelector('.tv__next').addEventListener('click', function(){ step(1); });
 
@@ -2107,6 +2126,8 @@ a{ color:inherit; text-decoration:none; }
     });
 
     root.video = v;
+    root.inFullscreen = inFullscreen;
+    root.leaveFullscreen = leaveFullscreen;
     root.paint = paint;
     root.nudge = nudge;
     root.toggle = toggle;
@@ -2211,7 +2232,9 @@ a{ color:inherit; text-decoration:none; }
     var on = e.target;
     if (on && (on.classList.contains('pl__track') || on.classList.contains('tv__vol'))) return;
     var v = tv.video, k = e.key;
-    if (k === 'Escape'){ closeTheater(); }
+    // В полном экране первый Esc только сворачивает: закрывать окно заодно
+    // — значит терять место в ролике одним нажатием.
+    if (k === 'Escape'){ if (tv.inFullscreen()) tv.leaveFullscreen(); else closeTheater(); }
     else if (k === 'ArrowRight'){ tv.nudge(SKIP); }
     else if (k === 'ArrowLeft'){ tv.nudge(-SKIP); }
     else if (k === 'ArrowUp'){ v.volume = Math.min(1, v.volume + 0.1); v.muted = false; }
@@ -2248,6 +2271,9 @@ a{ color:inherit; text-decoration:none; }
   function closeTheater(){
     if (!tv || tv.hidden) return;
     var v = tv.video;
+    // Сначала выходим из полного экрана: иначе браузер останется развёрнутым
+    // на уже спрятанном окне и покажет страницу, из которой не выйти.
+    tv.leaveFullscreen();
     v.pause();
     v.removeAttribute('src');
     v.load();

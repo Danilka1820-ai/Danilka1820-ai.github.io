@@ -139,6 +139,7 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
     ['перемотка',             /function seekPart\s*\(/],
     ['пропорции кадра',       /--tv-ratio/],
     ['сообщение об ошибке',   /tv__fail/],
+    ['выход из полного экрана', /function leaveFullscreen\s*\(/],
   ];
   const нет = нужно.filter(([, re]) => !re.test(html)).map(([имя]) => имя);
   if (нет.length) throw new Error('пропало: ' + нет.join(', '));

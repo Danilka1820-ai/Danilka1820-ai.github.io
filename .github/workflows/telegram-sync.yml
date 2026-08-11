@@ -27,6 +27,17 @@ jobs:
       - name: Установить ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
 
+      # Plyr по умолчанию дёргает пустой ролик со своего сервера cdn.plyr.io.
+      # Внешние запросы нам не нужны — делаем такой файл сами, один раз.
+      - name: Заглушка для плеера
+        run: |
+          f=assets/vendor/plyr/blank.mp4
+          if [ ! -s "$f" ]; then
+            ffmpeg -y -loglevel error -f lavfi -i color=c=black:s=32x32:d=0.1 \
+              -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$f"
+            echo "создан $f ($(stat -c%s "$f") байт)"
+          fi
+
       - run: node scripts/fetch-telegram-posts.mjs
         env:
           TG_CHANNEL: danilka2028k
@@ -35,7 +46,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data assets/posts
+          git add data assets/posts assets/vendor
           if git diff --cached --quiet; then
             echo "Нет новых записей."
             exit 0

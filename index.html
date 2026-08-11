@@ -806,8 +806,9 @@ a{ color:inherit; text-decoration:none; }
 .pl--round .pl__cap{ text-align:center; }
 
 /* ─── Окно просмотра ───
-   Светлое стекло поверх страницы: страница остаётся видна размытой, окно
-   читается за счёт кромки и тени, а не за счёт глухой заливки. */
+   Окно наше: затемнение, стрелки к соседним роликам, подпись, Esc.
+   Плеер внутри — Plyr. Здесь только рамка окна и подгонка библиотеки под
+   оформление сайта; остальное она рисует сама. */
 .tv{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
 .tv__backdrop{
   position:absolute; inset:0;
@@ -822,39 +823,72 @@ a{ color:inherit; text-decoration:none; }
   padding:0 clamp(8px,4vw,56px);
 }
 .tv__stage{
-  position:relative; max-width:100%; max-height:68vh;
-  display:flex; align-items:center; justify-content:center;
+  position:relative; width:100%; max-width:100%;
   border-radius:8px; overflow:hidden;
-  border:1px solid var(--glass-stroke);
-  box-shadow:0 40px 90px -40px rgba(17,21,27,.7), var(--glass-glow);
-  background:rgba(17,21,27,.9);
+  box-shadow:0 40px 90px -40px rgba(17,21,27,.7);
 }
-.tv__video{ max-width:100%; max-height:68vh; display:block; cursor:pointer; }
 .tv__win--round .tv__stage{
-  /* Предел --tv-cap ставит скрипт по настоящему размеру файла. */
-  width:min(68vh, 74vw, var(--tv-cap, 74vw)); aspect-ratio:1/1; border-radius:50%;
+  width:min(68vh, 74vw, var(--tv-cap, 74vw));
+  border-radius:0; overflow:visible; box-shadow:none;
 }
-.tv__win--round .tv__video{ width:100%; height:100%; object-fit:cover; }
 
-.tv__big{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.16); border:0; cursor:pointer; padding:0;
-  transition:opacity .25s;
+/* Plyr под оформление сайта */
+.tv .plyr{
+  --plyr-color-main:var(--lamp);
+  --plyr-video-background:#000;
+  --plyr-menu-background:rgba(251,252,253,.98);
+  --plyr-menu-color:var(--ink);
+  --plyr-font-family:var(--mono);
+  --plyr-font-size-small:12px;
+  --plyr-font-size-base:13px;
+  --plyr-control-radius:999px;
+  width:100%;
 }
-.tv__big span{
-  width:70px; height:70px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:22px; padding-left:5px; color:var(--ink);
-  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
-  border:1px solid rgba(255,255,255,.85);
-  box-shadow:0 14px 34px -12px rgba(17,21,27,.75);
+.tv .plyr__control--overlaid{ background:rgba(255,255,255,.88); color:var(--ink); }
+.tv .plyr__control--overlaid:hover{ background:#fff; }
+.tv .plyr__menu__container{ border:1px solid var(--glass-stroke); }
+
+/* Кружочек: круглым делаем только кадр. Панель Plyr раскладывает сам — свою
+   раскладку он знает лучше, а наши переопределения её ломали. */
+.tv__win--round .plyr{ background:transparent; }
+.tv__win--round .plyr__video-wrapper{
+  aspect-ratio:1/1; border-radius:50%; overflow:hidden; background:#000;
 }
-.tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
-.tv.is-waiting .tv__big span{ animation:plWait 1s linear infinite; }
-@keyframes plWait{ 0%,100%{opacity:.5} 50%{opacity:1} }
+.tv__win--round .plyr video{ width:100%; height:100%; object-fit:cover; }
+/* Панель ужимаем до ширины круга в этом месте — иначе её подложка вылезает
+   за края кадра в пустые углы. Ширина считана по хорде на этой высоте. */
+.tv__win--round .plyr--video .plyr__controls{
+  left:50%; right:auto; bottom:12%; transform:translateX(-50%);
+  width:min(64%, 380px); padding:6px 10px; flex-wrap:nowrap;
+  border-radius:999px; background:rgba(17,21,27,.6);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+}
+/* Внутри круга помещается немного: перемотку кружочку заменяет сама дорожка,
+   громкость на телефоне живёт на кнопках корпуса. */
+.tv__win--round [data-plyr="rewind"],
+.tv__win--round [data-plyr="fast-forward"],
+.tv__win--round .plyr__volume input[type="range"]{ display:none; }
+
+/* Дорожка — на свою строку. В один ряд с кнопками на узком экране ей
+   остаётся десяток точек, и перемотать пальцем нечего. */
+@media (max-width:700px){
+  .tv .plyr--video .plyr__controls{ flex-wrap:wrap; padding-top:24px; }
+  .tv .plyr__controls .plyr__progress__container{
+    order:-1; flex:1 0 100%; width:100%; margin:0 0 2px; padding-left:0;
+  }
+  .tv .plyr__volume input[type="range"]{ display:none; }
+  /* В круге вторая строка не помещается — там оставляем один ряд. */
+  .tv__win--round .plyr--video .plyr__controls{ flex-wrap:nowrap; padding-top:6px; }
+  .tv__win--round .plyr__controls .plyr__progress__container{
+    order:0; flex:1 1 40px; width:auto; margin:0;
+  }
+  .tv__win--round [data-plyr="mute"],
+  .tv__win--round .plyr__time,
+  .tv__win--round .plyr__menu{ display:none; }
+}
 
 .tv__close,.tv__nav{
-  position:absolute; z-index:2;
+  position:absolute; z-index:3;
   width:46px; height:46px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   font-family:var(--mono); font-size:18px; line-height:1;
@@ -878,110 +912,33 @@ a{ color:inherit; text-decoration:none; }
   text-transform:uppercase; color:var(--ink-2); text-align:center;
 }
 
-.tv__bar{
-  display:flex; align-items:center; gap:8px;
-  width:100%; max-width:720px; min-width:0;
-  padding:8px 12px; border-radius:999px;
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-stroke);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-}
-.pl__btn{
-  flex:0 0 auto; width:36px; height:36px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  border:0; background:transparent; cursor:pointer;
-  font-family:var(--mono); font-size:14px; line-height:1; color:var(--ink);
-  transition:background .2s;
-}
-.pl__btn:hover{ background:rgba(17,21,27,.08); }
-.pl__track{
-  position:relative; flex:1 1 40px; min-width:0; height:22px;
-  cursor:pointer; touch-action:none;
-}
-.pl__track::before{
-  content:""; position:absolute; left:0; right:0; top:50%; height:3px;
-  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.18);
-}
-.pl__buffer{
-  position:absolute; left:0; top:50%; height:3px; width:0;
-  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.3);
-}
-.pl__fill{
-  position:absolute; left:0; top:50%; height:3px; width:0;
-  margin-top:-1.5px; border-radius:3px; background:var(--lamp);
-}
-.pl__knob{
-  position:absolute; top:50%; left:0; width:11px; height:11px;
-  margin:-5.5px 0 0 -5.5px; border-radius:50%;
-  background:var(--paper); border:1px solid var(--lamp);
-  box-shadow:0 2px 6px rgba(17,21,27,.35);
-}
-.pl__time{
-  flex:0 0 auto;
-  font-family:var(--mono); font-size:11px; letter-spacing:.04em;
-  font-variant-numeric:tabular-nums; color:var(--ink-2); white-space:nowrap;
-}
-.tv__vol{ flex:0 0 76px; accent-color:var(--lamp); background:transparent; }
-.tv__rate span{ font-size:11px; }
-
-/* ─── Полный экран ───
-   Обычные ограничения окна (тысяча пикселей по ширине, 68% высоты) в полном
-   экране как раз и мешали развернуться. Здесь они снимаются, а кадр
-   подстраивается под фактические размеры экрана — любого, от телефона до
-   телевизора. Класс ставит скрипт, псевдокласс — подстраховка. */
-.tv.is-fs .tv__win, .tv__win:fullscreen, .tv__win:-webkit-full-screen{
-  max-width:none; width:100vw; height:100vh;
-  padding:0; gap:0; background:#000;
-  justify-content:center;
-}
-.tv.is-fs .tv__stage, .tv__win:fullscreen .tv__stage{
-  max-width:100vw; max-height:100vh; width:100%; height:100%;
-  border:0; border-radius:0; box-shadow:none; background:#000;
-}
-.tv.is-fs .tv__video, .tv__win:fullscreen .tv__video{
-  width:100%; height:100%; max-width:100vw; max-height:100vh;
-  object-fit:contain;
-}
-/* Кружочек и на весь экран остаётся кругом — по меньшей стороне. */
-.tv.is-fs .tv__win--round .tv__stage,
-.tv__win--round:fullscreen .tv__stage{
-  width:min(96vh, 96vw, calc(var(--tv-cap, 96vw) * 1.4));
-  height:min(96vh, 96vw, calc(var(--tv-cap, 96vw) * 1.4));
-  margin:auto; border-radius:50%;
-}
-.tv.is-fs .tv__win--round .tv__video{ object-fit:cover; }
-
-/* Управление ложится поверх кадра. */
-.tv.is-fs .tv__bar, .tv__win:fullscreen .tv__bar{
-  position:absolute; left:50%; bottom:24px; transform:translateX(-50%);
-  width:min(720px,92vw); z-index:3;
-}
-.tv.is-fs .tv__cap, .tv__win:fullscreen .tv__cap{
-  position:absolute; left:0; right:0; top:18px; z-index:3;
-  color:rgba(244,246,248,.8);
-}
-.tv.is-fs .tv__close, .tv__win:fullscreen .tv__close{ top:16px; right:16px; }
-.tv.is-fs .tv__nav, .tv__win:fullscreen .tv__nav{ margin-top:-23px; }
-.tv.is-fs .tv__prev{ left:16px; }
-.tv.is-fs .tv__next{ right:16px; }
-/* Фон окна в полном экране не нужен — его закрывает сам кадр. */
-.tv.is-fs .tv__backdrop{ display:none; }
-
 @media (max-width:720px){
   .tv__win{ gap:10px; }
   .tv__close{ top:-52px; }
   .tv__nav{ width:40px; height:40px; margin-top:-20px; }
   .tv__prev{ left:-6px; }
   .tv__next{ right:-6px; }
-  .tv__vol{ display:none; }
-  .tv__bar{ gap:4px; padding:6px 8px; }
-  .pl__btn{ width:32px; height:32px; font-size:13px; }
-  .pl__time{ font-size:10px; }
 }
 @media (prefers-reduced-transparency: reduce){
   .tv__backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--paper); }
+}
+
+/* ─── Полный экран ───
+   Развернутием заведует Plyr, включая обходной путь для iPhone, где система
+   пускает в полный экран только сам видеоэлемент. Нам остаётся кружочек: он
+   должен остаться кругом и не раздуться выше настоящего размера файла. */
+.tv .plyr--fullscreen-active{ background:#000; }
+.tv__win--round .plyr--fullscreen-active{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.tv__win--round .plyr--fullscreen-active .plyr__video-wrapper{
+  width:min(92vh, 92vw, calc(var(--tv-cap, 92vw) * 1.4));
+  height:min(92vh, 92vw, calc(var(--tv-cap, 92vw) * 1.4));
+  margin:auto; border-radius:50%;
+}
+.tv__win--round .plyr--fullscreen-active .plyr__controls{
+  position:absolute; left:50%; bottom:24px; transform:translateX(-50%);
+  width:min(720px,92vw); color:#fff;
 }
 
 /* Фотографии */

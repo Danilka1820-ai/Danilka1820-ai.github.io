@@ -1,0 +1,27 @@
+name: Проверка сайта
+
+# Идёт на каждую отправку кода и на каждое предложение правки. Если что-то
+# сломано, у коммита на GitHub появляется красный крестик, а в нём — список
+# по-русски: что именно и где чинить. Сайт при этом всё равно публикуется
+# (так устроены GitHub Pages), поэтому на крестик надо смотреть.
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore:
+      - 'data/**'
+      - 'assets/posts/**'
+      - '**.md'
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  proverka:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Проверить сайт
+        run: node scripts/check-site.mjs

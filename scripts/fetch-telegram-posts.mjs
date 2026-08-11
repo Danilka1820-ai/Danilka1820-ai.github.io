@@ -18,7 +18,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v5-two-qualities';
+const MEDIA_RECIPE = 'v6-with-sizes';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -50,6 +50,17 @@ async function keepIfSmaller(original, candidate, label) {
 
 // Telegram иногда отдаёт AV1 или HEVC. Они компактнее, но не открываются на
 // старых iPhone и части Android — как раз там, где сайт и должен работать.
+// Размер кадра пишем в данные: по нему браузер выберет версию под свой экран.
+function videoSize(file) {
+  const res = spawnSync('ffprobe', [
+    '-v', 'error', '-select_streams', 'v:0',
+    '-show_entries', 'stream=width,height', '-of', 'csv=p=0:s=x', file,
+  ], { encoding: 'utf8' });
+  if (res.status !== 0) return null;
+  const [w, h] = res.stdout.trim().split('x').map(Number);
+  return w && h ? { w, h } : null;
+}
+
 function videoCodec(file) {
   const res = spawnSync('ffprobe', [
     '-v', 'error', '-select_streams', 'v:0',
@@ -318,9 +329,13 @@ async function downloadMedia(postId, items) {
       const disk = path.join(ROOT, src);
       const lightDisk = await makeLight(disk, item.type);
       const entry = { type: item.type, src, poster, size: await sizeOf(disk) };
+      const full = videoSize(disk);
+      if (full) { entry.w = full.w; entry.h = full.h; }
       if (lightDisk) {
         entry.srcLow = `${MEDIA_PUBLIC}/${path.basename(lightDisk)}`;
         entry.sizeLow = await sizeOf(lightDisk);
+        const light = videoSize(lightDisk);
+        if (light) { entry.wLow = light.w; entry.hLow = light.h; }
       }
       saved.push(entry);
     }

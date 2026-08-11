@@ -514,18 +514,44 @@
     return (bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0) + ' МБ';
   }
 
+  /* Какая версия нужна этому экрану.
+     Считаем не «телефон или компьютер», а сколько настоящих точек займёт кадр:
+     ширина на странице, умноженная на плотность пикселей устройства. Берём
+     меньшую версию, только если её хватает с запасом — иначе картинка мылит. */
+  function fitsScreen(entry){
+    var it = entry.item;
+    if (!it.srcLow || !it.wLow || !it.w || !it.h) return false;
+
+    // Размер кадра считаем по геометрии окна, а не по текущей разметке:
+    // в момент выбора кадр ещё не разложен и намерил бы ерунду.
+    var round = it.type === 'round';
+    var availW = round
+      ? Math.min(window.innerHeight * 0.68, window.innerWidth * 0.74)
+      : Math.min(window.innerWidth * 0.92, 1000);
+    var availH = round ? availW : window.innerHeight * 0.68;
+    var shownW = Math.min(availW, availH * (it.w / it.h));
+
+    // Плотность выше двух на глаз уже не отличить, а файл тяжелее вдвое.
+    var density = Math.min(window.devicePixelRatio || 1, 2);
+    // Допуск. Лёгкая версия принимается, если покрывает четыре пятых нужного:
+    // на глаз разницы нет, а файл втрое легче. Без допуска телефону не хватало
+    // буквально нескольких пикселей — и он качал полную версию.
+    return it.wLow >= shownW * density * 0.8;
+  }
+
   function paintQuality(entry){
     var btn = tv.querySelector('.tv__hd');
     if (!entry.item.srcLow){ btn.hidden = true; return; }
     btn.hidden = false;
     var light = tv.classList.contains('is-light');
     var size = megabytes(light ? entry.item.sizeLow : entry.item.size);
-    btn.querySelector('span').textContent = light ? 'SD' : 'HD';
-    btn.setAttribute('aria-label',
-      (light ? 'Лёгкое качество' : 'Хорошее качество') + (size ? ', ' + size : '') + '. Переключить');
-    btn.title = light
-      ? 'Лёгкое' + (size ? ' · ' + size : '') + ' — нажмите для хорошего'
-      : 'Хорошее' + (size ? ' · ' + size : '') + ' — нажмите для лёгкого';
+    var here = light ? entry.item.hLow : entry.item.h;
+    var there = light ? entry.item.h : entry.item.hLow;
+    // Показываем настоящее разрешение, а не отвлечённые «HD» и «SD».
+    btn.querySelector('span').textContent = here ? here + 'p' : (light ? 'SD' : 'HD');
+    var now = (here ? here + 'p' : (light ? 'лёгкое' : 'хорошее')) + (size ? ' · ' + size : '');
+    btn.setAttribute('aria-label', 'Качество: ' + now + '. Переключить');
+    btn.title = now + (there ? ' — нажмите для ' + there + 'p' : ' — нажмите, чтобы переключить');
   }
 
   function step(dir){
@@ -542,13 +568,18 @@
 
     var v = tv.video;
     v.pause();
-    // На 2G и при экономии трафика сразу открываем лёгкую версию.
-    var light = THIN && !!entry.item.srcLow;
+    // Версию выбираем сами: по экономии трафика или по размеру экрана.
+    var light = !!entry.item.srcLow && (THIN || fitsScreen(entry));
     tv.classList.toggle('is-light', light);
     v.src = light ? entry.item.srcLow : entry.item.src;
     v.poster = entry.item.poster || '';
     v.loop = entry.item.type === 'round';
-    tv.querySelector('.tv__win').classList.toggle('tv__win--round', entry.item.type === 'round');
+    var winEl = tv.querySelector('.tv__win');
+    winEl.classList.toggle('tv__win--round', entry.item.type === 'round');
+    // Растягивать кадр много выше его настоящего размера бессмысленно: детали
+    // не появится, появится мыло. Предел считаем от самого файла.
+    var natural = light ? entry.item.wLow : entry.item.w;
+    winEl.style.setProperty('--tv-cap', natural ? Math.round(natural * 1.6) + 'px' : '100vw');
     tv.querySelector('.tv__cap').textContent =
       (entry.item.type === 'round' ? 'Кружочек' : 'Видео') +
       (entry.date ? ' · ' + entry.date : '') +

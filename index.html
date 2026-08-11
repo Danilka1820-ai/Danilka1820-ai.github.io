@@ -1642,10 +1642,13 @@ a{ color:inherit; text-decoration:none; }
   var navPill = document.getElementById('navPill');
   var topIn = document.querySelector('.top__in');
   var pillPlaced = false;
+  var pillHover = null;      // раздел под курсором, если он там есть
   function movePill(){
     if (!navPill || !topIn) return;
     var narrow = window.matchMedia('(max-width:900px)').matches;
-    var active = document.querySelector('[data-tab][aria-selected="true"]');
+    // Под курсором капсула забегает вперёд, к тому разделу, на который
+    // человек смотрит. Отпустил — вернулась к открытому.
+    var active = pillHover || document.querySelector('[data-tab][aria-selected="true"]');
     if (narrow || !active || !active.offsetWidth){
       topIn.classList.remove('has-pill');
       pillPlaced = false;
@@ -1669,6 +1672,23 @@ a{ color:inherit; text-decoration:none; }
   }
   // Полосу разделов можно прокрутить — капсула едет вместе с ней.
   if (navMenu) navMenu.addEventListener('scroll', movePill, { passive:true });
+
+  /* Капсула следует за курсором. Только там, где есть настоящая мышь: на
+     сенсорном экране браузер выдаёт «наведение» после касания, и капсула
+     залипала бы на разделе, который человек просто задел пальцем. */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches){
+    tabLinks.forEach(function(el){
+      el.addEventListener('mouseenter', function(){ pillHover = el; movePill(); });
+      // С клавиатуры — то же самое: видно, куда переведён выбор.
+      el.addEventListener('focus', function(){ pillHover = el; movePill(); });
+      el.addEventListener('blur', function(){ pillHover = null; movePill(); });
+    });
+    topIn.addEventListener('mouseleave', function(){ pillHover = null; movePill(); });
+    // Курсор может уйти с раздела в пустоту внутри самой шапки.
+    topIn.addEventListener('mousemove', function(e){
+      if (pillHover && !e.target.closest('[data-tab]')){ pillHover = null; movePill(); }
+    });
+  }
 
   var pillTick = 0;
   window.addEventListener('resize', function(){

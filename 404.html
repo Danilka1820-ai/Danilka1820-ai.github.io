@@ -3,77 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1A1410">
+<meta name="theme-color" content="#E8EAED">
 <meta name="description" content="Страница не найдена — дневник Данила Сарыкова.">
 <meta name="robots" content="noindex, follow">
-<title>404 — Страница не найдена</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%231A1410'/><circle cx='32' cy='32' r='12' fill='%23C8553D'/></svg>">
+<title>404 — такой страницы нет</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2311151B'/><circle cx='32' cy='32' r='12' fill='%23B0791C'/></svg>">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png">
 <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --ink:#1A1410;
-  --terracotta:#C8553D;
-  --cream:#F4EEE6;
-  --soft:#544A43;
-  --line:rgba(26,20,16,.12);
+/* Шрифты свои, из репозитория. Раньше здесь висели три обращения к Google
+   Fonts — там, где их режут, страница ошибки сама вставала колом. Читатель,
+   пришедший с главной, эти файлы уже скачал, так что они ничего не стоят. */
+@font-face{
+  font-family:"Spectral"; font-style:normal; font-weight:300; font-display:swap;
+  src:url(/assets/fonts/spectral-300-normal-cyrillic.woff2) format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
 }
-*{box-sizing:border-box;margin:0;padding:0}
+@font-face{
+  font-family:"IBM Plex Mono"; font-style:normal; font-weight:400; font-display:swap;
+  src:url(/assets/fonts/ibm-plex-mono-400-normal-cyrillic.woff2) format('woff2');
+  unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+
+/* Те же цвета и тот же ритм, что на самом сайте. */
+:root{
+  --paper:#E8EAED; --ink:#11151B; --ink-2:#545C6B; --lamp:#B0791C;
+  --rule:#CBCFD6;
+  --serif:"Spectral",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{ box-sizing:border-box; margin:0; padding:0; }
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
 body{
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  padding:24px;
-  background:var(--cream);
-  color:var(--ink);
-  font-family:"Manrope",system-ui,-apple-system,sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+  padding:24px; background:var(--paper); color:var(--ink);
+  font-family:var(--serif); font-weight:300; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
 }
 .code{
-  font-family:"Instrument Serif",serif;
-  font-style:italic;
-  font-size:clamp(4rem,16vw,8rem);
-  color:var(--terracotta);
-  line-height:1;
+  font-family:var(--mono); font-size:12px; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--lamp);
 }
 h1{
-  margin-top:16px;
-  font-family:"Instrument Serif",serif;
-  font-weight:400;
-  font-size:clamp(1.4rem,3.5vw,2rem);
+  margin-top:14px; font-weight:300; font-size:clamp(1.5rem,4vw,2.3rem);
+  letter-spacing:-.01em;
 }
-p{
-  margin-top:12px;
-  color:var(--soft);
-  max-width:380px;
+p{ margin-top:12px; color:var(--ink-2); max-width:32rem; }
+.go{
+  display:inline-flex; align-items:center; gap:10px; margin-top:36px;
+  padding:12px 26px; border-radius:999px; text-decoration:none;
+  font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink);
+  background:rgba(255,255,255,.55);
+  -webkit-backdrop-filter:blur(14px) saturate(1.4);
+  backdrop-filter:blur(14px) saturate(1.4);
+  border:1px solid var(--rule);
+  transition:background .2s, transform .2s;
 }
-a.btn{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  margin-top:32px;
-  padding:14px 30px;
-  border-radius:100px;
-  background:var(--ink);
-  color:var(--cream);
-  text-decoration:none;
-  font-weight:600;
-  font-size:14px;
-  letter-spacing:.03em;
-  transition:background .25s ease,transform .25s ease;
-}
-a.btn:hover{background:var(--terracotta);transform:translateY(-2px)}
+.go:hover{ background:rgba(255,255,255,.85); transform:translateY(-1px); }
+.go u{ text-decoration:none; border-bottom:1px solid var(--lamp); padding-bottom:2px; }
 </style>
 </head>
 <body>
   <span class="code">404</span>
-  <h1>Такой страницы дневника нет</h1>
-  <p>Похоже, эта запись не существует или переехала. Вернись на главную страницу.</p>
-  <a href="/" class="btn">На главную →</a>
+  <h1>Такой страницы в дневнике нет</h1>
+  <p>Запись могла переехать или её никогда не было. На главной — всё, что есть.</p>
+  <a href="/" class="go"><u>Вернуться к дневнику</u></a>
 </body>
 </html>

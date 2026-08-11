@@ -23,6 +23,9 @@ function шаг(имя, дело){
 }
 
 const html = readFileSync(ROOT + 'index.html', 'utf8');
+// Страница ошибки — тоже страница сайта, и правила у неё те же. Её долго
+// никто не проверял, и на ней всё это время висели чужие шрифты.
+const другие = ['404.html'];
 
 /* Комментарии в счёт не идут: в них мы сами пишем «не возвращайте
    fonts.googleapis.com», и проверка ловила бы собственное предупреждение. */
@@ -83,6 +86,16 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   const раздатчики = /(cdn\.plyr\.io|video\.js|videojs|unpkg\.com|jsdelivr\.net|cdnjs\.|fonts\.googleapis\.com|fonts\.gstatic\.com|ajax\.googleapis\.com)/gi;
   for (const m of код.matchAll(раздатчики)) чужие.add(m[0]);
 
+  // Остальные страницы сайта — по тем же правилам.
+  for (const файл of другие){
+    const текст = безКомментариев(readFileSync(ROOT + файл, 'utf8'));
+    for (const m of текст.matchAll(раздатчики)) чужие.add(файл + ': ' + m[0]);
+    for (const m of текст.matchAll(/<link\b[^>]*\bhref="(https?:)?\/\/([^"]+)"/gi)){
+      const хост = (m[2] || '').split('/')[0].toLowerCase();
+      if (!СВОИ.includes(хост)) чужие.add(файл + ': ' + хост);
+    }
+  }
+
   if (чужие.size){
     throw new Error('уберите их, всё нужное лежит в репозитории:\n      ' +
       [...чужие].join('\n      '));
@@ -110,6 +123,20 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
     if (!existsSync(файл)) нет.push(путь);
   }
   if (нет.length) throw new Error('в index.html ссылки на несуществующее:\n      ' + нет.join('\n      '));
+});
+
+шаг('файлы других страниц на месте', () => {
+  const нет = [];
+  for (const файл of другие){
+    const текст = readFileSync(ROOT + файл, 'utf8');
+    for (const m of текст.matchAll(/(?:href|src)="(\/[^"?#]+)"/g)){
+      if (!existsSync(ROOT + m[1].replace(/^\//, ''))) нет.push(файл + ' → ' + m[1]);
+    }
+    for (const m of текст.matchAll(/url\((\/[^)]+)\)/g)){
+      if (!existsSync(ROOT + m[1].replace(/^\//, ''))) нет.push(файл + ' → ' + m[1]);
+    }
+  }
+  if (нет.length) throw new Error('ссылки на несуществующее:\n      ' + нет.join('\n      '));
 });
 
 шаг('список в sw.js совпадает с файлами', () => {

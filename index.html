@@ -1948,9 +1948,9 @@ a{ color:inherit; text-decoration:none; }
     // Переключение качества: подменяем источник, но возвращаем зрителя на то
     // же место и в то же состояние — иначе ролик начнётся сначала.
     root.querySelector('.tv__hd').addEventListener('click', function(){
-      var entry = tvList && tvList[tvIndex];
-      if (!entry) return;
-      var all = levels(entry.item);
+      var это = сейчас();
+      if (!это) return;
+      var entry = это.entry, all = это.all;
       if (all.length < 2) return;
       root.level = (root.level + 1) % all.length;
       swap(all[root.level].src, v.currentTime, !v.paused);
@@ -1965,16 +1965,23 @@ a{ color:inherit; text-decoration:none; }
     /* Смена файла на лету. Скорость приходится ставить заново: браузер по
        стандарту сбрасывает её при каждой загрузке источника, и кнопка
        показывала «2×» у ролика, который шёл на обычной скорости. */
+    var ждётМету = null;
     function swap(src, at, play){
       root.classList.remove('is-failed');
-      v.src = src;
-      v.addEventListener('loadedmetadata', function once(){
-        v.removeEventListener('loadedmetadata', once);
+      // Прошлый файл мог так и не открыться — тогда его ожидание висит на
+      // элементе. На плохой связи такие ожидания копились пачкой и все разом
+      // срабатывали на первом же удавшемся файле.
+      if (ждётМету) v.removeEventListener('loadedmetadata', ждётМету);
+      ждётМету = function(){
+        v.removeEventListener('loadedmetadata', ждётМету);
+        ждётМету = null;
         paintRate();
         if (isFinite(at) && at > 0) v.currentTime = at;
         if (play) v.play().catch(function(){});
         paint();
-      });
+      };
+      v.src = src;
+      v.addEventListener('loadedmetadata', ждётМету);
       v.load();
       сторожить();
     }
@@ -2024,9 +2031,9 @@ a{ color:inherit; text-decoration:none; }
     }
 
     function спасти(){
-      var entry = tvList && tvList[tvIndex];
-      if (!entry) return;
-      var all = levels(entry.item);
+      var это = сейчас();
+      if (!это) return;
+      var entry = это.entry, all = это.all;
       var at = v.currentTime;
       спасений++;
 
@@ -2056,12 +2063,12 @@ a{ color:inherit; text-decoration:none; }
     }
 
     root.querySelector('.tv__again').addEventListener('click', function(){
-      var entry = tvList && tvList[tvIndex];
-      if (!entry) return;
+      var это = сейчас();
+      if (!это) return;
       спасений = 0;
       root.classList.remove('is-failed');
       root.classList.add('is-waiting');
-      swap((levels(entry.item)[root.level] || {}).src || entry.item.src, 0, true);
+      swap((это.all[root.level] || {}).src || это.entry.item.src, 0, true);
     });
 
     /* Полный экран.
@@ -2101,13 +2108,13 @@ a{ color:inherit; text-decoration:none; }
        уровень, если он есть, сохраняя место и состояние. Вниз при выходе не
        опускаем: файл уже скачан, толку не будет. */
     function upLevel(){
-      var entry = tvList && tvList[tvIndex];
-      if (!entry) return;
-      var надо = pickLevel(entry.item, true);
+      var это = сейчас();
+      if (!это) return;
+      var надо = pickLevel(это.entry.item, true);
       if (надо >= root.level) return;
       root.level = надо;
-      swap(levels(entry.item)[надо].src, v.currentTime, !v.paused);
-      paintQuality(entry);
+      swap(это.all[надо].src, v.currentTime, !v.paused);
+      paintQuality(это.entry);
     }
     // Разворачивая горизонтальный ролик на телефоне, поворачиваем экран —
     // иначе в вертикальном положении он занимает узкую полоску посередине.
@@ -2282,6 +2289,13 @@ a{ color:inherit; text-decoration:none; }
      какая пришла, вплоть до Full HD. Средняя появилась вместе с Full HD:
      без неё телефону пришлось бы выбирать между мылом и файлом вдвое тяжелее
      того, что его экран способен показать. */
+  /* Ролик, открытый прямо сейчас, и его уровни качества. Эта тройка строк
+     повторялась в пяти местах. */
+  function сейчас(){
+    var entry = tvList && tvList[tvIndex];
+    return entry ? { entry: entry, all: levels(entry.item) } : null;
+  }
+
   function levels(item){
     var out = [];
     if (item.src) out.push({ src:item.src, w:item.w, h:item.h, size:item.size });

@@ -7,7 +7,6 @@ import path from 'node:path';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const OUT_DIR = path.join(ROOT, 'assets', 'fonts');
-const OUT_CSS = path.join(OUT_DIR, 'fonts.css');
 const PAGE = path.join(ROOT, 'index.html');
 // Описание шрифтов вставляется прямо в страницу между этими метками: на
 // медленном канале отдельный файл стоит лишнего обращения к серверу.
@@ -84,11 +83,10 @@ for (const { subset, body } of blocks) {
 
 if (!saved) throw new Error('не удалось разобрать ответ Google Fonts');
 
+// Правила идут прямо в страницу: отдельный файл — это лишний поход к
+// серверу, а при большой задержке он стоит дороже собственного веса. Раньше
+// рядом писался ещё и assets/fonts/fonts.css — его не читал никто.
 const fontCss = out.join('\n') + '\n';
-await writeFile(OUT_CSS, fontCss);
-
-// Те же правила вставляем в саму страницу: отдельный файл — это лишний поход
-// к серверу, а при большой задержке он стоит дороже собственного веса.
 const page = await readFile(PAGE, 'utf8');
 const from = page.indexOf(MARK_BEGIN);
 const to = page.indexOf(MARK_END);

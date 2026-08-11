@@ -7,7 +7,8 @@
    опечатка в пути к файлу, синтаксическая ошибка в скрипте, случайно снесённый
    раздел. Всё, что она пишет, — на русском и с указанием, что чинить. */
 
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, statSync, lstatSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { Script } from 'node:vm';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -146,7 +147,34 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   if (нет.length) throw new Error('пропало: ' + нет.join(', '));
 });
 
-/* ── 5. Быстрая загрузка ── */
+/* ── 5. Ничего лишнего ──
+   Проверено аудитом: мёртвых стилей нет, утечек слушателей нет, осиротевших
+   медиафайлов нет. Здесь караулим то, что уже накапливалось. */
+шаг('нет одинаковых файлов среди своих', () => {
+  const свои = ['.', 'scripts', 'assets/fonts', 'assets/images', 'assets/icons'];
+  const хэши = new Map();
+  const дубли = [];
+  for (const папка of свои){
+    for (const имя of readdirSync(папка)){
+      const путь = папка === '.' ? имя : папка + '/' + имя;
+      if (имя.startsWith('.') || lstatSync(путь).isSymbolicLink()) continue;
+      if (!statSync(путь).isFile()) continue;
+      const h = createHash('md5').update(readFileSync(путь)).digest('hex');
+      if (хэши.has(h)) дубли.push(путь + ' == ' + хэши.get(h));
+      else хэши.set(h, путь);
+    }
+  }
+  if (дубли.length) throw new Error('одно и то же лежит дважды:\n      ' + дубли.join('\n      '));
+});
+
+шаг('нет файлов, которых никто не читает', () => {
+  const мёртвые = ['assets/fonts/fonts.css'].filter((f) => existsSync(ROOT + f));
+  if (мёртвые.length){
+    throw new Error('эти файлы никто не подключает, их незачем держать:\n      ' + мёртвые.join('\n      '));
+  }
+});
+
+/* ── 6. Быстрая загрузка ── */
 шаг('шрифты подключаются после ленты', () => {
   if (!/id="fontStyles"[^>]*media="print"/.test(html)){
     throw new Error('пропал media="print" у #fontStyles — страница снова будет ждать шрифты');

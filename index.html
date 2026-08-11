@@ -405,23 +405,27 @@ a{ color:inherit; text-decoration:none; }
   flex-wrap:nowrap;
 }
 .top__name{
+  position:relative; z-index:1;
   font-family:var(--mono); font-size:12px; font-weight:500;
-  letter-spacing:.18em; text-transform:uppercase;
+  letter-spacing:.08em; text-transform:uppercase;
   flex:0 0 auto; display:flex; align-items:center;
   padding-block:16px;
+  color:var(--ink-2);
+  transition:color .2s;
 }
+/* Имя — это и есть кнопка «Главная», поэтому ведёт себя как раздел. */
+.top__name:hover{ color:var(--ink); }
+.top__name[aria-selected="true"]{ color:var(--ink); }
 .top__nav{
   position:relative;
   display:flex; align-items:stretch; gap:var(--s3);
   flex:0 1 auto; min-width:0;
-  /* Запас по краям, чтобы капсула на крайних разделах не срезалась;
-     отрицательные поля возвращают полосу на прежнее место. */
-  padding-inline:14px; margin-inline:-14px;
   overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
 }
 .top__nav::-webkit-scrollbar{ display:none; }
 
-/* Стеклянная капсула переезжает к выбранному разделу. */
+/* Стеклянная капсула переезжает к выбранному разделу. Живёт в самой шапке,
+   а не внутри полосы разделов: иначе она не смогла бы доехать до имени. */
 .nav__pill{
   position:absolute; left:0; top:50%; height:34px; margin-top:-17px; width:0;
   border-radius:999px;
@@ -433,10 +437,10 @@ a{ color:inherit; text-decoration:none; }
   opacity:0; pointer-events:none; z-index:0;
   transition:transform .45s cubic-bezier(.2,.7,.3,1), width .45s cubic-bezier(.2,.7,.3,1), opacity .3s ease;
 }
-.top__nav.has-pill .nav__pill{ opacity:1; }
+.top__in.has-pill .nav__pill{ opacity:1; }
 .nav__pill.no-anim{ transition:none; }
 /* Пока капсулы нет — подчёркивание; с ней оно лишнее. */
-.top__nav.has-pill .tab::after{ display:none; }
+.top__in.has-pill .tab::after{ display:none; }
 @media (prefers-reduced-motion: reduce){ .nav__pill{ transition:opacity .3s ease; } }
 
 .tab{
@@ -536,7 +540,7 @@ a{ color:inherit; text-decoration:none; }
   .top__now .now-date,.top__now .sep-date{ display:inline; }
 }
 @media (max-width:560px){
-  .top__name{ font-size:11px; letter-spacing:.1em; }
+  .top__name{ font-size:11px; letter-spacing:.06em; }
   .top__now{ font-size:10.5px; letter-spacing:.04em; gap:5px; }
   .top__more{ width:36px; height:36px; }
 }
@@ -1056,7 +1060,7 @@ a{ color:inherit; text-decoration:none; }
   .label,.tab,.top__name{ font-size:19px; }
   .entry__date{ font-size:23px; }
   .btn,.filters button{ font-size:17px; padding:20px 32px; }
-  .top__name{ letter-spacing:.2em; }
+  .top__name{ letter-spacing:.1em; }
 }
 
 /* Телевизоры и приставки: курсора нет, ходят пультом — рамка выбора должна
@@ -1095,12 +1099,12 @@ a{ color:inherit; text-decoration:none; }
 
 <header class="top" id="top">
   <div class="top__in">
-    <a class="top__name" href="#/glavnaya">Данил Сарыков</a>
+    <a class="top__name" href="#/glavnaya" role="tab" data-tab="home"
+       aria-selected="true" aria-controls="tab-home">Данил Сарыков</a>
+    <span class="nav__pill" id="navPill" aria-hidden="true"></span>
     <button type="button" class="top__more" id="moreBtn"
             aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
     <nav class="top__nav" id="navMenu" role="tablist" aria-label="Разделы сайта">
-      <span class="nav__pill" id="navPill" aria-hidden="true"></span>
-      <a class="tab" role="tab" href="#/glavnaya" data-tab="home"     aria-selected="true"  aria-controls="tab-home">Главная</a>
       <a class="tab" role="tab" href="#/dnevnik"  data-tab="diary"    aria-selected="false" aria-controls="tab-diary">Записи</a>
       <a class="tab" role="tab" href="#/o-sebe"   data-tab="about"    aria-selected="false" aria-controls="tab-about">О дневнике</a>
       <a class="tab" role="tab" href="#/voprosy"  data-tab="faq"      aria-selected="false" aria-controls="tab-faq">Вопросы</a>

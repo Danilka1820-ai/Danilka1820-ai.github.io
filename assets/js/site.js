@@ -157,7 +157,8 @@
     { key:'contacts', slug:'kontakty', title:'Контакты — Данил Сарыков' }
   ];
   var OLD_ANCHORS = { posts:'diary', feed:'diary', main:'home', about:'about', hero:'home' };
-  var tabLinks = [].slice.call(document.querySelectorAll('.tab'));
+  // Имя в шапке — тоже раздел, поэтому ищем по data-tab, а не по классу.
+  var tabLinks = [].slice.call(document.querySelectorAll('[data-tab]'));
 
   function findTab(key){
     for (var i=0;i<TABS.length;i++) if (TABS[i].key === key) return TABS[i];
@@ -173,28 +174,35 @@
   /* Капсула едет к выбранному разделу. На телефоне разделы лежат столбиком
      в выпадающем меню — там она не нужна. */
   var navPill = document.getElementById('navPill');
+  var topIn = document.querySelector('.top__in');
   var pillPlaced = false;
   function movePill(){
-    if (!navPill || !navMenu) return;
+    if (!navPill || !topIn) return;
     var narrow = window.matchMedia('(max-width:900px)').matches;
-    var active = navMenu.querySelector('.tab[aria-selected="true"]');
+    var active = document.querySelector('[data-tab][aria-selected="true"]');
     if (narrow || !active || !active.offsetWidth){
-      navMenu.classList.remove('has-pill');
+      topIn.classList.remove('has-pill');
       pillPlaced = false;
       return;
     }
+    // Считаем от края шапки, а не от полосы разделов: имя лежит вне полосы,
+    // а сама полоса может быть прокручена.
     var pad = 14;
+    var barBox = topIn.getBoundingClientRect();
+    var box = active.getBoundingClientRect();
     // Первую установку не анимируем, иначе капсула приезжает из угла.
     if (!pillPlaced) navPill.classList.add('no-anim');
-    navPill.style.width = (active.offsetWidth + pad * 2) + 'px';
-    navPill.style.transform = 'translateX(' + (active.offsetLeft - pad) + 'px)';
-    navMenu.classList.add('has-pill');
+    navPill.style.width = (box.width + pad * 2) + 'px';
+    navPill.style.transform = 'translateX(' + (box.left - barBox.left - pad) + 'px)';
+    topIn.classList.add('has-pill');
     if (!pillPlaced){
       void navPill.offsetWidth;
       navPill.classList.remove('no-anim');
       pillPlaced = true;
     }
   }
+  // Полосу разделов можно прокрутить — капсула едет вместе с ней.
+  if (navMenu) navMenu.addEventListener('scroll', movePill, { passive:true });
 
   var pillTick = 0;
   window.addEventListener('resize', function(){

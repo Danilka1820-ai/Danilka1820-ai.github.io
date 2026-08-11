@@ -462,7 +462,13 @@ a{ color:inherit; text-decoration:none; }
   backdrop-filter:var(--glass-blur);
   box-shadow:0 8px 20px -10px rgba(17,21,27,.4), inset 0 1px 0 rgba(255,255,255,1);
   opacity:0; pointer-events:none; z-index:0;
-  transition:transform .45s cubic-bezier(.2,.7,.3,1), width .45s cubic-bezier(.2,.7,.3,1), opacity .3s ease;
+  /* Трогается быстро, садится мягко — так ход читается как скольжение, а не
+     как рывок. Ширина и сдвиг идут одной кривой, иначе края капсулы
+     приезжают вразнобой и она «дышит». */
+  transition:transform .42s cubic-bezier(.22,1,.36,1),
+             width .42s cubic-bezier(.22,1,.36,1),
+             opacity .3s ease;
+  will-change:transform, width;
 }
 .top__in.has-pill .nav__pill{ opacity:1; }
 .nav__pill.no-anim{ transition:none; }
@@ -1683,11 +1689,11 @@ a{ color:inherit; text-decoration:none; }
       el.addEventListener('focus', function(){ pillHover = el; movePill(); });
       el.addEventListener('blur', function(){ pillHover = null; movePill(); });
     });
+    // Возвращается к открытому разделу, только когда курсор ушёл из шапки
+    // совсем. Промежутки между пунктами не в счёт: пока курсор идёт от
+    // «Записей» к «Контактам», он их пересекает, и капсула на каждом
+    // отскакивала назад — получалось дёрганье вместо движения.
     topIn.addEventListener('mouseleave', function(){ pillHover = null; movePill(); });
-    // Курсор может уйти с раздела в пустоту внутри самой шапки.
-    topIn.addEventListener('mousemove', function(e){
-      if (pillHover && !e.target.closest('[data-tab]')){ pillHover = null; movePill(); }
-    });
   }
 
   var pillTick = 0;

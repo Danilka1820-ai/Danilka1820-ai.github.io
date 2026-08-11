@@ -10,7 +10,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-519-0.mp4",
-        "poster": "assets/posts/danilka2028k-519-0p.jpg"
+        "poster": "assets/posts/danilka2028k-519-0p.jpg",
+        "size": 1202811,
+        "srcLow": "assets/posts/danilka2028k-519-0-low.mp4",
+        "sizeLow": 643495
       }
     ]
   },
@@ -25,7 +28,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-518-0.mp4",
-        "poster": "assets/posts/danilka2028k-518-0p.jpg"
+        "poster": "assets/posts/danilka2028k-518-0p.jpg",
+        "size": 2300041,
+        "srcLow": "assets/posts/danilka2028k-518-0-low.mp4",
+        "sizeLow": 909231
       }
     ]
   },
@@ -109,7 +115,10 @@
       {
         "type": "video",
         "src": "assets/posts/danilka2028k-506-0.mp4",
-        "poster": "assets/posts/danilka2028k-506-0p.jpg"
+        "poster": "assets/posts/danilka2028k-506-0p.jpg",
+        "size": 6992257,
+        "srcLow": "assets/posts/danilka2028k-506-0-low.mp4",
+        "sizeLow": 2027845
       }
     ]
   },
@@ -282,7 +291,10 @@
       {
         "type": "video",
         "src": "assets/posts/danilka2028k-485-0.mp4",
-        "poster": "assets/posts/danilka2028k-485-0p.jpg"
+        "poster": "assets/posts/danilka2028k-485-0p.jpg",
+        "size": 3930547,
+        "srcLow": "assets/posts/danilka2028k-485-0-low.mp4",
+        "sizeLow": 1459833
       }
     ]
   },
@@ -430,7 +442,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-465-0.mp4",
-        "poster": "assets/posts/danilka2028k-465-0p.jpg"
+        "poster": "assets/posts/danilka2028k-465-0p.jpg",
+        "size": 2179272,
+        "srcLow": "assets/posts/danilka2028k-465-0-low.mp4",
+        "sizeLow": 1194996
       }
     ]
   },
@@ -466,7 +481,10 @@
       {
         "type": "video",
         "src": "assets/posts/danilka2028k-460-0.mp4",
-        "poster": ""
+        "poster": "",
+        "size": 5691819,
+        "srcLow": "assets/posts/danilka2028k-460-0-low.mp4",
+        "sizeLow": 1829849
       }
     ]
   },
@@ -535,7 +553,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-454-0.mp4",
-        "poster": "assets/posts/danilka2028k-454-0p.jpg"
+        "poster": "assets/posts/danilka2028k-454-0p.jpg",
+        "size": 232456,
+        "srcLow": "assets/posts/danilka2028k-454-0-low.mp4",
+        "sizeLow": 140106
       }
     ]
   },
@@ -550,7 +571,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-453-0.mp4",
-        "poster": "assets/posts/danilka2028k-453-0p.jpg"
+        "poster": "assets/posts/danilka2028k-453-0p.jpg",
+        "size": 605925,
+        "srcLow": "assets/posts/danilka2028k-453-0-low.mp4",
+        "sizeLow": 323751
       }
     ]
   },
@@ -565,7 +589,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-452-0.mp4",
-        "poster": "assets/posts/danilka2028k-452-0p.jpg"
+        "poster": "assets/posts/danilka2028k-452-0p.jpg",
+        "size": 936942,
+        "srcLow": "assets/posts/danilka2028k-452-0-low.mp4",
+        "sizeLow": 374814
       }
     ]
   },
@@ -580,7 +607,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-449-0.mp4",
-        "poster": "assets/posts/danilka2028k-449-0p.jpg"
+        "poster": "assets/posts/danilka2028k-449-0p.jpg",
+        "size": 2052688,
+        "srcLow": "assets/posts/danilka2028k-449-0-low.mp4",
+        "sizeLow": 782222
       }
     ]
   },
@@ -595,7 +625,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-448-0.mp4",
-        "poster": "assets/posts/danilka2028k-448-0p.jpg"
+        "poster": "assets/posts/danilka2028k-448-0p.jpg",
+        "size": 778422,
+        "srcLow": "assets/posts/danilka2028k-448-0-low.mp4",
+        "sizeLow": 427282
       }
     ]
   },
@@ -610,7 +643,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-447-0.mp4",
-        "poster": "assets/posts/danilka2028k-447-0p.jpg"
+        "poster": "assets/posts/danilka2028k-447-0p.jpg",
+        "size": 1017534,
+        "srcLow": "assets/posts/danilka2028k-447-0-low.mp4",
+        "sizeLow": 558944
       }
     ]
   },
@@ -625,7 +661,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-446-0.mp4",
-        "poster": "assets/posts/danilka2028k-446-0p.jpg"
+        "poster": "assets/posts/danilka2028k-446-0p.jpg",
+        "size": 2077051,
+        "srcLow": "assets/posts/danilka2028k-446-0-low.mp4",
+        "sizeLow": 1117315
       }
     ]
   },
@@ -640,7 +679,10 @@
       {
         "type": "round",
         "src": "assets/posts/danilka2028k-445-0.mp4",
-        "poster": "assets/posts/danilka2028k-445-0p.jpg"
+        "poster": "assets/posts/danilka2028k-445-0p.jpg",
+        "size": 982259,
+        "srcLow": "assets/posts/danilka2028k-445-0-low.mp4",
+        "sizeLow": 554941
       }
     ]
   }

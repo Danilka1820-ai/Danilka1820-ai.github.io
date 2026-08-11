@@ -1154,7 +1154,7 @@ a{ color:inherit; text-decoration:none; }
    нечего. */
 html.thin body{ background-image:none; }
 html.thin .entry, html.thin .about, html.thin .qa, html.thin .thesis,
-html.thin .hero__fig{
+html.thin .contact, html.thin .hero__fig{
   background:var(--paper-lift); box-shadow:none; border-color:var(--rule);
 }
 html.thin .top, html.thin .foot, html.thin .tv__backdrop, html.thin .nav__pill,
@@ -1166,7 +1166,7 @@ html.thin .entry:hover{ transform:none; }
 
 @media (prefers-reduced-transparency: reduce){
   body{ background-image:none; }
-  .entry, .about, .qa, .thesis, .hero__fig{
+  .entry, .about, .qa, .thesis, .contact, .hero__fig{
     background:var(--paper-lift); border-color:var(--rule);
   }
   .foot{ background:var(--paper-lift); }
@@ -1187,9 +1187,13 @@ html.thin .entry:hover{ transform:none; }
 /* ─────────────────────────────────────────────
    О ДНЕВНИКЕ
    ───────────────────────────────────────────── */
+/* Стеклянные рамы разделов. Отступ сверху и снизу — чтобы рама не прилипала
+   к шапке и к подвалу: прижатая к краю, она читается как часть их, а не как
+   отдельная плита. */
 .about{
-  padding:var(--s5) var(--s4);
-  display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5);
+  margin-block:var(--s5);
+  padding:var(--s4) var(--s4) var(--s4) var(--s3);
+  display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s4);
   border-radius:var(--pane-round);
   background:var(--pane);
   border:1px solid var(--pane-edge);
@@ -1215,8 +1219,9 @@ html.thin .entry:hover{ transform:none; }
    ВОПРОСЫ
    ───────────────────────────────────────────── */
 .qa{
-  padding:var(--s5) var(--s4); display:grid;
-  grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5);
+  margin-block:var(--s5);
+  padding:var(--s4) var(--s4) var(--s4) var(--s3); display:grid;
+  grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s4);
   border-radius:var(--pane-round);
   background:var(--pane);
   border:1px solid var(--pane-edge);
@@ -1239,7 +1244,14 @@ html.thin .entry:hover{ transform:none; }
 /* ─────────────────────────────────────────────
    КОНТАКТЫ И ПОДВАЛ
    ───────────────────────────────────────────── */
-.contact{ padding-block:var(--s7); }
+.contact{
+  margin-block:var(--s5);
+  padding:var(--s5) var(--s4);
+  border-radius:var(--pane-round);
+  background:var(--pane);
+  border:1px solid var(--pane-edge);
+  box-shadow:var(--pane-lift), var(--pane-glow);
+}
 .contact__cta{
   font-weight:300; font-size:clamp(1.6rem,4vw,2.6rem);
   line-height:1.22; letter-spacing:-.015em;

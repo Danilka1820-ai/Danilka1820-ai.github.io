@@ -904,6 +904,22 @@ a{ color:inherit; text-decoration:none; }
 .tv.is-failed .tv__fail{ display:flex; }
 .tv.is-failed .tv__big, .tv.is-failed .tv__wait{ display:none; }
 .tv__fail a{ color:var(--lamp); border-bottom:1px solid currentColor; }
+.tv__again{
+  font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  color:#F4F6F8; cursor:pointer; padding:9px 18px; border-radius:999px;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35);
+}
+.tv__again:hover{ background:rgba(255,255,255,.2); }
+
+/* Строка о том, что происходит со связью. На VPN и в метро ролик встаёт
+   молча, и человек не понимает, ждать ему или уходить. */
+.tv__note{
+  position:absolute; left:50%; top:14px; transform:translateX(-50%);
+  max-width:88%; padding:7px 14px; border-radius:999px; text-align:center;
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
+  background:rgba(17,21,27,.78); color:#F4F6F8;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
 
 .tv__close,.tv__nav{
   position:absolute; z-index:2;
@@ -1782,7 +1798,9 @@ a{ color:inherit; text-decoration:none; }
           '<video class="tv__video" playsinline preload="metadata"></video>' +
           '<button type="button" class="tv__big" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
           '<div class="tv__wait" aria-hidden="true"></div>' +
+          '<div class="tv__note" role="status" aria-live="polite" hidden></div>' +
           '<div class="tv__fail" role="status"><span class="tv__failText"></span>' +
+            '<button type="button" class="tv__again">Попробовать снова</button>' +
             '<a class="tv__failLink" href="#" target="_blank" rel="noopener">Открыть файл напрямую</a></div>' +
         '</div>' +
         '<div class="tv__cap"></div>' +
@@ -1958,7 +1976,93 @@ a{ color:inherit; text-decoration:none; }
         paint();
       });
       v.load();
+      сторожить();
     }
+
+    /* ─── Спасение на плохой связи ───
+       Через VPN, гостиничный вайфай или в метро соединение рвётся и подвисает
+       посреди файла. Браузер об этом молчит: ни ошибки, ни движения — просто
+       вечное колечко. Поэтому следим сами и вытаскиваем ролик по лесенке:
+
+         1. тот же файл заново с того же места — чаще всего оборвалось
+            соединение, и достаточно попросить ещё раз;
+         2. ступень качества вниз — файл легче, шансов доехать больше;
+         3. ещё ступень, до самой лёгкой версии;
+         4. только тогда сдаёмся и предлагаем открыть файл напрямую.
+
+       Автоматический спуск не запоминается: это вынужденная мера, а не выбор
+       зрителя. */
+    var ЖДЁМ = 7000;        // столько ждём без движения, прежде чем спасать
+    var спасений = 0;       // сколько раз уже выручали этот ролик
+    var сторож = null, былоЗакачано = -1;
+    var записка = root.querySelector('.tv__note');
+    var записканаТаймер = null;
+
+    function сказать(текст){
+      записка.textContent = текст;
+      записка.hidden = false;
+      clearTimeout(записканаТаймер);
+      записканаТаймер = setTimeout(function(){ записка.hidden = true; }, 4000);
+    }
+    function буфер(){
+      try { return v.buffered.length ? v.buffered.end(v.buffered.length - 1) : 0; }
+      catch (e){ return 0; }
+    }
+    function прекратить(){ if (сторож){ clearTimeout(сторож); сторож = null; } }
+    function сторожить(){
+      прекратить();
+      былоЗакачано = буфер();
+      сторож = setTimeout(проверить, ЖДЁМ);
+    }
+    function проверить(){
+      сторож = null;
+      if (root.hidden || root.classList.contains('is-failed')) return;
+      // Ролик доигран или стоит на паузе по воле зрителя — это не беда.
+      if (v.paused && !root.classList.contains('is-waiting')) return;
+      if (буфер() > былоЗакачано + 0.1){ сторожить(); return; }   // всё-таки едет
+      спасти();
+    }
+
+    function спасти(){
+      var entry = tvList && tvList[tvIndex];
+      if (!entry) return;
+      var all = levels(entry.item);
+      var at = v.currentTime;
+      спасений++;
+
+      if (спасений === 1){
+        сказать('Связь прервалась — пробую ещё раз');
+        swap(all[root.level].src, at, true);
+        return;
+      }
+      if (root.level < all.length - 1){
+        root.level++;
+        сказать('Связь медленная — включаю ' + ((all[root.level].h || '') + 'p'));
+        swap(all[root.level].src, at, true);
+        paintQuality(entry);
+        return;
+      }
+      сдаться();
+    }
+
+    function сдаться(){
+      прекратить();
+      root.classList.remove('is-waiting');
+      root.classList.add('is-failed');
+      root.querySelector('.tv__failText').textContent =
+        navigator.onLine === false ? 'Нет связи — ролик не загрузился' : 'Ролик не грузится';
+      root.querySelector('.tv__failLink').href = v.currentSrc || v.src || '#';
+      записка.hidden = true;
+    }
+
+    root.querySelector('.tv__again').addEventListener('click', function(){
+      var entry = tvList && tvList[tvIndex];
+      if (!entry) return;
+      спасений = 0;
+      root.classList.remove('is-failed');
+      root.classList.add('is-waiting');
+      swap((levels(entry.item)[root.level] || {}).src || entry.item.src, 0, true);
+    });
 
     /* Полный экран.
        Не угадываем устройство по названию браузера — спрашиваем, что он умеет.
@@ -2098,19 +2202,32 @@ a{ color:inherit; text-decoration:none; }
     });
     v.addEventListener('timeupdate', paint);
     v.addEventListener('progress', paint);
-    v.addEventListener('waiting', function(){ root.classList.add('is-waiting'); });
-    v.addEventListener('playing', function(){ root.classList.remove('is-waiting'); });
+    v.addEventListener('waiting', function(){ root.classList.add('is-waiting'); сторожить(); });
+    v.addEventListener('playing', function(){
+      root.classList.remove('is-waiting');
+      // Поехало — значит спасать не надо, и прошлые попытки можно забыть.
+      спасений = 0;
+      прекратить();
+    });
+    v.addEventListener('ended', прекратить);
+    v.addEventListener('pause', function(){ if (!root.classList.contains('is-waiting')) прекратить(); });
     v.addEventListener('volumechange', paintSound);
 
-    /* Ролик не открылся: кончился интернет, файл не той сборки, браузер не
-       понимает кодек. Раньше зритель видел просто чёрный прямоугольник. */
+    /* Ролик не открылся: оборвалась сеть, файл не той сборки, браузер не
+       понимает кодек. Раньше зритель видел просто чёрный прямоугольник; теперь
+       сеть сначала пробуем пересилить, и только потом сдаёмся. */
     v.addEventListener('error', function(){
       if (!v.currentSrc) return;      // сброс источника при закрытии — не ошибка
-      root.classList.remove('is-waiting');
-      root.classList.add('is-failed');
-      root.querySelector('.tv__failText').textContent =
-        navigator.onLine === false ? 'Нет связи — ролик не загрузился' : 'Ролик не открылся';
-      root.querySelector('.tv__failLink').href = v.currentSrc;
+      var код = v.error && v.error.code;
+      // 3 — файл битый, 4 — формат не поддержан: перезапрашивать нечего, тот
+      // же файл так и не откроется. Но те же коды браузер ставит и когда
+      // соединение оборвалось до первого байта — он просто не успел понять,
+      // что за файл. Отличаем по тому, пришло ли хоть что-нибудь.
+      var пришло = v.readyState > 0 || буфер() > 0;
+      if ((код === 3 || код === 4) && пришло){ сдаться(); return; }
+      var all = levels((tvList && tvList[tvIndex] || {}).item || {});
+      if (спасений >= 1 + Math.max(0, all.length - 1)){ сдаться(); return; }
+      спасти();
     });
 
     // Кнопки перемотки бессмысленны, пока неизвестна длительность.
@@ -2145,6 +2262,9 @@ a{ color:inherit; text-decoration:none; }
     });
 
     root.video = v;
+    root.сторожить = сторожить;
+    root.прекратить = прекратить;
+    root.сброситьСпасение = function(){ спасений = 0; записка.hidden = true; };
     root.inFullscreen = inFullscreen;
     root.leaveFullscreen = leaveFullscreen;
     root.paint = paint;
@@ -2264,6 +2384,7 @@ a{ color:inherit; text-decoration:none; }
     v.pause();
     tv.classList.remove('is-failed');
     tv.classList.add('is-waiting');
+    tv.сброситьСпасение();
     // Уровень выбираем сами: по экономии трафика или по размеру экрана.
     // Но если зритель уже выбирал качество руками, держим его выбор.
     tv.level = nearestLevel(entry.item, tv.wanted);
@@ -2331,6 +2452,7 @@ a{ color:inherit; text-decoration:none; }
     // Сначала выходим из полного экрана: иначе браузер останется развёрнутым
     // на уже спрятанном окне и покажет страницу, из которой не выйти.
     tv.leaveFullscreen();
+    tv.прекратить();
     v.pause();
     v.removeAttribute('src');
     v.load();

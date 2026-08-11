@@ -202,6 +202,17 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
 });
 
 /* ── 6. Быстрая загрузка ── */
+шаг('экономный режим гасит стекло', () => {
+  // Класс вешает скрипт в шапке. Однажды правила для него потерялись при
+  // переборке стилей: класс был, а снимать было нечего.
+  if (!/html\.thin\s+body\{[^}]*background-image:\s*none/.test(html)){
+    throw new Error('html.thin больше не убирает световой фон');
+  }
+  if (!/html\.thin[^{]*\{[^}]*backdrop-filter:\s*none/.test(html)){
+    throw new Error('html.thin больше не отключает размытия');
+  }
+});
+
 шаг('шрифты подключаются после ленты', () => {
   if (!/id="fontStyles"[^>]*media="print"/.test(html)){
     throw new Error('пропал media="print" у #fontStyles — страница снова будет ждать шрифты');

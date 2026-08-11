@@ -316,6 +316,23 @@
   --rail: 96px;          /* левый рельс с датами */
   --page: 1160px;
 
+  /* ── СТЕКЛО ──
+     Два разных стекла, и разница между ними важнее, чем кажется.
+
+     Плавающее (--glass-*) стоит там, где под поверхностью реально едет
+     содержимое: шапка, кнопки, окно просмотра. Только ему нужно настоящее
+     размытие фона, и только оно его стоит.
+
+     Поверхности (--pane-*) лежат на ровном световом фоне страницы. Размывать
+     под ними нечего — плавный градиент после блюра выглядит так же. Поэтому
+     они держатся на прозрачности, кромке, блике и тени, без backdrop-filter:
+     на странице их три десятка, и каждое размытие стоило бы кадров при
+     прокрутке. */
+  --pane:        linear-gradient(157deg, rgba(255,255,255,.58), rgba(255,255,255,.30));
+  --pane-edge:   rgba(255,255,255,.68);
+  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.85);
+  --pane-lift:   0 20px 44px -30px rgba(17,21,27,.5), 0 2px 8px -6px rgba(17,21,27,.18);
+  --pane-round:  20px;
   /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
      текст и лента остаются плоскими, иначе читать тяжело. */
   --glass-tint:   linear-gradient(160deg, rgba(255,255,255,.72), rgba(255,255,255,.34));
@@ -341,9 +358,15 @@ body{
   color:var(--ink);
   /* Едва заметный свет, чтобы стеклу было что преломлять: на ровной заливке
      эффект не читается вовсе. */
+  /* Четыре мягких пятна света вместо ровной заливки. Без них стекло не
+     читается: преломлять нечего, и поверхности выглядят просто белёсыми.
+     Чистый CSS, ни одного байта картинок. */
   background-image:
-    radial-gradient(60rem 40rem at 12% -10%, rgba(176,121,28,.09), transparent 60%),
-    radial-gradient(50rem 36rem at 92% 8%, rgba(84,92,107,.13), transparent 62%);
+    radial-gradient(58rem 40rem at  8% -10%, rgba(198,140,42,.20), transparent 60%),
+    radial-gradient(52rem 38rem at 96%  2%, rgba(86,124,186,.24), transparent 62%),
+    radial-gradient(46rem 42rem at 80% 78%, rgba(158,132,208,.20), transparent 64%),
+    radial-gradient(44rem 36rem at 16% 92%, rgba(96,164,178,.18), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 40%);
   background-attachment:fixed;
   font-family:var(--serif);
   font-weight:400;
@@ -550,18 +573,41 @@ a{ color:inherit; text-decoration:none; }
   }
   .top__nav.is-open{ opacity:1; transform:none; pointer-events:auto; }
 
+  /* Та же стеклянная капсула, что на компьютере, только в столбике она ездит
+     сверху вниз. Палец ведёт её так же, как мышь на большом экране. */
+  .nav__pillY{
+    position:absolute; left:8px; right:8px; top:0; height:0;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.9);
+    background:linear-gradient(160deg, rgba(255,255,255,.95), rgba(255,255,255,.72));
+    box-shadow:0 8px 20px -12px rgba(17,21,27,.45), inset 0 1px 0 rgba(255,255,255,1);
+    opacity:0; pointer-events:none; z-index:0;
+    transition:transform .34s cubic-bezier(.22,1,.36,1),
+               height .34s cubic-bezier(.22,1,.36,1),
+               opacity .22s ease;
+  }
+  .top__nav.has-pill .nav__pillY{ opacity:1; }
+  .nav__pillY.no-anim{ transition:none; }
+
   .tab{
+    position:relative; z-index:1;
     padding:11px 14px; border-radius:12px;
     font-size:12.5px; letter-spacing:.1em;
   }
   .tab::after{ display:none; }
-  .tab[aria-selected="true"]{ background:rgba(17,21,27,.07); color:var(--ink); }
+  /* Подсветку выбранного держит капсула — своя заливка ей только мешает. */
+  .top__nav:not(.has-pill) .tab[aria-selected="true"]{ background:rgba(17,21,27,.07); }
+  .tab[aria-selected="true"]{ color:var(--ink); }
   .tab--cta{
     align-self:stretch; margin-top:4px; text-align:left;
     background:rgba(17,21,27,.06); border-color:rgba(255,255,255,.55);
     box-shadow:none;
   }
-  .tab--cta[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
+  /* Выбранное отмечает капсула. Своя заливка «Контактов» её закрывала —
+     оставляем заливку только там, где капсулы нет. */
+  .top__nav:not(.has-pill) .tab--cta[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
+  .top__nav.has-pill .tab--cta[aria-selected="true"]{ background:transparent; color:var(--ink); }
+  .top__nav.has-pill .tab--cta{ background:transparent; border-color:transparent; }
 
   /* Часы встают в строку сразу за тремя точками, а не улетают к правому краю:
      так имя, кнопка и время читаются одной группой. */
@@ -648,7 +694,13 @@ a{ color:inherit; text-decoration:none; }
 
 /* В профиле пока не фотография, а знак — поэтому небольшой квадрат
    в нейтральном тоне, а не портрет во всю колонку. */
-.hero__fig{ margin:0 0 0 auto; position:relative; max-width:300px; width:100%; }
+.hero__fig{
+  margin:0 0 0 auto; position:relative; max-width:300px; width:100%;
+  padding:10px; border-radius:calc(var(--pane-round) + 4px);
+  background:var(--pane);
+  border:1px solid var(--pane-edge);
+  box-shadow:var(--pane-lift), var(--pane-glow);
+}
 .hero__fig img{
   width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;
   background:var(--paper-lift);
@@ -663,7 +715,13 @@ a{ color:inherit; text-decoration:none; }
 /* ─────────────────────────────────────────────
    ТЕЗИС
    ───────────────────────────────────────────── */
-.thesis{ border-top:1px solid var(--rule); padding-block:var(--s7); }
+.thesis{
+  padding:var(--s6) var(--s5); margin-block:var(--s6);
+  border-radius:var(--pane-round);
+  background:var(--pane);
+  border:1px solid var(--pane-edge);
+  box-shadow:var(--pane-lift), var(--pane-glow);
+}
 .thesis blockquote{
   margin:0; max-width:26ch;
   font-size:clamp(1.7rem,4.4vw,2.9rem);
@@ -715,32 +773,31 @@ a{ color:inherit; text-decoration:none; }
   text-decoration-thickness:2px; text-decoration-color:var(--lamp);
 }
 
-.rail{ position:relative; }
-.rail::before{
-  content:""; position:absolute;
-  left:calc(var(--rail) + 24px); top:6px; bottom:6px;
-  width:1px; background:var(--rule);
-}
+.rail{ position:relative; display:grid; gap:var(--s3); }
 
+/* Запись — стеклянная плита. Рельс с датой остался внутри неё: он и был
+   опознавательным знаком этого дневника, терять его незачем. */
 .entry{
   position:relative;
   display:grid;
   grid-template-columns:var(--rail) minmax(0,1fr);
   gap:var(--s5);
-  padding-block:var(--s5);
-  border-bottom:1px solid var(--rule);
+  padding:var(--s4) var(--s4) var(--s4) var(--s3);
+  border-radius:var(--pane-round);
+  background:var(--pane);
+  border:1px solid var(--pane-edge);
+  box-shadow:var(--pane-lift), var(--pane-glow);
+  transition:transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s, background .3s;
 }
-.entry:last-of-type{ border-bottom:0; }
+@media (hover: hover) and (pointer: fine){
+  .entry:hover{
+    transform:translateY(-2px);
+    box-shadow:0 26px 54px -30px rgba(17,21,27,.55), 0 3px 10px -6px rgba(17,21,27,.2), var(--pane-glow);
+  }
+}
 
-.entry::before{
-  content:""; position:absolute;
-  left:calc(var(--rail) + 21px); top:calc(var(--s5) + 13px);
-  width:7px; height:7px; border-radius:50%;
-  background:var(--paper);
-  box-shadow:inset 0 0 0 1px var(--ink-3);
-  transition:background .25s, box-shadow .25s;
-}
-.entry:hover::before{ background:var(--lamp); box-shadow:inset 0 0 0 1px var(--lamp); }
+/* Точки на рельсе больше нет: она отмечала запись на сплошной ленте, а
+   теперь границу держит сама плита, и точка лишь налезала на дату. */
 
 .entry__meta{ text-align:right; min-width:0; }
 .entry__date{
@@ -1088,8 +1145,36 @@ a{ color:inherit; text-decoration:none; }
   .pl__btn{ width:34px; height:34px; font-size:13px; }
   .pl__time{ font-size:10px; }
 }
+/* ─── Когда стекла быть не должно ───
+   Экономный режим (2G или включённая экономия трафика — класс ставит скрипт
+   в шапке страницы) и системная просьба убрать прозрачность. Размытие стоит
+   работы видеокарте, а световой фон — лишней отрисовки; на слабом устройстве
+   это разница между плавной прокруткой и рывками. Правила этого блока
+   когда-то потерялись при переборке стилей: класс вешался, а снимать было
+   нечего. */
+html.thin body{ background-image:none; }
+html.thin .entry, html.thin .about, html.thin .qa, html.thin .thesis,
+html.thin .hero__fig{
+  background:var(--paper-lift); box-shadow:none; border-color:var(--rule);
+}
+html.thin .top, html.thin .foot, html.thin .tv__backdrop, html.thin .nav__pill,
+html.thin .filters button, html.thin .tv__bar, html.thin .tv__close, html.thin .tv__nav{
+  -webkit-backdrop-filter:none; backdrop-filter:none;
+}
+html.thin .entry{ transition:none; }
+html.thin .entry:hover{ transform:none; }
+
 @media (prefers-reduced-transparency: reduce){
-  .tv__backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--paper); }
+  body{ background-image:none; }
+  .entry, .about, .qa, .thesis, .hero__fig{
+    background:var(--paper-lift); border-color:var(--rule);
+  }
+  .foot{ background:var(--paper-lift); }
+  .tv__backdrop{ background:var(--paper); }
+  .top, .foot, .tv__backdrop, .nav__pill, .filters button, .tv__bar,
+  .tv__close, .tv__nav{
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
 }
 
 /* Фотографии */
@@ -1103,9 +1188,14 @@ a{ color:inherit; text-decoration:none; }
    О ДНЕВНИКЕ
    ───────────────────────────────────────────── */
 .about{
-  padding-block:var(--s7);
+  padding:var(--s5) var(--s4);
   display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5);
+  border-radius:var(--pane-round);
+  background:var(--pane);
+  border:1px solid var(--pane-edge);
+  box-shadow:var(--pane-lift), var(--pane-glow);
 }
+.about + .about{ margin-top:var(--s3); }
 .about + .about{ border-top:1px solid var(--rule); }
 .about > .label{ text-align:right; margin:0; }
 .about__body{ max-width:var(--measure); }
@@ -1124,7 +1214,14 @@ a{ color:inherit; text-decoration:none; }
 /* ─────────────────────────────────────────────
    ВОПРОСЫ
    ───────────────────────────────────────────── */
-.qa{ padding-block:var(--s7); display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5); }
+.qa{
+  padding:var(--s5) var(--s4); display:grid;
+  grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s5);
+  border-radius:var(--pane-round);
+  background:var(--pane);
+  border:1px solid var(--pane-edge);
+  box-shadow:var(--pane-lift), var(--pane-glow);
+}
 .qa > .label{ text-align:right; margin:0; }
 .qa__list{ max-width:var(--measure); }
 .qa__item{ border-bottom:1px solid var(--rule); }
@@ -1153,7 +1250,13 @@ a{ color:inherit; text-decoration:none; }
 
 /* Подвал прижат к низу окна: на коротких разделах под ним не остаётся
    пустой плашки. */
-.foot{ border-top:1px solid var(--rule); margin-top:auto; }
+.foot{
+  margin-top:auto;
+  border-top:1px solid var(--pane-edge);
+  background:linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.62));
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+}
 .foot__row{
   display:flex; flex-wrap:wrap; gap:var(--s3);
   align-items:baseline; padding-block:var(--s3);
@@ -1261,16 +1364,15 @@ a{ color:inherit; text-decoration:none; }
   .top__name{ padding-block:14px; }
   .tab{ padding-block:14px; }
 
-  .rail::before{ display:none; }
   .entry{ grid-template-columns:1fr; gap:var(--s2); padding-block:var(--s4); }
-  .entry::before{ display:none; }
   .entry__meta{ display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap; text-align:left; }
   .entry__day,.entry__tag{ margin-top:0; }
   .about,.qa{ grid-template-columns:1fr; gap:var(--s3); }
   .about > .label,.qa > .label{ text-align:left; }
   .feed__foot,.feed__empty,.feed__state{ padding-left:0; }
   .thesis,.feed,.feed--home,.about,.qa,.contact{ padding-block:var(--s6); }
-  .top__nav{ gap:var(--s2); }
+  /* В столбике пункты стоят плотно — просвет между ними держит капсула. */
+  .top__nav{ gap:2px; }
   .media--pair{ grid-template-columns:1fr; }
   .pl--round{ width:min(260px,86%); margin-inline:auto; }
 }
@@ -1293,6 +1395,7 @@ a{ color:inherit; text-decoration:none; }
     <button type="button" class="top__more" id="moreBtn"
             aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
     <nav class="top__nav" id="navMenu" role="tablist" aria-label="Разделы сайта">
+      <span class="nav__pillY" id="navPillY" aria-hidden="true"></span>
       <a class="tab" role="tab" href="#/dnevnik"  data-tab="diary"    aria-selected="false" aria-controls="tab-diary">Записи</a>
       <a class="tab" role="tab" href="#/o-sebe"   data-tab="about"    aria-selected="false" aria-controls="tab-about">О дневнике</a>
       <a class="tab" role="tab" href="#/voprosy"  data-tab="faq"      aria-selected="false" aria-controls="tab-faq">Вопросы</a>
@@ -1556,10 +1659,15 @@ a{ color:inherit; text-decoration:none; }
     moreBtn.addEventListener('click', function(e){
       e.stopPropagation();
       setOpen(moreBtn.getAttribute('aria-expanded') !== 'true');
+      // Открыли — капсула сразу стоит на текущем разделе, без наезда.
+      if (typeof moveYPill === 'function') moveYPill();
     });
     // Выбрали раздел — меню закрывается, чтобы не перекрывать страницу.
     navMenu.addEventListener('click', function(e){
-      if (e.target.closest('.tab')) setOpen(false);
+      if (e.target.closest('.tab')){
+        setOpen(false);
+        if (typeof moveYPill === 'function') moveYPill();
+      }
     });
     document.addEventListener('click', function(e){
       if (!navMenu.contains(e.target) && e.target !== moreBtn) setOpen(false);
@@ -1678,6 +1786,52 @@ a{ color:inherit; text-decoration:none; }
   }
   // Полосу разделов можно прокрутить — капсула едет вместе с ней.
   if (navMenu) navMenu.addEventListener('scroll', movePill, { passive:true });
+
+  /* ── Капсула в выпадающем меню ──
+     На телефоне разделы лежат столбиком, и та, что ездит по шапке, туда не
+     достаёт. Здесь своя — ходит сверху вниз и слушается пальца: коснулся
+     раздела, капсула переехала и осталась, как на компьютере под курсором. */
+  var pillY = document.getElementById('navPillY');
+  var pillYPlaced = false;
+  var pillYTouch = null;      // раздел, которого касается палец
+
+  function moveYPill(){
+    if (!pillY || !navMenu) return;
+    var wide = window.matchMedia('(min-width:901px)').matches;
+    var цель = pillYTouch || navMenu.querySelector('[data-tab][aria-selected="true"]');
+    if (wide || !navMenu.classList.contains('is-open') || !цель || !цель.offsetHeight){
+      navMenu.classList.remove('has-pill');
+      pillYPlaced = false;
+      return;
+    }
+    if (!pillYPlaced) pillY.classList.add('no-anim');
+    pillY.style.height = цель.offsetHeight + 'px';
+    pillY.style.transform = 'translateY(' + цель.offsetTop + 'px)';
+    navMenu.classList.add('has-pill');
+    if (!pillYPlaced){
+      void pillY.offsetWidth;
+      pillY.classList.remove('no-anim');
+      pillYPlaced = true;
+    }
+  }
+
+  if (pillY && navMenu){
+    navMenu.addEventListener('pointerdown', function(e){
+      var раздел = e.target.closest('[data-tab]');
+      if (раздел){ pillYTouch = раздел; moveYPill(); }
+    });
+    // Палец скользит по столбику, не отрываясь, — капсула идёт следом.
+    navMenu.addEventListener('pointermove', function(e){
+      if (!pillYTouch) return;
+      var под = document.elementFromPoint(e.clientX, e.clientY);
+      var раздел = под && под.closest && под.closest('[data-tab]');
+      if (раздел && раздел !== pillYTouch){ pillYTouch = раздел; moveYPill(); }
+    });
+    // Отпустили — капсула остаётся там, куда привёл палец: выбор уже сделан.
+    window.addEventListener('pointerup', function(){ pillYTouch = null; });
+    window.addEventListener('pointercancel', function(){ pillYTouch = null; moveYPill(); });
+    window.addEventListener('resize', moveYPill);
+  }
 
   /* Капсула следует за курсором. Только там, где есть настоящая мышь: на
      сенсорном экране браузер выдаёт «наведение» после касания, и капсула

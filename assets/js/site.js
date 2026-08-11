@@ -324,6 +324,7 @@
           '</div>' +
           '<span class="pl__time tv__time">0:00</span>' +
           '<button type="button" class="pl__btn tv__rate" aria-label="Скорость воспроизведения"><span aria-hidden="true">1×</span></button>' +
+          '<button type="button" class="pl__btn tv__hd" aria-label="Качество видео" hidden><span aria-hidden="true">HD</span></button>' +
           '<button type="button" class="pl__btn tv__sound" aria-label="Выключить звук"><span aria-hidden="true">♪</span></button>' +
           '<input class="tv__vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Громкость">' +
           '<button type="button" class="pl__btn tv__full" aria-label="Во весь экран"><span aria-hidden="true">⛶</span></button>' +
@@ -342,6 +343,7 @@
     var rateBtn = root.querySelector('.tv__rate');
     var soundBtn = root.querySelector('.tv__sound');
     var volEl = root.querySelector('.tv__vol');
+    var hdBtn = root.querySelector('.tv__hd');
 
     function paint(){
       var dur = v.duration;
@@ -399,6 +401,26 @@
       v.muted = v.volume === 0;
     });
 
+    // Переключение качества: подменяем источник, но возвращаем зрителя на то
+    // же место и в то же состояние — иначе ролик начнётся сначала.
+    hdBtn.addEventListener('click', function(){
+      var entry = tvList && tvList[tvIndex];
+      if (!entry || !entry.item.srcLow) return;
+      var wantLight = !root.classList.contains('is-light');
+      var at = v.currentTime;
+      var wasPlaying = !v.paused;
+      v.src = wantLight ? entry.item.srcLow : entry.item.src;
+      v.addEventListener('loadedmetadata', function once(){
+        v.removeEventListener('loadedmetadata', once);
+        if (isFinite(at)) v.currentTime = at;
+        if (wasPlaying) v.play().catch(function(){});
+        paint();
+      });
+      v.load();
+      root.classList.toggle('is-light', wantLight);
+      paintQuality(entry);
+    });
+
     root.querySelector('.tv__full').addEventListener('click', function(){
       var win = root.querySelector('.tv__win');
       if (document.fullscreenElement) document.exitFullscreen();
@@ -445,6 +467,25 @@
     return root;
   }
 
+  function megabytes(bytes){
+    if (!bytes) return '';
+    return (bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0) + ' МБ';
+  }
+
+  function paintQuality(entry){
+    var btn = tv.querySelector('.tv__hd');
+    if (!entry.item.srcLow){ btn.hidden = true; return; }
+    btn.hidden = false;
+    var light = tv.classList.contains('is-light');
+    var size = megabytes(light ? entry.item.sizeLow : entry.item.size);
+    btn.querySelector('span').textContent = light ? 'SD' : 'HD';
+    btn.setAttribute('aria-label',
+      (light ? 'Лёгкое качество' : 'Хорошее качество') + (size ? ', ' + size : '') + '. Переключить');
+    btn.title = light
+      ? 'Лёгкое' + (size ? ' · ' + size : '') + ' — нажмите для хорошего'
+      : 'Хорошее' + (size ? ' · ' + size : '') + ' — нажмите для лёгкого';
+  }
+
   function step(dir){
     if (!tvList) return;
     var next = tvIndex + dir;
@@ -459,7 +500,10 @@
 
     var v = tv.video;
     v.pause();
-    v.src = entry.item.src;
+    // На 2G и при экономии трафика сразу открываем лёгкую версию.
+    var light = THIN && !!entry.item.srcLow;
+    tv.classList.toggle('is-light', light);
+    v.src = light ? entry.item.srcLow : entry.item.src;
     v.poster = entry.item.poster || '';
     v.loop = entry.item.type === 'round';
     tv.querySelector('.tv__win').classList.toggle('tv__win--round', entry.item.type === 'round');
@@ -467,6 +511,7 @@
       (entry.item.type === 'round' ? 'Кружочек' : 'Видео') +
       (entry.date ? ' · ' + entry.date : '') +
       ' · ' + (index + 1) + ' из ' + tvList.length;
+    paintQuality(entry);
     tv.querySelector('.tv__prev').disabled = index === 0;
     tv.querySelector('.tv__next').disabled = index === tvList.length - 1;
     tv.paint();
@@ -595,6 +640,10 @@
       link: post.link || '',
       tags: Array.isArray(post.tags) ? post.tags : [],
       media: media.filter(function(m){ return m && m.src && isSafeUrl(m.src); })
+        .map(function(m){
+          if (m.srcLow && !isSafeUrl(m.srcLow)) { m = Object.assign({}, m); delete m.srcLow; }
+          return m;
+        })
     };
   }
 

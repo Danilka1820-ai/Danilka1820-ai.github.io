@@ -18,7 +18,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v4-lighter-photos';
+const MEDIA_RECIPE = 'v5-two-qualities';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -99,6 +99,31 @@ async function optimizeVideo(file, kind) {
     }
   }
   if (existsSync(remux)) await unlink(remux);
+}
+
+// Вторая, лёгкая версия ролика. На слабом канале основной файл может просто
+// не успевать подгружаться, и человеку нужен вариант, который поедет.
+async function makeLight(file, kind) {
+  if (!FFMPEG) return '';
+  const light = file.replace(/\.mp4$/, '-low.mp4');
+  if (existsSync(light)) return light;
+
+  const round = kind === 'round';
+  const ok = tool(FFMPEG, [
+    '-y', '-loglevel', 'error', '-i', file,
+    '-vf', `scale='min(${round ? 360 : 640},iw)':-2`,
+    '-c:v', 'libx264', '-crf', round ? '34' : '32', '-preset', 'veryfast',
+    '-profile:v', 'baseline', '-level', '3.0', '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-b:a', '48k', '-ac', '1',
+    '-movflags', '+faststart', light,
+  ]);
+  if (!ok) { if (existsSync(light)) await unlink(light); return ''; }
+
+  // Если «лёгкая» вышла не легче — она бессмысленна.
+  const [full, small] = [await sizeOf(file), await sizeOf(light)];
+  if (small < 1024 || small >= full * 0.85) { await unlink(light); return ''; }
+  console.log(`    лёгкая версия: ${Math.round(full / 1024)} → ${Math.round(small / 1024)} KB`);
+  return light;
 }
 
 async function optimizeImage(file) {
@@ -289,7 +314,16 @@ async function downloadMedia(postId, items) {
     }
     const src = await mirror(postId, i, item.src, 'mp4', MAX_VIDEO_BYTES, item.type);
     const poster = item.poster ? await mirror(postId, `${i}p`, item.poster, 'jpg', MAX_IMAGE_BYTES, 'photo') : '';
-    if (src) saved.push({ type: item.type, src, poster });
+    if (src) {
+      const disk = path.join(ROOT, src);
+      const lightDisk = await makeLight(disk, item.type);
+      const entry = { type: item.type, src, poster, size: await sizeOf(disk) };
+      if (lightDisk) {
+        entry.srcLow = `${MEDIA_PUBLIC}/${path.basename(lightDisk)}`;
+        entry.sizeLow = await sizeOf(lightDisk);
+      }
+      saved.push(entry);
+    }
     else if (poster) saved.push({ type: 'photo', src: poster, unplayable: true });
   }
   return saved;
@@ -369,7 +403,7 @@ for (const post of raw) {
 const counts = posts.flatMap((p) => p.media).reduce((acc, m) => ({ ...acc, [m.type]: (acc[m.type] || 0) + 1 }), {});
 console.log('Медиа:', counts);
 
-await pruneMedia(posts.flatMap((p) => p.media).flatMap((m) => [m.src, m.poster].filter(Boolean)));
+await pruneMedia(posts.flatMap((p) => p.media).flatMap((m) => [m.src, m.srcLow, m.poster].filter(Boolean)));
 if (FFMPEG) await writeFile(RECIPE_FILE, `${MEDIA_RECIPE}\n`);
 
 const totals = { фото: 0, видео: 0 };

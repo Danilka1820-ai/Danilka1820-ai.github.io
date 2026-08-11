@@ -1,0 +1,42 @@
+name: Telegram Gemini bot
+
+# GitHub Actions не умеет держать процесс запущенным постоянно, поэтому
+# вместо одного вечно висящего бота workflow запускается по расписанию
+# и каждый раз недолго (несколько минут) опрашивает Telegram —
+# см. telegram-gemini-bot/poll_once.py.
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+# Не даём двум запускам опрашивать Telegram одновременно (иначе Telegram
+# ответит ошибкой конфликта getUpdates). Новый запуск отменяет застрявший
+# предыдущий, чтобы очередь не копилась.
+concurrency:
+  group: telegram-gemini-bot
+  cancel-in-progress: true
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Установить зависимости
+        working-directory: telegram-gemini-bot
+        run: pip install -r requirements.txt
+
+      - name: Опросить Telegram и обработать сообщения
+        working-directory: telegram-gemini-bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          ADMIN_ID: ${{ secrets.ADMIN_ID }}
+          POLL_SECONDS: "260"
+        run: python poll_once.py

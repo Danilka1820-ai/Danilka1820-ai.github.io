@@ -421,10 +421,52 @@
       paintQuality(entry);
     });
 
+    /* Полный экран.
+       Не угадываем устройство по названию браузера — спрашиваем, что он умеет.
+       На iPhone развернуть произвольный блок нельзя вовсе: система пускает в
+       полный экран только сам видеоэлемент, через свой вызов. */
+    var win = root.querySelector('.tv__win');
+
+    function fsElement(){
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+    function markFullscreen(){
+      var on = fsElement() === win;
+      root.classList.toggle('is-fs', on);
+      if (!on) unlockTurn();
+    }
+    // Разворачивая горизонтальный ролик на телефоне, поворачиваем экран —
+    // иначе в вертикальном положении он занимает узкую полоску посередине.
+    function tryTurn(){
+      try{
+        if (screen.orientation && screen.orientation.lock &&
+            v.videoWidth > v.videoHeight && window.innerWidth < 900){
+          screen.orientation.lock('landscape').catch(function(){});
+        }
+      }catch(e){}
+    }
+    function unlockTurn(){
+      try{ if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    }
+
+    document.addEventListener('fullscreenchange', markFullscreen);
+    document.addEventListener('webkitfullscreenchange', markFullscreen);
+
     root.querySelector('.tv__full').addEventListener('click', function(){
-      var win = root.querySelector('.tv__win');
-      if (document.fullscreenElement) document.exitFullscreen();
-      else if (win.requestFullscreen) win.requestFullscreen().catch(function(){});
+      if (fsElement()){
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        return;
+      }
+      var request = win.requestFullscreen || win.webkitRequestFullscreen;
+      var onVideo = function(){
+        // Запасной путь для iPhone и старых браузеров.
+        if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+        else if (v.requestFullscreen) v.requestFullscreen().catch(function(){});
+      };
+      if (!request){ onVideo(); return; }
+      var done = request.call(win);
+      if (done && done.then) done.then(tryTurn, onVideo);
+      else tryTurn();
     });
 
     var dragging = false;

@@ -134,7 +134,7 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   const нужно = [
     ['окно просмотра',        /function openTheater\s*\(/],
     ['переход к соседнему',   /function step\s*\(/],
-    ['выбор качества',        /function fitsScreen\s*\(/],
+    ['выбор качества',        /function pickLevel\s*\(/],
     ['панель управления',     /function buildTheater\s*\(/],
     ['перемотка',             /function seekPart\s*\(/],
     ['пропорции кадра',       /--tv-ratio/],

@@ -18,7 +18,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v6-with-sizes';
+const MEDIA_RECIPE = 'v7-fullhd';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -85,7 +85,10 @@ async function optimizeVideo(file, kind) {
 
   const ok = tool(FFMPEG, [
     '-y', '-loglevel', 'error', '-i', file,
-    '-vf', `scale='min(${round ? 540 : 1280},iw)':-2`,
+    // Раньше здесь стояло 1280 — и Full HD, присланный в Telegram, срезали
+    // мы сами. Теперь оставляем как есть, вплоть до 1920. Больше нет смысла:
+    // выше исходника не прыгнуть, а вес растёт вдвое.
+    '-vf', `scale='min(${round ? 540 : 1920},iw)':-2`,
     '-c:v', 'libx264', '-crf', round ? '32' : '28', '-preset', 'veryfast',
     '-profile:v', 'main', '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', round ? '64k' : '96k', '-ac', '1',
@@ -112,30 +115,48 @@ async function optimizeVideo(file, kind) {
   if (existsSync(remux)) await unlink(remux);
 }
 
-// Вторая, лёгкая версия ролика. На слабом канале основной файл может просто
-// не успевать подгружаться, и человеку нужен вариант, который поедет.
-async function makeLight(file, kind) {
-  if (!FFMPEG) return '';
-  const light = file.replace(/\.mp4$/, '-low.mp4');
-  if (existsSync(light)) return light;
+/* Версия поменьше. Их две: средняя и лёгкая.
 
-  const round = kind === 'round';
+   Средняя нужна с тех пор, как основной файл может быть Full HD: телефону
+   иначе пришлось бы выбирать между мылом в 360p и вдвое более тяжёлым
+   кадром, который его экран всё равно не покажет.
+
+   Лёгкая — для слабого канала: основной файл там просто не успевает. */
+async function makeSmaller(file, kind, { width, crf, suffix, profile }) {
+  if (!FFMPEG) return '';
+  const out = file.replace(/\.mp4$/, `-${suffix}.mp4`);
+  if (existsSync(out)) return out;
+
+  // Растягивать вверх бессмысленно: детали не прибавится, вес прибавится.
+  const size = videoSize(file);
+  if (size && size.w <= width * 1.1) return '';
+
   const ok = tool(FFMPEG, [
     '-y', '-loglevel', 'error', '-i', file,
-    '-vf', `scale='min(${round ? 360 : 640},iw)':-2`,
-    '-c:v', 'libx264', '-crf', round ? '34' : '32', '-preset', 'veryfast',
-    '-profile:v', 'baseline', '-level', '3.0', '-pix_fmt', 'yuv420p',
-    '-c:a', 'aac', '-b:a', '48k', '-ac', '1',
-    '-movflags', '+faststart', light,
+    '-vf', `scale='min(${width},iw)':-2`,
+    '-c:v', 'libx264', '-crf', String(crf), '-preset', 'veryfast',
+    '-profile:v', profile, ...(profile === 'baseline' ? ['-level', '3.0'] : []),
+    '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-b:a', suffix === 'low' ? '48k' : '96k', '-ac', '1',
+    '-movflags', '+faststart', out,
   ]);
-  if (!ok) { if (existsSync(light)) await unlink(light); return ''; }
+  if (!ok) { if (existsSync(out)) await unlink(out); return ''; }
 
-  // Если «лёгкая» вышла не легче — она бессмысленна.
-  const [full, small] = [await sizeOf(file), await sizeOf(light)];
-  if (small < 1024 || small >= full * 0.85) { await unlink(light); return ''; }
-  console.log(`    лёгкая версия: ${Math.round(full / 1024)} → ${Math.round(small / 1024)} KB`);
-  return light;
+  // Если версия вышла не легче — она бессмысленна.
+  const [full, small] = [await sizeOf(file), await sizeOf(out)];
+  if (small < 1024 || small >= full * 0.85) { await unlink(out); return ''; }
+  console.log(`    ${suffix === 'low' ? 'лёгкая' : 'средняя'} версия: ${Math.round(full / 1024)} → ${Math.round(small / 1024)} KB`);
+  return out;
 }
+
+const makeLight = (file, kind) => makeSmaller(file, kind, {
+  width: kind === 'round' ? 360 : 640, crf: kind === 'round' ? 34 : 32,
+  suffix: 'low', profile: 'baseline',
+});
+// Средний уровень — только у обычного видео: кружочки и так 512 пикселей.
+const makeMid = (file, kind) => (kind === 'round' ? '' : makeSmaller(file, kind, {
+  width: 1280, crf: 28, suffix: 'mid', profile: 'main',
+}));
 
 async function optimizeImage(file) {
   const tmp = `${file}.tmp.jpg`;
@@ -328,9 +349,16 @@ async function downloadMedia(postId, items) {
     if (src) {
       const disk = path.join(ROOT, src);
       const lightDisk = await makeLight(disk, item.type);
+      const midDisk = await makeMid(disk, item.type);
       const entry = { type: item.type, src, poster, size: await sizeOf(disk) };
       const full = videoSize(disk);
       if (full) { entry.w = full.w; entry.h = full.h; }
+      if (midDisk) {
+        entry.srcMid = `${MEDIA_PUBLIC}/${path.basename(midDisk)}`;
+        entry.sizeMid = await sizeOf(midDisk);
+        const mid = videoSize(midDisk);
+        if (mid) { entry.wMid = mid.w; entry.hMid = mid.h; }
+      }
       if (lightDisk) {
         entry.srcLow = `${MEDIA_PUBLIC}/${path.basename(lightDisk)}`;
         entry.sizeLow = await sizeOf(lightDisk);
@@ -418,7 +446,7 @@ for (const post of raw) {
 const counts = posts.flatMap((p) => p.media).reduce((acc, m) => ({ ...acc, [m.type]: (acc[m.type] || 0) + 1 }), {});
 console.log('Медиа:', counts);
 
-await pruneMedia(posts.flatMap((p) => p.media).flatMap((m) => [m.src, m.srcLow, m.poster].filter(Boolean)));
+await pruneMedia(posts.flatMap((p) => p.media).flatMap((m) => [m.src, m.srcMid, m.srcLow, m.poster].filter(Boolean)));
 if (FFMPEG) await writeFile(RECIPE_FILE, `${MEDIA_RECIPE}\n`);
 
 const totals = { фото: 0, видео: 0 };

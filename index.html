@@ -1733,10 +1733,10 @@ a{ color:inherit; text-decoration:none; }
      например, сломан установщик пропорций). Здесь весь плеер — двести строк,
      и каждая делает то, что нужно этому сайту.
 
-     Клавиши: пробел — пуск, ← → — десять секунд, ↑ ↓ — громкость,
+     Клавиши: пробел — пуск, ← → — пять секунд, ↑ ↓ — громкость,
      Home/End — начало и конец, N и P — соседний ролик, Esc — закрыть. */
 
-  var SKIP = 10;                      // на сколько прыгают кнопки перемотки
+  var SKIP = 5;                       // на сколько прыгают кнопки перемотки
   var SPEEDS = [1, 1.25, 1.5, 2, 0.5];
   var PREFS = 'sarykov-player';       // громкость и скорость помним между заходами
 
@@ -1787,9 +1787,9 @@ a{ color:inherit; text-decoration:none; }
         '</div>' +
         '<div class="tv__cap"></div>' +
         '<div class="tv__bar">' +
-          '<button type="button" class="pl__btn tv__back" aria-label="Назад на 10 секунд"><span aria-hidden="true">↺</span></button>' +
+          '<button type="button" class="pl__btn tv__back" aria-label="Назад на 5 секунд"><span aria-hidden="true">↺</span></button>' +
           '<button type="button" class="pl__btn tv__play" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
-          '<button type="button" class="pl__btn tv__fwd" aria-label="Вперёд на 10 секунд"><span aria-hidden="true">↻</span></button>' +
+          '<button type="button" class="pl__btn tv__fwd" aria-label="Вперёд на 5 секунд"><span aria-hidden="true">↻</span></button>' +
           '<div class="pl__track tv__track" role="slider" tabindex="0" aria-label="Перемотка" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
             '<div class="pl__buffer"></div><div class="pl__fill"></div><div class="pl__knob"></div>' +
             '<div class="pl__hint" aria-hidden="true">0:00</div>' +
@@ -1827,6 +1827,8 @@ a{ color:inherit; text-decoration:none; }
     if (typeof prefs.volume === 'number'){ v.volume = prefs.volume; volEl.value = prefs.volume; }
     if (prefs.muted) v.muted = true;
     root.rate = SPEEDS.indexOf(prefs.rate) >= 0 ? prefs.rate : 1;
+    root.level = 0;                        // какой уровень показан сейчас
+    root.wanted = prefs.quality || 0;      // какой зритель выбрал руками
 
     function known(){ return isFinite(v.duration) && v.duration > 0; }
 
@@ -1916,7 +1918,7 @@ a{ color:inherit; text-decoration:none; }
       volEl.value = v.muted ? 0 : v.volume;
     }
     function remember(){
-      savePrefs({ volume: v.volume, muted: v.muted, rate: root.rate });
+      savePrefs({ volume: v.volume, muted: v.muted, rate: root.rate, quality: root.wanted });
     }
     soundBtn.addEventListener('click', function(){ v.muted = !v.muted; paintSound(); remember(); });
     volEl.addEventListener('input', function(){
@@ -1929,13 +1931,17 @@ a{ color:inherit; text-decoration:none; }
     // же место и в то же состояние — иначе ролик начнётся сначала.
     root.querySelector('.tv__hd').addEventListener('click', function(){
       var entry = tvList && tvList[tvIndex];
-      if (!entry || !entry.item.srcLow) return;
-      var wantLight = !root.classList.contains('is-light');
-      var at = v.currentTime;
-      var wasPlaying = !v.paused;
-      root.classList.toggle('is-light', wantLight);
-      swap(wantLight ? entry.item.srcLow : entry.item.src, at, wasPlaying);
+      if (!entry) return;
+      var all = levels(entry.item);
+      if (all.length < 2) return;
+      root.level = (root.level + 1) % all.length;
+      swap(all[root.level].src, v.currentTime, !v.paused);
+      sizeStage(entry);
       paintQuality(entry);
+      // Выбор руками — это решение зрителя, а не разовая случайность:
+      // соседние ролики открываем в том же качестве.
+      root.wanted = all[root.level].h || 0;
+      remember();
     });
 
     /* Смена файла на лету. Скорость приходится ставить заново: браузер по
@@ -1985,6 +1991,19 @@ a{ color:inherit; text-decoration:none; }
       var on = fsElement() === win;
       root.classList.toggle('is-fs', on);
       if (!on) unlockTurn();
+      if (on) upLevel();
+    }
+    /* Развернули на весь экран — кадру стало нужно больше точек. Поднимаем
+       уровень, если он есть, сохраняя место и состояние. Вниз при выходе не
+       опускаем: файл уже скачан, толку не будет. */
+    function upLevel(){
+      var entry = tvList && tvList[tvIndex];
+      if (!entry) return;
+      var надо = pickLevel(entry.item, true);
+      if (надо >= root.level) return;
+      root.level = надо;
+      swap(levels(entry.item)[надо].src, v.currentTime, !v.paused);
+      paintQuality(entry);
     }
     // Разворачивая горизонтальный ролик на телефоне, поворачиваем экран —
     // иначе в вертикальном положении он занимает узкую полоску посередине.
@@ -2045,8 +2064,8 @@ a{ color:inherit; text-decoration:none; }
     // Дорожка объявлена ползунком — значит, должна слушаться и с клавиатуры.
     track.addEventListener('keydown', function(e){
       var k = e.key;
-      if (k === 'ArrowRight' || k === 'ArrowUp'){ nudge(5); }
-      else if (k === 'ArrowLeft' || k === 'ArrowDown'){ nudge(-5); }
+      if (k === 'ArrowRight' || k === 'ArrowUp'){ nudge(SKIP); }
+      else if (k === 'ArrowLeft' || k === 'ArrowDown'){ nudge(-SKIP); }
       else if (k === 'PageUp'){ nudge(60); }
       else if (k === 'PageDown'){ nudge(-60); }
       else if (k === 'Home'){ seekPart(0); }
@@ -2138,42 +2157,79 @@ a{ color:inherit; text-decoration:none; }
     return root;
   }
 
-  /* Какая версия нужна этому экрану.
+  /* Уровни качества, от самого крупного к лёгкому. Сборщик к каждому ролику
+     делает две версии поменьше: среднюю (1280) и лёгкую (640), а основная —
+     какая пришла, вплоть до Full HD. Средняя появилась вместе с Full HD:
+     без неё телефону пришлось бы выбирать между мылом и файлом вдвое тяжелее
+     того, что его экран способен показать. */
+  function levels(item){
+    var out = [];
+    if (item.src) out.push({ src:item.src, w:item.w, h:item.h, size:item.size });
+    if (item.srcMid) out.push({ src:item.srcMid, w:item.wMid, h:item.hMid, size:item.sizeMid });
+    if (item.srcLow) out.push({ src:item.srcLow, w:item.wLow, h:item.hLow, size:item.sizeLow });
+    return out;
+  }
+
+  /* Какой уровень нужен этому экрану — самый лёгкий из тех, что его покрывают.
      Считаем не «телефон или компьютер», а сколько настоящих точек займёт кадр:
      геометрия окна, а не текущая разметка — в момент выбора кадр ещё не
      разложен и намерил бы ерунду. */
-  function fitsScreen(entry){
-    var it = entry.item;
-    if (!it.srcLow || !it.wLow || !it.w || !it.h) return false;
+  function pickLevel(item, полныйЭкран){
+    var all = levels(item);
+    if (all.length < 2) return 0;
+    if (THIN) return all.length - 1;          // экономия трафика — самый лёгкий
+    if (!item.w || !item.h) return 0;
 
-    var round = it.type === 'round';
-    var availW = round
-      ? Math.min(window.innerHeight * 0.68, window.innerWidth * 0.74)
-      : Math.min(window.innerWidth * 0.92, 1000);
-    var availH = round ? availW : window.innerHeight * 0.68;
-    var shownW = Math.min(availW, availH * (it.w / it.h));
+    var round = item.type === 'round';
+    // В полном экране кадр занимает весь монитор, а не тысячу точек окна —
+    // иначе Full HD не выбрался бы никогда, и на весь экран растягивался бы
+    // кадр 720p.
+    var availW = полныйЭкран
+      ? (round ? Math.min(window.innerHeight, window.innerWidth) : window.innerWidth)
+      : round
+        ? Math.min(window.innerHeight * 0.68, window.innerWidth * 0.74)
+        : Math.min(window.innerWidth * 0.92, 1000);
+    var availH = полныйЭкран ? window.innerHeight : (round ? availW : window.innerHeight * 0.68);
+    var shownW = Math.min(availW, availH * (item.w / item.h));
 
     // Плотность выше двух на глаз уже не отличить, а файл тяжелее вдвое.
     var density = Math.min(window.devicePixelRatio || 1, 2);
-    // Допуск. Лёгкая версия принимается, если покрывает четыре пятых нужного:
-    // на глаз разницы нет, а файл втрое легче. Без допуска телефону не хватало
-    // буквально нескольких пикселей — и он качал полную версию.
-    return it.wLow >= shownW * density * 0.8;
+    // Допуск: уровень принимается, если покрывает четыре пятых нужного. На
+    // глаз разницы нет, а файл втрое легче. Без допуска телефону не хватало
+    // буквально нескольких точек — и он качал полную версию.
+    var need = shownW * density * 0.8;
+    for (var i = all.length - 1; i > 0; i--) if (all[i].w >= need) return i;
+    return 0;
+  }
+
+  /* Зритель однажды выбрал качество руками — ищем ближайшее к нему из тех,
+     что есть у этого ролика. У кружочков уровней меньше, чем у видео, поэтому
+     сравниваем по высоте кадра, а не по номеру. */
+  function nearestLevel(item, wanted){
+    if (!wanted || THIN) return pickLevel(item);
+    var all = levels(item), best = 0, diff = Infinity;
+    for (var i = 0; i < all.length; i++){
+      var d = Math.abs((all[i].h || 0) - wanted);
+      if (d < diff){ diff = d; best = i; }
+    }
+    return best;
   }
 
   function paintQuality(entry){
     var btn = tv.querySelector('.tv__hd');
-    if (!entry.item.srcLow){ btn.hidden = true; return; }
+    var all = levels(entry.item);
+    if (all.length < 2){ btn.hidden = true; return; }
     btn.hidden = false;
-    var light = tv.classList.contains('is-light');
-    var size = megabytes(light ? entry.item.sizeLow : entry.item.size);
-    var here = light ? entry.item.hLow : entry.item.h;
-    var there = light ? entry.item.h : entry.item.hLow;
+
+    var here = all[tv.level] || all[0];
+    var next = all[(tv.level + 1) % all.length];
     // Показываем настоящее разрешение, а не отвлечённые «HD» и «SD».
-    btn.querySelector('span').textContent = here ? here + 'p' : (light ? 'SD' : 'HD');
-    var now = (here ? here + 'p' : (light ? 'лёгкое' : 'хорошее')) + (size ? ' · ' + size : '');
-    btn.setAttribute('aria-label', 'Качество: ' + now + '. Переключить');
-    btn.title = now + (there ? ' — нажмите для ' + there + 'p' : ' — нажмите, чтобы переключить');
+    var имя = function(l){ return l.h ? l.h + 'p' : '?'; };
+    btn.querySelector('span').textContent = имя(here);
+    var сейчас = имя(here) + (here.h >= 1080 ? ' Full HD' : '') +
+      (megabytes(here.size) ? ' · ' + megabytes(here.size) : '');
+    btn.setAttribute('aria-label', 'Качество: ' + сейчас + '. Переключить');
+    btn.title = сейчас + ' — нажмите для ' + имя(next);
   }
 
   /* Место под кадр: пропорции и предел увеличения. Считается и при открытии,
@@ -2187,7 +2243,8 @@ a{ color:inherit; text-decoration:none; }
       : (it.w && it.h ? it.w + '/' + it.h : '16/9'));
     // Растягивать кадр много выше его настоящего размера бессмысленно: детали
     // не появится, появится мыло. Предел считаем от самого файла.
-    var natural = tv.classList.contains('is-light') ? (it.wLow || it.w) : it.w;
+    var уровень = levels(it)[tv.level] || {};
+    var natural = уровень.w || it.w;
     win.style.setProperty('--tv-cap', natural ? Math.round(natural * 1.6) + 'px' : '100vw');
   }
 
@@ -2207,13 +2264,13 @@ a{ color:inherit; text-decoration:none; }
     v.pause();
     tv.classList.remove('is-failed');
     tv.classList.add('is-waiting');
-    // Версию выбираем сами: по экономии трафика или по размеру экрана.
-    var light = !!entry.item.srcLow && (THIN || fitsScreen(entry));
-    tv.classList.toggle('is-light', light);
+    // Уровень выбираем сами: по экономии трафика или по размеру экрана.
+    // Но если зритель уже выбирал качество руками, держим его выбор.
+    tv.level = nearestLevel(entry.item, tv.wanted);
     sizeStage(entry);
     v.poster = entry.item.poster || '';
     v.loop = entry.item.type === 'round';
-    tv.swap(light ? entry.item.srcLow : entry.item.src, 0, true);
+    tv.swap((levels(entry.item)[tv.level] || {}).src || entry.item.src, 0, true);
     tv.abled();
 
     tv.querySelector('.tv__cap').textContent =

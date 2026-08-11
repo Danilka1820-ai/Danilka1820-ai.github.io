@@ -252,6 +252,23 @@ def handle_delete(message):
 def handle_text(message):
     # Команды (/post, /edit, /delete, /start, /help) обрабатываются выше
     # и до этого хендлера не доходят.
+
+    # Если переслали сообщение из канала/чата — просто сообщаем его точный
+    # ID и username вместо запроса к Gemini. Это удобный способ узнать,
+    # что писать в CHANNEL_ID (особенно для приватных каналов без @username).
+    if message.forward_from_chat is not None:
+        chat = message.forward_from_chat
+        username_line = f"@{chat.username}" if chat.username else "нет (канал приватный)"
+        bot.reply_to(
+            message,
+            "ℹ️ Информация о канале/чате, откуда переслано сообщение:\n"
+            f"ID: {chat.id}\n"
+            f"Название: {chat.title}\n"
+            f"Username: {username_line}\n\n"
+            f"Для CHANNEL_ID используй значение: {chat.username and ('@' + chat.username) or chat.id}",
+        )
+        return
+
     processing_msg = bot.reply_to(message, "⏳ Спрашиваю у Gemini...")
     try:
         post_text = ask_gemini_text(message.text)

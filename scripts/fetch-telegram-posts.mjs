@@ -18,7 +18,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v7-fullhd';
+const MEDIA_RECIPE = 'v8-720';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -85,10 +85,9 @@ async function optimizeVideo(file, kind) {
 
   const ok = tool(FFMPEG, [
     '-y', '-loglevel', 'error', '-i', file,
-    // Раньше здесь стояло 1280 — и Full HD, присланный в Telegram, срезали
-    // мы сами. Теперь оставляем как есть, вплоть до 1920. Больше нет смысла:
-    // выше исходника не прыгнуть, а вес растёт вдвое.
-    '-vf', `scale='min(${round ? 540 : 1920},iw)':-2`,
+    // Потолок — 720p. Full HD пробовали: кадр вчетверо тяжелее, а на экране
+    // дневника разницы не видно. Автор решил, что оно того не стоит.
+    '-vf', `scale='min(${round ? 540 : 1280},iw)':-2`,
     '-c:v', 'libx264', '-crf', round ? '32' : '28', '-preset', 'veryfast',
     '-profile:v', 'main', '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', round ? '64k' : '96k', '-ac', '1',
@@ -153,7 +152,11 @@ const makeLight = (file, kind) => makeSmaller(file, kind, {
   width: kind === 'round' ? 360 : 640, crf: kind === 'round' ? 34 : 32,
   suffix: 'low', profile: 'baseline',
 });
-// Средний уровень — только у обычного видео: кружочки и так 512 пикселей.
+/* Средний уровень имел смысл, пока основной был Full HD: телефону иначе
+   пришлось бы выбирать между мылом и вчетверо более тяжёлым кадром. С
+   потолком 720p он совпал бы с основным, и makeSmaller сам от него
+   откажется — оставляем вызов, чтобы уровень вернулся, если потолок
+   когда-нибудь снова поднимут. */
 const makeMid = (file, kind) => (kind === 'round' ? '' : makeSmaller(file, kind, {
   width: 1280, crf: 28, suffix: 'mid', profile: 'main',
 }));

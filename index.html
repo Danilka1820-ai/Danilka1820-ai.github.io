@@ -988,7 +988,15 @@ a{ color:inherit; text-decoration:none; }
   box-shadow:0 2px 6px rgba(17,21,27,.35);
   transition:transform .15s;
 }
-.pl__track:hover .pl__knob, .pl__track.is-dragging .pl__knob{ transform:scale(1.35); }
+.pl__track:hover .pl__knob, .pl__track.is-dragging .pl__knob{ transform:scale(1.4); }
+/* Под курсором полоса становится толще — в неё проще попасть и приятнее
+   тащить. На ощупь это то же самое, что палец делает на телефоне. */
+.pl__track:hover::before, .pl__track.is-dragging::before,
+.pl__track:hover .pl__fill, .pl__track.is-dragging .pl__fill,
+.pl__track:hover .pl__buffer, .pl__track.is-dragging .pl__buffer{
+  height:5px; margin-top:-2.5px;
+}
+.pl__track:focus-visible{ outline:2px solid var(--lamp); outline-offset:3px; border-radius:4px; }
 /* Подсказка со временем: видно, куда попадёшь, ещё до отпускания. */
 .pl__hint{
   position:absolute; bottom:calc(100% + 6px); left:0; transform:translateX(-50%);
@@ -1838,7 +1846,7 @@ a{ color:inherit; text-decoration:none; }
     var backBtn = root.querySelector('.tv__back');
     var fwdBtn = root.querySelector('.tv__fwd');
 
-    var dragging = false;
+    var dragging = false, dragPart = 0;
 
     // Запомненные с прошлого раза громкость и скорость.
     var prefs = loadPrefs();
@@ -2147,26 +2155,50 @@ a{ color:inherit; text-decoration:none; }
       else tryTurn();
     });
 
-    /* Перетаскивание дорожки. Отпускание слушаем на всём окне: палец часто
-       уходит за пределы полоски, и раньше ползунок оставался «прилипшим». */
+    /* Перетаскивание дорожки — мышью и пальцем одинаково.
+
+       Мышь шлёт до шестидесяти движений в секунду, и раньше каждое из них
+       запускало перемотку. Видео захлёбывалось, ползунок казался залипшим, и
+       на компьютере тащить полосу было заметно хуже, чем пальцем на телефоне,
+       где движений в разы меньше. Теперь кадр догоняет несколько раз в
+       секунду, а точная перемотка — одна, при отпускании.
+
+       Движения слушаем и на всём окне: курсор легко уводит за пределы узкой
+       полоски, и там, где захват указателя не сработал, перетаскивание
+       обрывалось на полпути. */
+    var ЧАСТО = 200;                    // как часто кадр догоняет ползунок
+    var последнийРывок = 0;
+
+    function вести(e){
+      var part = partFromEvent(e);
+      place(part);                      // подсказка со временем ходит и без нажатия
+      if (!dragging) return;
+      dragPart = part;
+      var now = Date.now();
+      if (now - последнийРывок > ЧАСТО){
+        последнийРывок = now;
+        v.currentTime = part * v.duration;
+      }
+    }
+
     track.addEventListener('pointerdown', function(e){
       if (!known()) return;
       dragging = true;
+      dragPart = partFromEvent(e);
+      последнийРывок = 0;
       track.classList.add('is-dragging');
       if (track.setPointerCapture) { try { track.setPointerCapture(e.pointerId); } catch (err){} }
-      place(partFromEvent(e));
+      вести(e);
       e.preventDefault();
     });
-    track.addEventListener('pointermove', function(e){
-      var part = partFromEvent(e);
-      place(part);                                   // подсказка ходит и без нажатия
-      if (dragging){ v.currentTime = part * v.duration; }
-    });
+    track.addEventListener('pointermove', вести);
+    window.addEventListener('pointermove', function(e){ if (dragging) вести(e); });
+
     var release = function(){
       if (!dragging) return;
       dragging = false;
       track.classList.remove('is-dragging');
-      paint();
+      seekPart(dragPart);               // ставим ровно туда, где отпустили
     };
     window.addEventListener('pointerup', release);
     window.addEventListener('pointercancel', release);
@@ -2360,8 +2392,7 @@ a{ color:inherit; text-decoration:none; }
     // Показываем настоящее разрешение, а не отвлечённые «HD» и «SD».
     var имя = function(l){ return l.h ? l.h + 'p' : '?'; };
     btn.querySelector('span').textContent = имя(here);
-    var сейчас = имя(here) + (here.h >= 1080 ? ' Full HD' : '') +
-      (megabytes(here.size) ? ' · ' + megabytes(here.size) : '');
+    var сейчас = имя(here) + (megabytes(here.size) ? ' · ' + megabytes(here.size) : '');
     btn.setAttribute('aria-label', 'Качество: ' + сейчас + '. Переключить');
     btn.title = сейчас + ' — нажмите для ' + имя(next);
   }

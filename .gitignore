@@ -1,2 +1,7 @@
 # No build artifacts, dependencies, or temporary files detected in changes
 # Only source/config files present, so no additional ignores needed
+
+# Telegram Gemini bot: local environment / secrets and virtualenv
+telegram-gemini-bot/.env
+telegram-gemini-bot/venv/
+telegram-gemini-bot/__pycache__/

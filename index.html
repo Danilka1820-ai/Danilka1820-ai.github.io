@@ -535,20 +535,30 @@ a{ color:inherit; text-decoration:none; }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
 
 /* Три точки рядом с именем — на широком экране не нужны, часы и так видны. */
+/* Кнопка разделов — та же отливка, что у портрета: кромка-лупа, толщина,
+   цветная грань и блик, идущий за пальцем. Кромку берём тоньше: кнопка
+   сорок точек в поперечнике, широкая грань съела бы её целиком. */
 .top__more{
   display:none; flex:0 0 auto; align-self:center;
   width:40px; height:40px; border-radius:50%; cursor:pointer;
   align-items:center; justify-content:center;
   font-family:var(--mono); font-size:15px; line-height:1;
   color:var(--ink-2);
-  border:1px solid var(--glass-stroke);
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:0 6px 16px -12px rgba(17,21,27,.6), var(--glass-glow);
-  transition:color .2s, background .2s;
+  --rim:4px;
+  transition:color .2s, transform .2s cubic-bezier(.22,1,.36,1);
 }
-.top__more[aria-expanded="true"]{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.top__more:active{ transform:scale(.94); }
+/* Открытое меню отмечаем не заливкой — она погасила бы стекло, — а тем, что
+   грань разгорается и точки темнеют. */
+.top__more[aria-expanded="true"]{
+  color:var(--ink);
+  box-shadow:
+    0 24px 50px -28px rgba(17,21,27,.55),
+    0 2px 10px -6px rgba(17,21,27,.2),
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 -1px 0 rgba(17,21,27,.14),
+    inset 0 0 0 1px rgba(176,121,28,.35);
+}
 
 @media (max-width:1080px){ .top__now .now-date, .top__now .sep-date{ display:none; } }
 
@@ -732,7 +742,7 @@ a{ color:inherit; text-decoration:none; }
   -webkit-mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
   -webkit-mask-composite:xor; mask-composite:exclude;
   mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
-  padding:9px;                                   /* ширина кромки */
+  padding:var(--rim, 9px);                       /* ширина кромки */
   pointer-events:none;
 }
 /* Блик, идущий за курсором, и цветная кайма на грани. */
@@ -1454,7 +1464,7 @@ html.thin .entry:hover{ transform:none; }
     <a class="top__name" href="#/glavnaya" role="tab" data-tab="home"
        aria-selected="true" aria-controls="tab-home">Данил Сарыков</a>
     <span class="nav__pill" id="navPill" aria-hidden="true"></span>
-    <button type="button" class="top__more" id="moreBtn"
+    <button type="button" class="glass-real top__more" id="moreBtn"
             aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
     <nav class="top__nav" id="navMenu" role="tablist" aria-label="Разделы сайта">
       <span class="nav__pillY" id="navPillY" aria-hidden="true"></span>
@@ -1854,23 +1864,30 @@ html.thin .entry:hover{ transform:none; }
      в переменные место курсора внутри стекла, а рисует уже CSS. Считаем не
      чаще кадра и только там, где есть мышь: на телефоне двигать нечем, а
      лишние вычисления на прокрутке ни к чему. */
-  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
-      !reduce && !THIN){
+  if (!reduce && !THIN){
     var стёкла = [].slice.call(document.querySelectorAll('.glass-real'));
     var бликЖдёт = false, бликСобытие = null;
-    if (стёкла.length){
+    var светить = function(e, только){
+      (только ? [только] : стёкла).forEach(function(el){
+        var b = el.getBoundingClientRect();
+        if (!b.width) return;
+        el.style.setProperty('--mx', ((e.clientX - b.left) / b.width * 100).toFixed(1) + '%');
+        el.style.setProperty('--my', ((e.clientY - b.top) / b.height * 100).toFixed(1) + '%');
+      });
+    };
+    // Палец: блик вспыхивает там, где коснулись. Считать на каждое движение
+    // пальца незачем — касание одно и короткое.
+    стёкла.forEach(function(el){
+      el.addEventListener('pointerdown', function(e){ светить(e, el); });
+    });
+    if (стёкла.length && window.matchMedia('(hover: hover) and (pointer: fine)').matches){
       window.addEventListener('pointermove', function(e){
         бликСобытие = e;
         if (бликЖдёт) return;
         бликЖдёт = true;
         requestAnimationFrame(function(){
           бликЖдёт = false;
-          стёкла.forEach(function(el){
-            var b = el.getBoundingClientRect();
-            if (!b.width) return;
-            el.style.setProperty('--mx', ((бликСобытие.clientX - b.left) / b.width * 100).toFixed(1) + '%');
-            el.style.setProperty('--my', ((бликСобытие.clientY - b.top) / b.height * 100).toFixed(1) + '%');
-          });
+          светить(бликСобытие);
         });
       }, { passive:true });
     }

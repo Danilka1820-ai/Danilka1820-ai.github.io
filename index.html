@@ -669,8 +669,22 @@ a{ color:inherit; text-decoration:none; }
   padding:11px 16px; min-height:42px; cursor:pointer;
   transition:color .2s, border-color .2s, background .2s, box-shadow .2s;
 }
-.filters button:hover{ color:var(--ink); background:rgba(255,255,255,.72); }
-.filters button[aria-pressed="true"]{ color:var(--paper); background:var(--ink); border-color:var(--ink); }
+/* Как и остальные кнопки: стекло не заливается чёрным, подчёркивается слово.
+   Выбранная рубрика держится не цветом фона, а плотным стеклом и линией —
+   иначе её не отличить от просто наведённой. */
+.filters button:hover,.filters button:focus-visible{
+  color:var(--ink); background:rgba(255,255,255,.72);
+  text-decoration:underline; text-underline-offset:5px;
+  text-decoration-thickness:1px; text-decoration-color:var(--lamp);
+}
+.filters button[aria-pressed="true"]{
+  color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
+  border-color:rgba(255,255,255,.92);
+  box-shadow:0 8px 20px -10px rgba(17,21,27,.4), inset 0 1px 0 rgba(255,255,255,1);
+  text-decoration:underline; text-underline-offset:5px;
+  text-decoration-thickness:2px; text-decoration-color:var(--lamp);
+}
 
 .rail{ position:relative; }
 .rail::before{

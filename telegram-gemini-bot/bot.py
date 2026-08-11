@@ -3,7 +3,7 @@ Telegram-бот на pyTelegramBotAPI + Google Gemini.
 
 Возможности:
   - Текст -> бот просит Gemini сделать из него красивый пост.
-  - Фото/видео -> бот скачивает файл, отдаёт его Gemini 1.5 Flash,
+  - Фото/видео -> бот скачивает файл, отдаёт его Gemini,
     получает описание сюжета/текста и превращает в пост.
   - Кружочки (video_note) и голосовые (voice) -> бот скачивает аудио/видео,
     Gemini расшифровывает речь и формирует готовый пост.
@@ -25,7 +25,7 @@ import time
 import tempfile
 
 import telebot
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 # ---------------------------------------------------------------------------
@@ -54,8 +54,8 @@ ADMIN_ID = int(ADMIN_ID) if ADMIN_ID else None
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN, parse_mode="HTML")
 
-genai.configure(api_key=GEMINI_API_KEY)
-gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = "gemini-flash-latest"
 
 # Промпт, который просит Gemini всегда возвращать готовый к публикации текст
 # без лишних пояснений и без markdown-разметки, которую Telegram не понимает.
@@ -103,7 +103,7 @@ def ask_gemini_text(user_text: str) -> str:
         f"{POST_STYLE_HINT}\n\n"
         f"Исходный текст:\n{user_text}"
     )
-    response = gemini_model.generate_content(prompt)
+    response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
     return response.text.strip()
 
 
@@ -116,11 +116,11 @@ def ask_gemini_about_media(local_path: str, task_description: str) -> str:
     # Загружаем файл в Gemini File API. Для фото это происходит мгновенно,
     # для видео/аудио файлу нужно время на обработку на стороне Google —
     # поэтому дожидаемся, пока его состояние станет ACTIVE.
-    uploaded_file = genai.upload_file(path=local_path)
+    uploaded_file = gemini_client.files.upload(file=local_path)
 
     while uploaded_file.state.name == "PROCESSING":
         time.sleep(2)
-        uploaded_file = genai.get_file(uploaded_file.name)
+        uploaded_file = gemini_client.files.get(name=uploaded_file.name)
 
     if uploaded_file.state.name == "FAILED":
         raise RuntimeError("Gemini не смог обработать присланный файл")
@@ -128,11 +128,14 @@ def ask_gemini_about_media(local_path: str, task_description: str) -> str:
     prompt = f"{task_description}\n{POST_STYLE_HINT}"
 
     try:
-        response = gemini_model.generate_content([uploaded_file, prompt])
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[uploaded_file, prompt],
+        )
         return response.text.strip()
     finally:
         # Файл больше не нужен на серверах Google — удаляем, чтобы не копились.
-        genai.delete_file(uploaded_file.name)
+        gemini_client.files.delete(name=uploaded_file.name)
 
 
 def process_media_message(message, file_id: str, suffix: str, task_description: str):

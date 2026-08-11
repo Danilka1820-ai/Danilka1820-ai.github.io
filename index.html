@@ -345,13 +345,6 @@ a{ color:inherit; text-decoration:none; }
   scroll-margin-bottom:24px;
 }
 
-/* Палец и пульт промахиваются по мелким ссылкам. Расширяем область нажатия
-   невидимой подложкой, не трогая внешний вид. */
-.hit{ position:relative; }
-.hit::after{
-  content:""; position:absolute; inset:-12px -10px; border-radius:8px;
-}
-
 .wrap{
   max-width:var(--page);
   margin-inline:auto;
@@ -364,49 +357,6 @@ a{ color:inherit; text-decoration:none; }
   padding:12px 20px; z-index:99;
 }
 .skip:focus{ left:16px; top:16px; }
-
-/* ─────────────────────────────────────────────
-   ЖИДКОЕ СТЕКЛО
-   ───────────────────────────────────────────── */
-.glass{
-  position:relative;
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-stroke);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-}
-/* Блик по верхней кромке — то, что и делает стекло стеклом. */
-.glass::before{
-  content:""; position:absolute; inset:0; border-radius:inherit;
-  background:linear-gradient(180deg, rgba(255,255,255,.55), transparent 42%);
-  opacity:.9; pointer-events:none;
-}
-.glass > *{ position:relative; z-index:1; }
-
-/* Там, где размытия нет, стекло превращается в плотную заливку — иначе
-   надписи лягут прямо на контент. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
-  .glass{ background:color-mix(in srgb, var(--paper) 94%, white); }
-}
-/* Уважаем системную просьбу убрать прозрачность. */
-@media (prefers-reduced-transparency: reduce){
-  .glass{
-    background:color-mix(in srgb, var(--paper) 94%, white);
-    -webkit-backdrop-filter:none; backdrop-filter:none;
-  }
-  .glass::before{ display:none; }
-}
-
-/* Экономный режим: ни фоновой подсветки, ни размытий — на дешёвом телефоне
-   с 2G они стоят и трафика, и кадров. Вид остаётся тот же, только плотный. */
-.thin body{ background-image:none; }
-.thin .top,.thin .top.is-stuck,.thin .glass,.thin .btn,.thin .nav__pill,
-.thin .top__nav,.thin .top__more,.thin .pl__big span,.thin .pl__bar,.thin .up{
-  -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
-}
-.thin .top,.thin .top.is-stuck{ background:var(--paper); }
-.thin .glass::before{ display:none; }
 
 .label{
   font-family:var(--mono);
@@ -785,69 +735,147 @@ a{ color:inherit; text-decoration:none; }
   background:var(--paper-lift);
   filter:grayscale(.1);
 }
-/* Плеер: один и тот же для видео и кружочка, отличается только сцена. */
-.pl{ margin:0 0 var(--s3); max-width:100%; }
-.pl__stage{
-  position:relative; overflow:hidden;
-  background:var(--ink); border:1px solid var(--rule);
+/* ─── Кадр в ленте ───
+   Не плеер, а кнопка: постер и знак пуска. Всё управление — в окне. */
+.pl{
+  display:block; width:100%; padding:0; margin:0 0 var(--s3);
+  border:0; background:none; cursor:pointer; text-align:left;
+  font:inherit; color:inherit;
 }
-.pl__video{ width:100%; height:100%; display:block; cursor:pointer; }
-
+.pl__stage{
+  position:relative; display:block; overflow:hidden;
+  aspect-ratio:3/2; background:var(--paper-lift);
+  border:1px solid var(--rule); border-radius:4px;
+}
+.pl__poster{ width:100%; height:100%; object-fit:cover; filter:grayscale(.1); }
 .pl--round{ width:min(300px,80%); }
 .pl--round .pl__stage{ aspect-ratio:1/1; border-radius:50%; }
-.pl--round .pl__video{ object-fit:cover; }
 
-/* Большая кнопка поверх кадра — пока не играет. */
 .pl__big{
   position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.22); border:0; cursor:pointer; padding:0;
-  transition:opacity .25s, background .25s;
+  background:rgba(17,21,27,.18); transition:background .25s;
 }
-.pl__big:hover{ background:rgba(17,21,27,.32); }
-.pl__big span{
-  width:58px; height:58px; border-radius:50%;
+.pl:hover .pl__big{ background:rgba(17,21,27,.3); }
+.pl__glyph{
+  width:56px; height:56px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
-  font-size:19px; padding-left:4px; color:var(--ink);
-  background:linear-gradient(160deg, rgba(255,255,255,.92), rgba(255,255,255,.66));
+  font-size:18px; padding-left:4px; color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,.62));
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
   border:1px solid rgba(255,255,255,.8);
   box-shadow:0 10px 26px -10px rgba(17,21,27,.7), inset 0 1px 0 rgba(255,255,255,.95);
+  transition:transform .25s;
 }
-.pl.is-playing .pl__big{ opacity:0; pointer-events:none; }
-.pl.is-waiting .pl__big span{ animation:plWait 1s linear infinite; }
+.pl:hover .pl__glyph{ transform:scale(1.06); }
+.pl__cap{
+  display:block; margin-top:8px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--ink-3);
+}
+.pl--round .pl__cap{ text-align:center; }
+
+/* ─── Окно просмотра ───
+   Светлое стекло поверх страницы: страница остаётся видна размытой, окно
+   читается за счёт кромки и тени, а не за счёт глухой заливки. */
+.tv{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
+.tv__backdrop{
+  position:absolute; inset:0;
+  background:rgba(232,234,237,.62);
+  -webkit-backdrop-filter:blur(26px) saturate(1.6);
+  backdrop-filter:blur(26px) saturate(1.6);
+}
+.tv__win{
+  position:relative; z-index:1;
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  max-width:min(1000px,92vw); width:100%;
+  padding:0 clamp(8px,4vw,56px);
+}
+.tv__stage{
+  position:relative; max-width:100%; max-height:68vh;
+  display:flex; align-items:center; justify-content:center;
+  border-radius:8px; overflow:hidden;
+  border:1px solid var(--glass-stroke);
+  box-shadow:0 40px 90px -40px rgba(17,21,27,.7), var(--glass-glow);
+  background:rgba(17,21,27,.9);
+}
+.tv__video{ max-width:100%; max-height:68vh; display:block; cursor:pointer; }
+.tv__win--round .tv__stage{
+  width:min(68vh,74vw); aspect-ratio:1/1; border-radius:50%;
+}
+.tv__win--round .tv__video{ width:100%; height:100%; object-fit:cover; }
+
+.tv__big{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(17,21,27,.16); border:0; cursor:pointer; padding:0;
+  transition:opacity .25s;
+}
+.tv__big span{
+  width:70px; height:70px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; padding-left:5px; color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
+  border:1px solid rgba(255,255,255,.85);
+  box-shadow:0 14px 34px -12px rgba(17,21,27,.75);
+}
+.tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
+.tv.is-waiting .tv__big span{ animation:plWait 1s linear infinite; }
 @keyframes plWait{ 0%,100%{opacity:.5} 50%{opacity:1} }
 
-/* Панель под кадром: в круге её обрезало бы, а пультом по ней попадать проще. */
-.pl__bar{
-  display:flex; align-items:center; gap:8px;
-  min-width:0; max-width:100%;
-  margin-top:10px; padding:8px 10px;
-  border-radius:999px;
-  border:1px solid var(--glass-stroke);
+.tv__close,.tv__nav{
+  position:absolute; z-index:2;
+  width:46px; height:46px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:18px; line-height:1;
+  color:var(--ink); cursor:pointer;
   background:var(--glass-tint);
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
-  box-shadow:0 6px 18px -14px rgba(17,21,27,.5), var(--glass-glow);
+  border:1px solid var(--glass-stroke);
+  box-shadow:var(--glass-drop), var(--glass-glow);
+  transition:background .2s, opacity .2s;
+}
+.tv__close:hover,.tv__nav:hover{ background:rgba(255,255,255,.85); }
+.tv__close{ top:-60px; right:clamp(8px,4vw,56px); }
+.tv__nav{ top:50%; margin-top:-23px; font-size:26px; }
+.tv__prev{ left:-4px; }
+.tv__next{ right:-4px; }
+.tv__nav[disabled]{ opacity:.3; cursor:default; }
+
+.tv__cap{
+  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-2); text-align:center;
+}
+
+.tv__bar{
+  display:flex; align-items:center; gap:8px;
+  width:100%; max-width:720px; min-width:0;
+  padding:8px 12px; border-radius:999px;
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-stroke);
+  box-shadow:var(--glass-drop), var(--glass-glow);
 }
 .pl__btn{
-  position:relative;
   flex:0 0 auto; width:36px; height:36px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   border:0; background:transparent; cursor:pointer;
   font-family:var(--mono); font-size:14px; line-height:1; color:var(--ink);
-  transition:background .2s, color .2s;
+  transition:background .2s;
 }
 .pl__btn:hover{ background:rgba(17,21,27,.08); }
-.pl__play span{ font-size:13px; }
-
 .pl__track{
   position:relative; flex:1 1 40px; min-width:0; height:22px;
   cursor:pointer; touch-action:none;
 }
 .pl__track::before{
   content:""; position:absolute; left:0; right:0; top:50%; height:3px;
-  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.16);
+  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.18);
+}
+.pl__buffer{
+  position:absolute; left:0; top:50%; height:3px; width:0;
+  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.3);
 }
 .pl__fill{
   position:absolute; left:0; top:50%; height:3px; width:0;
@@ -864,98 +892,6 @@ a{ color:inherit; text-decoration:none; }
   font-family:var(--mono); font-size:11px; letter-spacing:.04em;
   font-variant-numeric:tabular-nums; color:var(--ink-2); white-space:nowrap;
 }
-.pl__cap{
-  margin-top:8px;
-  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--ink-3); text-align:center;
-}
-
-/* На узком экране панель ужимается, иначе распирает всю запись. */
-/* Расширять область нажатия за края нельзя: кнопки стоят вплотную и начали бы
-   перехватывать нажатия друг у друга. Поэтому просто уменьшаем сам ряд. */
-@media (max-width:420px){
-  .pl__bar{ gap:4px; padding:6px 8px; }
-  .pl__btn{ width:32px; height:32px; font-size:13px; }
-  .pl__time{ font-size:10px; }
-}
-
-/* ─── Окно просмотра ───
-   Полноэкранное окно поверх страницы: крупный кадр, полная панель и
-   переключение между всеми роликами ленты. */
-.tv{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
-.tv__backdrop{ position:absolute; inset:0; background:rgba(11,14,19,.93); -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
-.tv__win{
-  position:relative; z-index:1;
-  display:flex; flex-direction:column; align-items:center; gap:12px;
-  max-width:min(1100px, 92vw); width:100%;
-  padding:0 clamp(8px,4vw,56px);
-}
-.tv__stage{
-  position:relative; width:100%; max-height:70vh;
-  display:flex; align-items:center; justify-content:center;
-  background:#000; border-radius:6px; overflow:hidden;
-}
-.tv__video{ max-width:100%; max-height:70vh; display:block; cursor:pointer; }
-/* Кружочек и в окне остаётся кружочком. */
-.tv__win--round .tv__stage{
-  width:min(70vh,76vw); aspect-ratio:1/1; border-radius:50%; background:#000;
-}
-.tv__win--round .tv__video{ width:100%; height:100%; object-fit:cover; }
-
-.tv__big{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.2); border:0; cursor:pointer; padding:0;
-  transition:opacity .25s;
-}
-.tv__big span{
-  width:70px; height:70px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:23px; padding-left:5px; color:var(--ink);
-  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
-  border:1px solid rgba(255,255,255,.85);
-  box-shadow:0 12px 30px -10px rgba(0,0,0,.8);
-}
-.tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
-.tv.is-waiting .tv__big span{ animation:plWait 1s linear infinite; }
-
-.tv__close,.tv__nav{
-  position:absolute; z-index:2;
-  width:46px; height:46px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--mono); font-size:18px; line-height:1;
-  color:var(--paper); cursor:pointer;
-  background:rgba(244,246,248,.14);
-  border:1px solid rgba(244,246,248,.28);
-  transition:background .2s, opacity .2s;
-}
-.tv__close:hover,.tv__nav:hover{ background:rgba(244,246,248,.28); }
-.tv__close{ top:-58px; right:clamp(8px,4vw,56px); }
-.tv__nav{ top:50%; margin-top:-23px; font-size:26px; }
-.tv__prev{ left:-4px; }
-.tv__next{ right:-4px; }
-.tv__nav[disabled]{ opacity:.25; cursor:default; }
-
-.tv__cap{
-  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:rgba(244,246,248,.66); text-align:center;
-}
-
-/* Панель в окне — светлая на тёмном, поэтому свои цвета поверх общих правил. */
-.tv__bar{
-  display:flex; align-items:center; gap:8px;
-  width:100%; max-width:760px; min-width:0;
-  padding:8px 12px; border-radius:999px;
-  background:rgba(244,246,248,.1);
-  border:1px solid rgba(244,246,248,.2);
-}
-.tv__bar .pl__btn{ color:var(--paper); }
-.tv__bar .pl__btn:hover{ background:rgba(244,246,248,.16); }
-.tv__bar .pl__time{ color:rgba(244,246,248,.75); }
-.tv__bar .pl__track::before{ background:rgba(244,246,248,.22); }
-.pl__buffer{
-  position:absolute; left:0; top:50%; height:3px; width:0;
-  margin-top:-1.5px; border-radius:3px; background:rgba(244,246,248,.34);
-}
 .tv__vol{ flex:0 0 76px; accent-color:var(--lamp); background:transparent; }
 .tv__rate span{ font-size:11px; }
 
@@ -967,10 +903,11 @@ a{ color:inherit; text-decoration:none; }
   .tv__next{ right:-6px; }
   .tv__vol{ display:none; }
   .tv__bar{ gap:4px; padding:6px 8px; }
-  .tv__bar .pl__btn{ width:32px; height:32px; }
+  .pl__btn{ width:32px; height:32px; font-size:13px; }
+  .pl__time{ font-size:10px; }
 }
 @media (prefers-reduced-transparency: reduce){
-  .tv__backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none; background:rgba(17,21,27,.96); }
+  .tv__backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--paper); }
 }
 
 /* Фотографии */

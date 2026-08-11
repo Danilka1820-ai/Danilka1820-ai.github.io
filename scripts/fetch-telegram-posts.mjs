@@ -355,8 +355,6 @@ for (const post of raw) {
   const media = await downloadMedia(post.id, post.media);
   const text = post.text.trim();
   if (!text && !media.length) continue;
-  // photo/photos stay for older caches of the page that predate video support.
-  const photos = media.filter((m) => m.type === 'photo').map((m) => m.src);
   posts.push({
     id: post.id,
     date: formatDate(post.date),
@@ -364,8 +362,6 @@ for (const post of raw) {
     text: text || ' ',
     link: post.link,
     tags: [...new Set((text.match(/#[\p{L}\p{N}_]{2,}/gu) || []).map((t) => t.slice(1)))],
-    photo: photos[0] || '',
-    photos,
     media,
   });
 }

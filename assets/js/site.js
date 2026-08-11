@@ -236,8 +236,7 @@
      всё отдаёт сам сайт: Telegram у читателя может быть закрыт. */
   var POSTS_SOURCES = [
     '/data/posts.json',
-    'https://raw.githubusercontent.com/Danilka1820-ai/Danilka1820-ai.github.io/main/data/posts.json',
-    'https://cool-butterfly-3969.dahytan22.workers.dev/'
+    'https://raw.githubusercontent.com/Danilka1820-ai/Danilka1820-ai.github.io/main/data/posts.json'
   ];
   var railEl = document.getElementById('rail');
   var latestEl = document.getElementById('latestRail');
@@ -484,8 +483,6 @@
     }
     tvList = list;
     tvReturn = opener || null;
-    // Всё, что играло в ленте, замолкает — иначе звук наложится.
-    [].slice.call(document.querySelectorAll('.pl__video')).forEach(function(o){ o.pause(); });
     tv.hidden = false;
     document.body.style.overflow = 'hidden';
     showInTheater(index);
@@ -518,217 +515,51 @@
     return b;
   }
 
-  function buildPlayer(item, list, date){
+  /* В ленте плеера нет — только кадр с кнопкой. Всё управление живёт в окне
+     просмотра, и незачем держать его во второй раз на каждой из четырнадцати
+     записей: это и лишний код, и лишние элементы <video> на странице. */
+  function buildPoster(item, list, date){
     var round = item.type === 'round';
 
-    var video = document.createElement('video');
-    video.src = item.src;
-    // На слабом интернете видео не должно скачиваться само: до нажатия
-    // виден только постер, файл идёт по сети лишь по клику зрителя.
-    video.preload = 'none';
-    video.playsInline = true;
-    video.setAttribute('playsinline', '');
-    video.className = 'pl__video';
-    // Постер — это ещё одна картинка на запись. На 2G его не грузим.
-    if (item.poster && !THIN) video.poster = item.poster;
-
-    var root = document.createElement('div');
-    root.className = 'pl' + (round ? ' pl--round' : '');
-
-    // Место этого ролика в списке — по нему окно листает соседние.
     var slot = -1;
     if (list){ slot = list.length; list.push({ item:item, date:date }); }
 
-    var stage = document.createElement('div');
+    var root = document.createElement('button');
+    root.type = 'button';
+    root.className = 'pl' + (round ? ' pl--round' : '');
+    root.setAttribute('aria-label', (round ? 'Проиграть кружочек' : 'Проиграть видео') + (date ? ' от ' + date : ''));
+
+    var stage = document.createElement('span');
     stage.className = 'pl__stage';
 
-    var big = document.createElement('button');
-    big.type = 'button';
-    big.className = 'pl__big';
-    big.setAttribute('aria-label', 'Проиграть');
-    big.innerHTML = '<span aria-hidden="true">▶</span>';
+    // Постер — обычная картинка: без элемента <video> страница легче, и ни
+    // байта ролика не уходит по сети до нажатия.
+    if (item.poster && !THIN){
+      var img = document.createElement('img');
+      img.className = 'pl__poster';
+      img.src = item.poster;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.setAttribute('fetchpriority', 'low');
+      img.onerror = function(){ img.remove(); };
+      stage.appendChild(img);
+    }
 
-    stage.appendChild(video);
+    var big = document.createElement('span');
+    big.className = 'pl__big';
+    big.innerHTML = '<span class="pl__glyph" aria-hidden="true">▶</span>';
     stage.appendChild(big);
     root.appendChild(stage);
 
-    var bar = document.createElement('div');
-    bar.className = 'pl__bar';
+    var cap = document.createElement('span');
+    cap.className = 'pl__cap';
+    cap.textContent = round ? 'кружочек' : 'видео';
+    root.appendChild(cap);
 
-    var back = iconButton('pl__back', 'Назад на ' + SKIP + ' секунд', '↺');
-    var play = iconButton('pl__play', 'Проиграть', '▶');
-    var fwd  = iconButton('pl__fwd', 'Вперёд на ' + SKIP + ' секунд', '↻');
-
-    var track = document.createElement('div');
-    track.className = 'pl__track';
-    track.setAttribute('role', 'slider');
-    track.setAttribute('tabindex', '0');
-    track.setAttribute('aria-label', 'Перемотка');
-    track.setAttribute('aria-valuemin', '0');
-    track.setAttribute('aria-valuemax', '100');
-    track.setAttribute('aria-valuenow', '0');
-    var fill = document.createElement('div');
-    fill.className = 'pl__fill';
-    var knob = document.createElement('div');
-    knob.className = 'pl__knob';
-    track.appendChild(fill);
-    track.appendChild(knob);
-
-    var time = document.createElement('span');
-    time.className = 'pl__time';
-    time.textContent = '0:00';
-
-    var sound = iconButton('pl__sound', 'Выключить звук', '♪');
-
-    bar.appendChild(back);
-    bar.appendChild(play);
-    bar.appendChild(fwd);
-    bar.appendChild(track);
-    bar.appendChild(time);
-    bar.appendChild(sound);
-
-    // Развернуть в окно просмотра: там полная панель и переключение роликов.
-    var expand = iconButton('pl__expand', 'Открыть в окне', '⛶');
-    expand.addEventListener('click', function(){
-      if (list && slot >= 0) openTheater(list, slot, expand);
+    root.addEventListener('click', function(){
+      if (list && slot >= 0) openTheater(list, slot, root);
     });
-    bar.appendChild(expand);
-
-    root.appendChild(bar);
-
-    if (round){
-      var cap = document.createElement('div');
-      cap.className = 'pl__cap';
-      cap.textContent = 'кружочек';
-      root.appendChild(cap);
-    }
-
-    /* ── управление ── */
-
-    function paint(){
-      var dur = video.duration;
-      var known = isFinite(dur) && dur > 0;
-      var part = known ? (video.currentTime / dur) : 0;
-      fill.style.width = (part * 100) + '%';
-      knob.style.left = (part * 100) + '%';
-      track.setAttribute('aria-valuenow', Math.round(part * 100));
-      track.setAttribute('aria-valuetext', clockText(video.currentTime) + (known ? ' из ' + clockText(dur) : ''));
-      time.textContent = clockText(video.currentTime) + (known ? ' / ' + clockText(dur) : '');
-    }
-
-    function toggle(){
-      if (video.paused) video.play().catch(function(){});
-      else video.pause();
-    }
-
-    // До первого запуска длительность неизвестна: файл ещё не качался.
-    // Поэтому перемотка сначала подгружает данные, а потом прыгает.
-    // Пока данные едут, ведём одну отложенную цель: при перетаскивании
-    // ползунка иначе накопились бы десятки обработчиков и вызовов load().
-    var pendingPart = -1;
-    function applyPending(){
-      video.removeEventListener('loadedmetadata', applyPending);
-      if (pendingPart < 0) return;
-      var part = pendingPart;
-      pendingPart = -1;
-      if (isFinite(video.duration) && video.duration > 0){
-        video.currentTime = part * video.duration;
-        paint();
-      }
-    }
-
-    function seekTo(part){
-      part = Math.max(0, Math.min(1, part));
-      if (isFinite(video.duration) && video.duration > 0){
-        video.currentTime = part * video.duration;
-        paint();
-        return;
-      }
-      var waiting = pendingPart >= 0;
-      pendingPart = part;
-      if (waiting) return;
-      video.addEventListener('loadedmetadata', applyPending);
-      video.load();
-    }
-
-    function nudge(sec){
-      if (isFinite(video.duration) && video.duration > 0){
-        video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + sec));
-        paint();
-      } else if (sec > 0){
-        seekTo(0);
-      }
-    }
-
-    // Нажатие на кадр открывает окно — так и просили: полноценное окно,
-    // а не проигрывание в углу страницы. Мелкая кнопка в панели играет тут же.
-    big.addEventListener('click', function(){
-      if (list && slot >= 0) openTheater(list, slot, big);
-      else toggle();
-    });
-    play.addEventListener('click', toggle);
-    video.addEventListener('click', toggle);
-    back.addEventListener('click', function(){ nudge(-SKIP); });
-    fwd.addEventListener('click', function(){ nudge(SKIP); });
-
-    sound.addEventListener('click', function(){
-      video.muted = !video.muted;
-      sound.querySelector('span').textContent = video.muted ? '✕' : '♪';
-      sound.setAttribute('aria-label', video.muted ? 'Включить звук' : 'Выключить звук');
-    });
-
-    function partFromEvent(e){
-      var box = track.getBoundingClientRect();
-      var x = (e.touches ? e.touches[0].clientX : e.clientX) - box.left;
-      return box.width ? x / box.width : 0;
-    }
-
-    var dragging = false;
-    track.addEventListener('pointerdown', function(e){
-      dragging = true;
-      if (track.setPointerCapture) track.setPointerCapture(e.pointerId);
-      seekTo(partFromEvent(e));
-    });
-    track.addEventListener('pointermove', function(e){
-      if (dragging) seekTo(partFromEvent(e));
-    });
-    var stopDrag = function(){ dragging = false; };
-    track.addEventListener('pointerup', stopDrag);
-    track.addEventListener('pointercancel', stopDrag);
-
-    // Стрелками ходят и с клавиатуры, и пультом телевизора.
-    track.addEventListener('keydown', function(e){
-      var k = e.key;
-      if (k === 'ArrowRight'){ nudge(5); e.preventDefault(); }
-      else if (k === 'ArrowLeft'){ nudge(-5); e.preventDefault(); }
-      else if (k === 'Home'){ seekTo(0); e.preventDefault(); }
-      else if (k === 'End'){ seekTo(0.999); e.preventDefault(); }
-      else if (k === ' ' || k === 'Enter'){ toggle(); e.preventDefault(); }
-    });
-
-    video.addEventListener('play', function(){
-      // Два ролика разом — это каша из звука. Останавливаем остальные.
-      [].slice.call(document.querySelectorAll('.pl__video')).forEach(function(other){
-        if (other !== video && !other.paused) other.pause();
-      });
-      root.classList.add('is-playing');
-      play.querySelector('span').textContent = '❚❚';
-      play.setAttribute('aria-label', 'Пауза');
-      big.setAttribute('aria-label', 'Пауза');
-    });
-    var stopped = function(){
-      root.classList.remove('is-playing');
-      play.querySelector('span').textContent = '▶';
-      play.setAttribute('aria-label', 'Проиграть');
-      big.setAttribute('aria-label', 'Проиграть');
-    };
-    video.addEventListener('pause', stopped);
-    video.addEventListener('ended', stopped);
-    video.addEventListener('loadedmetadata', paint);
-    video.addEventListener('timeupdate', paint);
-    video.addEventListener('waiting', function(){ root.classList.add('is-waiting'); });
-    video.addEventListener('playing', function(){ root.classList.remove('is-waiting'); });
-
     return root;
   }
 
@@ -744,15 +575,11 @@
       img.onerror = function(){ img.style.display = 'none'; };
       return img;
     }
-    return buildPlayer(item, list, date);
+    return buildPoster(item, list, date);
   }
 
   function normalize(post){
-    var media = Array.isArray(post.media) ? post.media : null;
-    if (!media){
-      var legacy = Array.isArray(post.photos) ? post.photos : (post.photo ? [post.photo] : []);
-      media = legacy.map(function(src){ return { type:'photo', src:src }; });
-    }
+    var media = Array.isArray(post.media) ? post.media : [];
     return {
       date: post.date || '',
       datetime: post.datetime || '',

@@ -30,6 +30,5 @@ SOFTWARE.
 видео в data/ и assets/posts/, а также имя и портрет автора. Это личные
 материалы Данила Сарыкова, все права на них сохраняются за ним.
 
-Сторонние части лежат отдельно и живут по своим лицензиям:
-* плеер Plyr — MIT, текст в assets/vendor/plyr/LICENSE.md;
-* шрифты Spectral и IBM Plex Mono — SIL Open Font License 1.1.
+Из стороннего в сайте только шрифты Spectral и IBM Plex Mono — они под
+SIL Open Font License 1.1. Плеер и весь остальной код написаны здесь.

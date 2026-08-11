@@ -829,9 +829,10 @@ a{ color:inherit; text-decoration:none; }
 .pl--round .pl__cap{ text-align:center; }
 
 /* ─── Окно просмотра ───
-   Окно наше: затемнение, стрелки к соседним роликам, подпись, Esc.
-   Плеер внутри — Plyr. Здесь только рамка окна и подгонка библиотеки под
-   оформление сайта; остальное она рисует сама. */
+   Светлое стекло поверх страницы: страница остаётся видна размытой, окно
+   читается за счёт кромки и тени, а не за счёт глухой заливки.
+   Плеер свой, без сторонних библиотек: ни одного лишнего килобайта и полная
+   свобода в оформлении. */
 .tv{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
 .tv__backdrop{
   position:absolute; inset:0;
@@ -846,72 +847,66 @@ a{ color:inherit; text-decoration:none; }
   padding:0 clamp(8px,4vw,56px);
 }
 .tv__stage{
-  position:relative; width:100%; max-width:100%;
+  position:relative; max-width:100%; max-height:68vh;
+  display:flex; align-items:center; justify-content:center;
   border-radius:8px; overflow:hidden;
-  box-shadow:0 40px 90px -40px rgba(17,21,27,.7);
+  border:1px solid var(--glass-stroke);
+  box-shadow:0 40px 90px -40px rgba(17,21,27,.7), var(--glass-glow);
+  background:rgba(17,21,27,.9);
+  /* Пропорции знаем из данных и ставим до чтения файла: иначе видео до
+     метаданных занимает 300×150, и окно на глазах прыгает. */
+  aspect-ratio:var(--tv-ratio, 16/9);
+  width:min(100%, calc(68vh * var(--tv-ratio, 1.777)));
 }
+.tv__video{ width:100%; height:100%; display:block; cursor:pointer; object-fit:contain; }
 .tv__win--round .tv__stage{
-  width:min(68vh, 74vw, var(--tv-cap, 74vw));
-  border-radius:0; overflow:visible; box-shadow:none;
+  /* Предел --tv-cap ставит скрипт по настоящему размеру файла. */
+  width:min(68vh, 74vw, var(--tv-cap, 74vw)); aspect-ratio:1/1; border-radius:50%;
+}
+.tv__win--round .tv__video{ object-fit:cover; }
+
+.tv__big{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(17,21,27,.16); border:0; cursor:pointer; padding:0;
+  transition:opacity .25s;
+}
+.tv__big span{
+  width:70px; height:70px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; padding-left:5px; color:var(--ink);
+  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
+  border:1px solid rgba(255,255,255,.85);
+  box-shadow:0 14px 34px -12px rgba(17,21,27,.75);
+}
+.tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
+
+/* Колечко ожидания. Раньше о задержке говорила мигающая кнопка пуска — но во
+   время игры она спрятана, и зритель смотрел в замерший кадр без объяснений. */
+.tv__wait{
+  position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px;
+  border-radius:50%; border:2px solid rgba(255,255,255,.35); border-top-color:#fff;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.tv.is-waiting .tv__wait{ opacity:1; animation:tvSpin .9s linear infinite; }
+@keyframes tvSpin{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){
+  .tv.is-waiting .tv__wait{ animation:none; }
 }
 
-/* Plyr под оформление сайта */
-.tv .plyr{
-  --plyr-color-main:var(--lamp);
-  --plyr-video-background:#000;
-  --plyr-menu-background:rgba(251,252,253,.98);
-  --plyr-menu-color:var(--ink);
-  --plyr-font-family:var(--mono);
-  --plyr-font-size-small:12px;
-  --plyr-font-size-base:13px;
-  --plyr-control-radius:999px;
-  width:100%;
+/* Ролик не открылся — говорим об этом и даём открыть файл напрямую. */
+.tv__fail{
+  position:absolute; inset:0; display:none;
+  flex-direction:column; align-items:center; justify-content:center; gap:12px;
+  padding:24px; text-align:center;
+  background:rgba(17,21,27,.92); color:#F4F6F8;
+  font-family:var(--mono); font-size:12px; letter-spacing:.06em; line-height:1.7;
 }
-.tv .plyr__control--overlaid{ background:rgba(255,255,255,.88); color:var(--ink); }
-.tv .plyr__control--overlaid:hover{ background:#fff; }
-.tv .plyr__menu__container{ border:1px solid var(--glass-stroke); }
-
-/* Кружочек: круглым делаем только кадр. Панель Plyr раскладывает сам — свою
-   раскладку он знает лучше, а наши переопределения её ломали. */
-.tv__win--round .plyr{ background:transparent; }
-.tv__win--round .plyr__video-wrapper{
-  aspect-ratio:1/1; border-radius:50%; overflow:hidden; background:#000;
-}
-.tv__win--round .plyr video{ width:100%; height:100%; object-fit:cover; }
-/* Панель ужимаем до ширины круга в этом месте — иначе её подложка вылезает
-   за края кадра в пустые углы. Ширина считана по хорде на этой высоте. */
-.tv__win--round .plyr--video .plyr__controls{
-  left:50%; right:auto; bottom:12%; transform:translateX(-50%);
-  width:min(64%, 380px); padding:6px 10px; flex-wrap:nowrap;
-  border-radius:999px; background:rgba(17,21,27,.6);
-  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
-}
-/* Внутри круга помещается немного: перемотку кружочку заменяет сама дорожка,
-   громкость на телефоне живёт на кнопках корпуса. */
-.tv__win--round [data-plyr="rewind"],
-.tv__win--round [data-plyr="fast-forward"],
-.tv__win--round .plyr__volume input[type="range"]{ display:none; }
-
-/* Дорожка — на свою строку. В один ряд с кнопками на узком экране ей
-   остаётся десяток точек, и перемотать пальцем нечего. */
-@media (max-width:700px){
-  .tv .plyr--video .plyr__controls{ flex-wrap:wrap; padding-top:24px; }
-  .tv .plyr__controls .plyr__progress__container{
-    order:-1; flex:1 0 100%; width:100%; margin:0 0 2px; padding-left:0;
-  }
-  .tv .plyr__volume input[type="range"]{ display:none; }
-  /* В круге вторая строка не помещается — там оставляем один ряд. */
-  .tv__win--round .plyr--video .plyr__controls{ flex-wrap:nowrap; padding-top:6px; }
-  .tv__win--round .plyr__controls .plyr__progress__container{
-    order:0; flex:1 1 40px; width:auto; margin:0;
-  }
-  .tv__win--round [data-plyr="mute"],
-  .tv__win--round .plyr__time,
-  .tv__win--round .plyr__menu{ display:none; }
-}
+.tv.is-failed .tv__fail{ display:flex; }
+.tv.is-failed .tv__big, .tv.is-failed .tv__wait{ display:none; }
+.tv__fail a{ color:var(--lamp); border-bottom:1px solid currentColor; }
 
 .tv__close,.tv__nav{
-  position:absolute; z-index:3;
+  position:absolute; z-index:2;
   width:46px; height:46px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   font-family:var(--mono); font-size:18px; line-height:1;
@@ -935,33 +930,136 @@ a{ color:inherit; text-decoration:none; }
   text-transform:uppercase; color:var(--ink-2); text-align:center;
 }
 
+.tv__bar{
+  display:flex; align-items:center; gap:8px;
+  width:100%; max-width:720px; min-width:0;
+  padding:8px 12px; border-radius:22px;
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-stroke);
+  box-shadow:var(--glass-drop), var(--glass-glow);
+}
+.pl__btn{
+  flex:0 0 auto; width:36px; height:36px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  border:0; background:transparent; cursor:pointer;
+  font-family:var(--mono); font-size:14px; line-height:1; color:var(--ink);
+  transition:background .2s;
+}
+.pl__btn:hover{ background:rgba(17,21,27,.08); }
+.pl__btn[disabled]{ opacity:.35; cursor:default; }
+.pl__track{
+  position:relative; flex:1 1 40px; min-width:0; height:24px;
+  cursor:pointer; touch-action:none;
+}
+.pl__track::before{
+  content:""; position:absolute; left:0; right:0; top:50%; height:3px;
+  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.18);
+}
+.pl__buffer{
+  position:absolute; left:0; top:50%; height:3px; width:0;
+  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.3);
+}
+.pl__fill{
+  position:absolute; left:0; top:50%; height:3px; width:0;
+  margin-top:-1.5px; border-radius:3px; background:var(--lamp);
+}
+.pl__knob{
+  position:absolute; top:50%; left:0; width:11px; height:11px;
+  margin:-5.5px 0 0 -5.5px; border-radius:50%;
+  background:var(--paper); border:1px solid var(--lamp);
+  box-shadow:0 2px 6px rgba(17,21,27,.35);
+  transition:transform .15s;
+}
+.pl__track:hover .pl__knob, .pl__track.is-dragging .pl__knob{ transform:scale(1.35); }
+/* Подсказка со временем: видно, куда попадёшь, ещё до отпускания. */
+.pl__hint{
+  position:absolute; bottom:calc(100% + 6px); left:0; transform:translateX(-50%);
+  padding:3px 7px; border-radius:6px; white-space:nowrap;
+  font-family:var(--mono); font-size:10px; letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;
+  background:rgba(17,21,27,.92); color:#F4F6F8;
+  opacity:0; pointer-events:none; transition:opacity .15s;
+}
+.pl__track:hover .pl__hint, .pl__track.is-dragging .pl__hint{ opacity:1; }
+.pl__time{
+  flex:0 0 auto;
+  font-family:var(--mono); font-size:11px; letter-spacing:.04em;
+  font-variant-numeric:tabular-nums; color:var(--ink-2); white-space:nowrap;
+}
+.tv__vol{ flex:0 0 76px; accent-color:var(--lamp); background:transparent; }
+.tv__rate span, .tv__hd span{ font-size:11px; }
+
+/* На узком экране дорожке в одном ряду с кнопками остаётся десяток точек —
+   перематывать пальцем нечего. Отправляем её на свою строку. */
+@media (max-width:700px){
+  .tv__bar{ flex-wrap:wrap; row-gap:2px; }
+  .tv__bar .pl__track{ order:-1; flex:1 0 100%; width:100%; height:28px; }
+  .tv__bar .pl__time{ order:-1; }
+}
+/* Ползунок громкости нужен только там, где есть мышь: на телефоне и планшете
+   громкость на кнопках корпуса, а iOS свойство volume вообще не слушает. */
+@media (hover: none), (pointer: coarse){
+  .tv__vol{ display:none; }
+}
+
+/* ─── Полный экран ───
+   Обычные ограничения окна (тысяча пикселей по ширине, 68% высоты) в полном
+   экране как раз и мешали развернуться. Здесь они снимаются, а кадр
+   подстраивается под фактические размеры экрана — любого, от телефона до
+   телевизора. Класс ставит скрипт, псевдокласс — подстраховка. */
+.tv.is-fs .tv__win, .tv__win:fullscreen, .tv__win:-webkit-full-screen{
+  max-width:none; width:100vw; height:100vh;
+  padding:0; gap:0; background:#000;
+  justify-content:center;
+}
+.tv.is-fs .tv__stage, .tv__win:fullscreen .tv__stage{
+  max-width:100vw; max-height:100vh; width:100%; height:100%;
+  aspect-ratio:auto;
+  border:0; border-radius:0; box-shadow:none; background:#000;
+}
+.tv.is-fs .tv__video, .tv__win:fullscreen .tv__video{
+  width:100%; height:100%; max-width:100vw; max-height:100vh;
+  object-fit:contain;
+}
+/* Кружочек и на весь экран остаётся кругом — по меньшей стороне. */
+.tv.is-fs .tv__win--round .tv__stage,
+.tv__win--round:fullscreen .tv__stage{
+  width:min(96vh, 96vw, calc(var(--tv-cap, 96vw) * 1.4));
+  height:min(96vh, 96vw, calc(var(--tv-cap, 96vw) * 1.4));
+  aspect-ratio:1/1; margin:auto; border-radius:50%;
+}
+.tv.is-fs .tv__win--round .tv__video{ object-fit:cover; }
+
+/* Управление ложится поверх кадра. */
+.tv.is-fs .tv__bar, .tv__win:fullscreen .tv__bar{
+  position:absolute; left:50%; bottom:24px; transform:translateX(-50%);
+  width:min(720px,92vw); z-index:3;
+}
+.tv.is-fs .tv__cap, .tv__win:fullscreen .tv__cap{
+  position:absolute; left:0; right:0; top:18px; z-index:3;
+  color:rgba(244,246,248,.8);
+}
+.tv.is-fs .tv__close, .tv__win:fullscreen .tv__close{ top:16px; right:16px; }
+.tv.is-fs .tv__nav, .tv__win:fullscreen .tv__nav{ margin-top:-23px; }
+.tv.is-fs .tv__prev{ left:16px; }
+.tv.is-fs .tv__next{ right:16px; }
+/* Фон окна в полном экране не нужен — его закрывает сам кадр. */
+.tv.is-fs .tv__backdrop{ display:none; }
+
 @media (max-width:720px){
   .tv__win{ gap:10px; }
   .tv__close{ top:-52px; }
   .tv__nav{ width:40px; height:40px; margin-top:-20px; }
   .tv__prev{ left:-6px; }
   .tv__next{ right:-6px; }
+  .tv__bar{ gap:4px; padding:6px 8px; }
+  .pl__btn{ width:34px; height:34px; font-size:13px; }
+  .pl__time{ font-size:10px; }
 }
 @media (prefers-reduced-transparency: reduce){
   .tv__backdrop{ -webkit-backdrop-filter:none; backdrop-filter:none; background:var(--paper); }
-}
-
-/* ─── Полный экран ───
-   Развернутием заведует Plyr, включая обходной путь для iPhone, где система
-   пускает в полный экран только сам видеоэлемент. Нам остаётся кружочек: он
-   должен остаться кругом и не раздуться выше настоящего размера файла. */
-.tv .plyr--fullscreen-active{ background:#000; }
-.tv__win--round .plyr--fullscreen-active{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-}
-.tv__win--round .plyr--fullscreen-active .plyr__video-wrapper{
-  width:min(92vh, 92vw, calc(var(--tv-cap, 92vw) * 1.4));
-  height:min(92vh, 92vw, calc(var(--tv-cap, 92vw) * 1.4));
-  margin:auto; border-radius:50%;
-}
-.tv__win--round .plyr--fullscreen-active .plyr__controls{
-  position:absolute; left:50%; bottom:24px; transform:translateX(-50%);
-  width:min(720px,92vw); color:#fff;
 }
 
 /* Фотографии */
@@ -1629,43 +1727,45 @@ a{ color:inherit; text-decoration:none; }
      у кружочка круглый кадр, у видео прямоугольный. Панель управления всегда
      под кадром — в круге её обрезало бы, а на телевизоре по ней удобнее
      попадать пультом, чем по наложенным поверх кнопкам.
-     Работает и с клавиатуры: пробел — пуск, стрелки — перемотка. */
 
-  var SKIP = 10; // на сколько секунд прыгают кнопки перемотки
+     Плеер свой, а не готовая библиотека. Сторонняя стоила бы 32 КБ, тянула бы
+     своё оформление поверх нашего и приносила бы свои болячки (в Plyr 3.8.4,
+     например, сломан установщик пропорций). Здесь весь плеер — двести строк,
+     и каждая делает то, что нужно этому сайту.
+
+     Клавиши: пробел — пуск, ← → — десять секунд, ↑ ↓ — громкость,
+     Home/End — начало и конец, N и P — соседний ролик, Esc — закрыть. */
+
+  var SKIP = 10;                      // на сколько прыгают кнопки перемотки
+  var SPEEDS = [1, 1.25, 1.5, 2, 0.5];
+  var PREFS = 'sarykov-player';       // громкость и скорость помним между заходами
 
   /* ─── Окно просмотра ───
-     Само окно — наше: затемнение, стрелки к соседним роликам, подпись, Esc.
-     Плеер внутри — Plyr: перемотка, громкость, скорость, меню качества и
-     полный экран, включая обходные пути для iPhone.
+     Одно на всю страницу: ролик в нём один и тот же элемент, меняется только
+     источник. Так в памяти не висят четырнадцать плееров, а переключение
+     между роликами получается мгновенным. */
 
-     Библиотека подгружается только при первом открытии ролика. Кто не смотрит
-     видео, не платит за неё ни байтом — а это 32 КБ вместе со стилями. */
-
-  var PLYR_JS = '/assets/vendor/plyr/plyr.min.js';
-  var PLYR_CSS = '/assets/vendor/plyr/plyr.css';
-
-  var tv = null;         // разметка окна
-  var player = null;     // экземпляр Plyr
+  var tv = null;         // разметка окна, создаётся при первом открытии
   var tvList = null;     // список роликов, по которому листаем
   var tvIndex = -1;
   var tvReturn = null;   // куда вернуть фокус после закрытия
-  var plyrReady = null;  // обещание загрузки библиотеки
 
-  function loadOnce(){
-    if (plyrReady) return plyrReady;
-    plyrReady = new Promise(function(resolve, reject){
-      var css = document.createElement('link');
-      css.rel = 'stylesheet';
-      css.href = PLYR_CSS;
-      document.head.appendChild(css);
+  function loadPrefs(){
+    try { return JSON.parse(localStorage.getItem(PREFS)) || {}; } catch (e){ return {}; }
+  }
+  function savePrefs(next){
+    try { localStorage.setItem(PREFS, JSON.stringify(next)); } catch (e){}
+  }
 
-      var js = document.createElement('script');
-      js.src = PLYR_JS;
-      js.onload = resolve;
-      js.onerror = reject;
-      document.head.appendChild(js);
-    });
-    return plyrReady;
+  function clockText(sec){
+    if (!isFinite(sec) || sec < 0) sec = 0;
+    var m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function megabytes(bytes){
+    if (!bytes) return '';
+    return (bytes / 1048576).toFixed(bytes < 10485760 ? 1 : 0) + ' МБ';
   }
 
   function buildTheater(){
@@ -1678,73 +1778,396 @@ a{ color:inherit; text-decoration:none; }
         '<button type="button" class="tv__close" aria-label="Закрыть">✕</button>' +
         '<button type="button" class="tv__nav tv__prev" aria-label="Предыдущее видео">‹</button>' +
         '<button type="button" class="tv__nav tv__next" aria-label="Следующее видео">›</button>' +
-        '<div class="tv__stage"><video class="tv__video" playsinline></video></div>' +
+        '<div class="tv__stage">' +
+          '<video class="tv__video" playsinline preload="metadata"></video>' +
+          '<button type="button" class="tv__big" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
+          '<div class="tv__wait" aria-hidden="true"></div>' +
+          '<div class="tv__fail" role="status"><span class="tv__failText"></span>' +
+            '<a class="tv__failLink" href="#" target="_blank" rel="noopener">Открыть файл напрямую</a></div>' +
+        '</div>' +
         '<div class="tv__cap"></div>' +
+        '<div class="tv__bar">' +
+          '<button type="button" class="pl__btn tv__back" aria-label="Назад на 10 секунд"><span aria-hidden="true">↺</span></button>' +
+          '<button type="button" class="pl__btn tv__play" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
+          '<button type="button" class="pl__btn tv__fwd" aria-label="Вперёд на 10 секунд"><span aria-hidden="true">↻</span></button>' +
+          '<div class="pl__track tv__track" role="slider" tabindex="0" aria-label="Перемотка" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">' +
+            '<div class="pl__buffer"></div><div class="pl__fill"></div><div class="pl__knob"></div>' +
+            '<div class="pl__hint" aria-hidden="true">0:00</div>' +
+          '</div>' +
+          '<span class="pl__time tv__time">0:00</span>' +
+          '<button type="button" class="pl__btn tv__rate" aria-label="Скорость воспроизведения"><span aria-hidden="true">1×</span></button>' +
+          '<button type="button" class="pl__btn tv__hd" aria-label="Качество видео" hidden><span aria-hidden="true">HD</span></button>' +
+          '<button type="button" class="pl__btn tv__sound" aria-label="Выключить звук"><span aria-hidden="true">♪</span></button>' +
+          '<input class="tv__vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Громкость">' +
+          '<button type="button" class="pl__btn tv__full" aria-label="Во весь экран"><span aria-hidden="true">⛶</span></button>' +
+        '</div>' +
       '</div>';
     document.body.appendChild(root);
+
+    var win = root.querySelector('.tv__win');
+    var v = root.querySelector('.tv__video');
+    var stage = root.querySelector('.tv__stage');
+    var track = root.querySelector('.tv__track');
+    var fill = root.querySelector('.pl__fill');
+    var buffer = root.querySelector('.pl__buffer');
+    var knob = root.querySelector('.pl__knob');
+    var hint = root.querySelector('.pl__hint');
+    var timeEl = root.querySelector('.tv__time');
+    var playBtn = root.querySelector('.tv__play');
+    var rateBtn = root.querySelector('.tv__rate');
+    var soundBtn = root.querySelector('.tv__sound');
+    var volEl = root.querySelector('.tv__vol');
+    var backBtn = root.querySelector('.tv__back');
+    var fwdBtn = root.querySelector('.tv__fwd');
+
+    var dragging = false;
+
+    // Запомненные с прошлого раза громкость и скорость.
+    var prefs = loadPrefs();
+    if (typeof prefs.volume === 'number'){ v.volume = prefs.volume; volEl.value = prefs.volume; }
+    if (prefs.muted) v.muted = true;
+    root.rate = SPEEDS.indexOf(prefs.rate) >= 0 ? prefs.rate : 1;
+
+    function known(){ return isFinite(v.duration) && v.duration > 0; }
+
+    function paint(){
+      if (dragging) return;   // пока тянут ползунок, ведёт его палец, а не видео
+      var part = known() ? v.currentTime / v.duration : 0;
+      place(part);
+      timeEl.textContent = clockText(v.currentTime) + (known() ? ' / ' + clockText(v.duration) : '');
+      track.setAttribute('aria-valuenow', Math.round(part * 100));
+      track.setAttribute('aria-valuetext', known()
+        ? clockText(v.currentTime) + ' из ' + clockText(v.duration)
+        : 'ролик ещё не открылся');
+      if (known() && v.buffered.length){
+        buffer.style.width = ((v.buffered.end(v.buffered.length - 1) / v.duration) * 100) + '%';
+      } else {
+        buffer.style.width = '0%';
+      }
+    }
+    function place(part){
+      var pc = Math.max(0, Math.min(1, part)) * 100;
+      fill.style.width = pc + '%';
+      knob.style.left = pc + '%';
+      hint.style.left = pc + '%';
+      hint.textContent = clockText(known() ? (pc / 100) * v.duration : 0);
+    }
+
+    function toggle(){ if (v.paused) v.play().catch(function(){}); else v.pause(); }
+    function nudge(sec){
+      if (!known()) return;
+      v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + sec));
+      paint();
+    }
+    function seekPart(part){
+      if (!known()) return;
+      v.currentTime = Math.max(0, Math.min(1, part)) * v.duration;
+      paint();
+    }
+    function partFromEvent(e){
+      var box = track.getBoundingClientRect();
+      var x = (e.touches ? e.touches[0].clientX : e.clientX) - box.left;
+      return box.width ? Math.max(0, Math.min(1, x / box.width)) : 0;
+    }
+
+    playBtn.addEventListener('click', toggle);
+    backBtn.addEventListener('click', function(){ nudge(-SKIP); });
+    fwdBtn.addEventListener('click', function(){ nudge(SKIP); });
+
+    /* Нажатие по кадру. Слушаем всю сцену, а не сам видеоэлемент: пока ролик
+       на паузе, кадр закрыт большой кнопкой пуска, и до видео нажатие просто
+       не доходило.
+
+       Двойной тап по краям — привычный на телефоне жест: слева назад, справа
+       вперёд. Первый тап при этом успевает переключить воспроизведение, и мы
+       возвращаем его как было: так одиночный тап отзывается сразу, без
+       задержки на ожидание второго. */
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var lastTap = 0, lastX = 0;
+    stage.addEventListener('click', function(e){
+      if (root.classList.contains('is-failed')) return;
+      var now = Date.now();
+      if (coarse && now - lastTap < 320 && Math.abs(e.clientX - lastX) < 60){
+        lastTap = 0;
+        toggle();                                    // отменяем переключение от первого тапа
+        var box = stage.getBoundingClientRect();
+        nudge(e.clientX - box.left < box.width / 2 ? -SKIP : SKIP);
+        return;
+      }
+      lastTap = now; lastX = e.clientX;
+      toggle();
+    });
+
+    function paintRate(){
+      v.playbackRate = root.rate;
+      rateBtn.querySelector('span').textContent = root.rate + '×';
+      rateBtn.setAttribute('aria-label', 'Скорость ' + root.rate + '×, нажмите чтобы сменить');
+    }
+    rateBtn.addEventListener('click', function(){
+      root.rate = SPEEDS[(SPEEDS.indexOf(root.rate) + 1) % SPEEDS.length];
+      paintRate();
+      remember();
+    });
+
+    function paintSound(){
+      var off = v.muted || v.volume === 0;
+      soundBtn.querySelector('span').textContent = off ? '✕' : '♪';
+      soundBtn.setAttribute('aria-label', off ? 'Включить звук' : 'Выключить звук');
+      volEl.value = v.muted ? 0 : v.volume;
+    }
+    function remember(){
+      savePrefs({ volume: v.volume, muted: v.muted, rate: root.rate });
+    }
+    soundBtn.addEventListener('click', function(){ v.muted = !v.muted; paintSound(); remember(); });
+    volEl.addEventListener('input', function(){
+      v.volume = Number(volEl.value);
+      v.muted = v.volume === 0;
+      paintSound(); remember();
+    });
+
+    // Переключение качества: подменяем источник, но возвращаем зрителя на то
+    // же место и в то же состояние — иначе ролик начнётся сначала.
+    root.querySelector('.tv__hd').addEventListener('click', function(){
+      var entry = tvList && tvList[tvIndex];
+      if (!entry || !entry.item.srcLow) return;
+      var wantLight = !root.classList.contains('is-light');
+      var at = v.currentTime;
+      var wasPlaying = !v.paused;
+      root.classList.toggle('is-light', wantLight);
+      swap(wantLight ? entry.item.srcLow : entry.item.src, at, wasPlaying);
+      paintQuality(entry);
+    });
+
+    /* Смена файла на лету. Скорость приходится ставить заново: браузер по
+       стандарту сбрасывает её при каждой загрузке источника, и кнопка
+       показывала «2×» у ролика, который шёл на обычной скорости. */
+    function swap(src, at, play){
+      root.classList.remove('is-failed');
+      v.src = src;
+      v.addEventListener('loadedmetadata', function once(){
+        v.removeEventListener('loadedmetadata', once);
+        paintRate();
+        if (isFinite(at) && at > 0) v.currentTime = at;
+        if (play) v.play().catch(function(){});
+        paint();
+      });
+      v.load();
+    }
+
+    /* Полный экран.
+       Не угадываем устройство по названию браузера — спрашиваем, что он умеет.
+       На iPhone развернуть произвольный блок нельзя вовсе: система пускает в
+       полный экран только сам видеоэлемент, через свой вызов. */
+    function fsElement(){
+      return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+    function markFullscreen(){
+      var on = fsElement() === win;
+      root.classList.toggle('is-fs', on);
+      if (!on) unlockTurn();
+    }
+    // Разворачивая горизонтальный ролик на телефоне, поворачиваем экран —
+    // иначе в вертикальном положении он занимает узкую полоску посередине.
+    function tryTurn(){
+      try{
+        if (screen.orientation && screen.orientation.lock &&
+            v.videoWidth > v.videoHeight && window.innerWidth < 900){
+          screen.orientation.lock('landscape').catch(function(){});
+        }
+      }catch(e){}
+    }
+    function unlockTurn(){
+      try{ if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+    }
+
+    document.addEventListener('fullscreenchange', markFullscreen);
+    document.addEventListener('webkitfullscreenchange', markFullscreen);
+
+    root.querySelector('.tv__full').addEventListener('click', function(){
+      if (fsElement()){
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        return;
+      }
+      var request = win.requestFullscreen || win.webkitRequestFullscreen;
+      var onVideo = function(){
+        // Запасной путь для iPhone и старых браузеров.
+        if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
+        else if (v.requestFullscreen) v.requestFullscreen().catch(function(){});
+      };
+      if (!request){ onVideo(); return; }
+      var done = request.call(win);
+      if (done && done.then) done.then(tryTurn, onVideo);
+      else tryTurn();
+    });
+
+    /* Перетаскивание дорожки. Отпускание слушаем на всём окне: палец часто
+       уходит за пределы полоски, и раньше ползунок оставался «прилипшим». */
+    track.addEventListener('pointerdown', function(e){
+      if (!known()) return;
+      dragging = true;
+      track.classList.add('is-dragging');
+      if (track.setPointerCapture) { try { track.setPointerCapture(e.pointerId); } catch (err){} }
+      place(partFromEvent(e));
+      e.preventDefault();
+    });
+    track.addEventListener('pointermove', function(e){
+      var part = partFromEvent(e);
+      place(part);                                   // подсказка ходит и без нажатия
+      if (dragging){ v.currentTime = part * v.duration; }
+    });
+    var release = function(){
+      if (!dragging) return;
+      dragging = false;
+      track.classList.remove('is-dragging');
+      paint();
+    };
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
+    track.addEventListener('pointerleave', function(){ if (!dragging) paint(); });
+
+    // Дорожка объявлена ползунком — значит, должна слушаться и с клавиатуры.
+    track.addEventListener('keydown', function(e){
+      var k = e.key;
+      if (k === 'ArrowRight' || k === 'ArrowUp'){ nudge(5); }
+      else if (k === 'ArrowLeft' || k === 'ArrowDown'){ nudge(-5); }
+      else if (k === 'PageUp'){ nudge(60); }
+      else if (k === 'PageDown'){ nudge(-60); }
+      else if (k === 'Home'){ seekPart(0); }
+      else if (k === 'End'){ seekPart(0.999); }
+      else return;
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    v.addEventListener('play', function(){
+      root.classList.add('is-playing');
+      playBtn.querySelector('span').textContent = '❚❚';
+      playBtn.setAttribute('aria-label', 'Пауза');
+    });
+    var stopped = function(){
+      root.classList.remove('is-playing');
+      playBtn.querySelector('span').textContent = '▶';
+      playBtn.setAttribute('aria-label', 'Проиграть');
+    };
+    v.addEventListener('pause', stopped);
+    v.addEventListener('ended', stopped);
+    v.addEventListener('loadedmetadata', function(){
+      // Настоящие пропорции файла точнее записанных в данных.
+      if (v.videoWidth && v.videoHeight && !win.classList.contains('tv__win--round')){
+        win.style.setProperty('--tv-ratio', v.videoWidth + '/' + v.videoHeight);
+      }
+      root.classList.remove('is-waiting');
+      abled();
+      paint();
+    });
+    v.addEventListener('timeupdate', paint);
+    v.addEventListener('progress', paint);
+    v.addEventListener('waiting', function(){ root.classList.add('is-waiting'); });
+    v.addEventListener('playing', function(){ root.classList.remove('is-waiting'); });
+    v.addEventListener('volumechange', paintSound);
+
+    /* Ролик не открылся: кончился интернет, файл не той сборки, браузер не
+       понимает кодек. Раньше зритель видел просто чёрный прямоугольник. */
+    v.addEventListener('error', function(){
+      if (!v.currentSrc) return;      // сброс источника при закрытии — не ошибка
+      root.classList.remove('is-waiting');
+      root.classList.add('is-failed');
+      root.querySelector('.tv__failText').textContent =
+        navigator.onLine === false ? 'Нет связи — ролик не загрузился' : 'Ролик не открылся';
+      root.querySelector('.tv__failLink').href = v.currentSrc;
+    });
+
+    // Кнопки перемотки бессмысленны, пока неизвестна длительность.
+    function abled(){
+      var ok = known();
+      backBtn.disabled = fwdBtn.disabled = !ok;
+      track.setAttribute('aria-disabled', ok ? 'false' : 'true');
+    }
 
     root.querySelector('.tv__close').addEventListener('click', closeTheater);
     root.querySelector('.tv__backdrop').addEventListener('click', closeTheater);
     root.querySelector('.tv__prev').addEventListener('click', function(){ step(-1); });
     root.querySelector('.tv__next').addEventListener('click', function(){ step(1); });
-    root.video = root.querySelector('.tv__video');
+
+    // Пока окно открыто, Tab не должен уводить за него: это модальное окно.
+    win.addEventListener('keydown', function(e){
+      if (e.key !== 'Tab') return;
+      var can = [].slice.call(win.querySelectorAll(
+        'button:not([disabled]):not([hidden]), input, [tabindex="0"]'))
+        .filter(function(el){ return el.offsetParent !== null; });
+      if (!can.length) return;
+      var first = can[0], last = can[can.length - 1];
+      if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+    });
+
+    // Поворот телефона меняет и место под кадр, и подходящее качество.
+    window.addEventListener('resize', function(){
+      if (!root.hidden && tvList && tvList[tvIndex]) sizeStage(tvList[tvIndex]);
+    });
+
+    root.video = v;
+    root.paint = paint;
+    root.nudge = nudge;
+    root.toggle = toggle;
+    root.swap = swap;
+    root.paintRate = paintRate;
+    root.paintSound = paintSound;
+    root.abled = abled;
     return root;
   }
 
-  function startPlayer(){
-    if (player) return player;
-    player = new window.Plyr(tv.video, {
-      iconUrl: '/assets/vendor/plyr/plyr.svg',
-      // Иначе Plyr при смене качества ходит за пустым роликом на cdn.plyr.io —
-      // чужой сервер, который в части регионов недоступен.
-      blankVideo: '/assets/vendor/plyr/blank.mp4',
-      controls: ['play-large','play','rewind','fast-forward','progress',
-                 'current-time','duration','mute','volume','settings','fullscreen'],
-      settings: ['quality','speed'],
-      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-      seekTime: 10,
-      keyboard: { focused: true, global: true },
-      tooltips: { controls: true, seek: true },
-      i18n: {
-        play: 'Проиграть', pause: 'Пауза', restart: 'Сначала',
-        rewind: 'Назад на {seektime} с', fastForward: 'Вперёд на {seektime} с',
-        seek: 'Перемотка', played: 'Проиграно', buffered: 'Загружено',
-        currentTime: 'Текущее время', duration: 'Длительность',
-        volume: 'Громкость', mute: 'Выключить звук', unmute: 'Включить звук',
-        enterFullscreen: 'Во весь экран', exitFullscreen: 'Выйти из полного экрана',
-        settings: 'Настройки', speed: 'Скорость', normal: 'Обычная',
-        quality: 'Качество', loop: 'Повтор', start: 'Начало', all: 'Все',
-        reset: 'Сбросить', disabled: 'Выключено', enabled: 'Включено'
-      }
-    });
-    return player;
-  }
-
-  /* Пробел и стрелки плеер слушает на всём документе — удобно, пока окно
-     открыто. Закрытое окно так же ловило бы их и запускало ролик, которого
-     не видно. Поэтому на время закрытия эти слушатели снимаем. */
-  function globalKeys(on){
-    if (player && player.listeners && player.listeners.global){
-      try { player.listeners.global(on); } catch (e){}
-    }
-  }
-
-  /* Какое качество нужно этому экрану.
+  /* Какая версия нужна этому экрану.
      Считаем не «телефон или компьютер», а сколько настоящих точек займёт кадр:
      геометрия окна, а не текущая разметка — в момент выбора кадр ещё не
      разложен и намерил бы ерунду. */
-  function bestHeight(item){
-    if (!item.hLow || !item.h) return item.h || 720;
-    var round = item.type === 'round';
+  function fitsScreen(entry){
+    var it = entry.item;
+    if (!it.srcLow || !it.wLow || !it.w || !it.h) return false;
+
+    var round = it.type === 'round';
     var availW = round
       ? Math.min(window.innerHeight * 0.68, window.innerWidth * 0.74)
       : Math.min(window.innerWidth * 0.92, 1000);
     var availH = round ? availW : window.innerHeight * 0.68;
-    var shownW = Math.min(availW, availH * (item.w / item.h));
-    // Плотность выше двойки на глаз не отличить, а файл тяжелее вдвое.
+    var shownW = Math.min(availW, availH * (it.w / it.h));
+
+    // Плотность выше двух на глаз уже не отличить, а файл тяжелее вдвое.
     var density = Math.min(window.devicePixelRatio || 1, 2);
-    // Лёгкая версия принимается, если покрывает четыре пятых нужного.
-    return item.wLow >= shownW * density * 0.8 ? item.hLow : item.h;
+    // Допуск. Лёгкая версия принимается, если покрывает четыре пятых нужного:
+    // на глаз разницы нет, а файл втрое легче. Без допуска телефону не хватало
+    // буквально нескольких пикселей — и он качал полную версию.
+    return it.wLow >= shownW * density * 0.8;
+  }
+
+  function paintQuality(entry){
+    var btn = tv.querySelector('.tv__hd');
+    if (!entry.item.srcLow){ btn.hidden = true; return; }
+    btn.hidden = false;
+    var light = tv.classList.contains('is-light');
+    var size = megabytes(light ? entry.item.sizeLow : entry.item.size);
+    var here = light ? entry.item.hLow : entry.item.h;
+    var there = light ? entry.item.h : entry.item.hLow;
+    // Показываем настоящее разрешение, а не отвлечённые «HD» и «SD».
+    btn.querySelector('span').textContent = here ? here + 'p' : (light ? 'SD' : 'HD');
+    var now = (here ? here + 'p' : (light ? 'лёгкое' : 'хорошее')) + (size ? ' · ' + size : '');
+    btn.setAttribute('aria-label', 'Качество: ' + now + '. Переключить');
+    btn.title = now + (there ? ' — нажмите для ' + there + 'p' : ' — нажмите, чтобы переключить');
+  }
+
+  /* Место под кадр: пропорции и предел увеличения. Считается и при открытии,
+     и при повороте телефона. */
+  function sizeStage(entry){
+    var it = entry.item;
+    var round = it.type === 'round';
+    var win = tv.querySelector('.tv__win');
+    win.classList.toggle('tv__win--round', round);
+    win.style.setProperty('--tv-ratio', round ? '1/1'
+      : (it.w && it.h ? it.w + '/' + it.h : '16/9'));
+    // Растягивать кадр много выше его настоящего размера бессмысленно: детали
+    // не появится, появится мыло. Предел считаем от самого файла.
+    var natural = tv.classList.contains('is-light') ? (it.wLow || it.w) : it.w;
+    win.style.setProperty('--tv-cap', natural ? Math.round(natural * 1.6) + 'px' : '100vw');
   }
 
   function step(dir){
@@ -1759,85 +2182,80 @@ a{ color:inherit; text-decoration:none; }
     if (!entry) return;
     tvIndex = index;
 
-    var item = entry.item;
-    var round = item.type === 'round';
-    var win = tv.querySelector('.tv__win');
-    win.classList.toggle('tv__win--round', round);
-    // Растягивать кадр много выше настоящего размера бессмысленно: детали не
-    // прибавится, прибавится мыла. Предел считаем от самого файла.
-    win.style.setProperty('--tv-cap', item.w ? Math.round(item.w * 1.6) + 'px' : '100vw');
-
-    var sources = [{ src: item.src, type: 'video/mp4', size: item.h || 720 }];
-    if (item.srcLow) sources.push({ src: item.srcLow, type: 'video/mp4', size: item.hLow || 360 });
-
-    var pick = THIN && item.hLow ? item.hLow : bestHeight(item);
-    // Пропорции знаем из данных, поэтому место под кадр держим ещё до чтения
-    // файла — иначе окно дёргается. Пишем прямо в настройки: у плеера свойство
-    // ratio принимает строку, но кладёт её в разбор для массива и обнуляет.
-    // Настройки читаются при подключении источника, значит задавать раньше.
-    player.config.ratio = item.w && item.h
-      ? item.w + ':' + item.h
-      : (round ? '1:1' : '16:9');
-    player.source = {
-      type: 'video',
-      title: (round ? 'Кружочек' : 'Видео') + (entry.date ? ' · ' + entry.date : ''),
-      sources: sources,
-      poster: item.poster || ''
-    };
-    if (sources.length > 1){
-      player.quality = pick;
-    }
-    player.loop = round;
+    var v = tv.video;
+    v.pause();
+    tv.classList.remove('is-failed');
+    tv.classList.add('is-waiting');
+    // Версию выбираем сами: по экономии трафика или по размеру экрана.
+    var light = !!entry.item.srcLow && (THIN || fitsScreen(entry));
+    tv.classList.toggle('is-light', light);
+    sizeStage(entry);
+    v.poster = entry.item.poster || '';
+    v.loop = entry.item.type === 'round';
+    tv.swap(light ? entry.item.srcLow : entry.item.src, 0, true);
+    tv.abled();
 
     tv.querySelector('.tv__cap').textContent =
-      (round ? 'Кружочек' : 'Видео') +
+      (entry.item.type === 'round' ? 'Кружочек' : 'Видео') +
       (entry.date ? ' · ' + entry.date : '') +
       ' · ' + (index + 1) + ' из ' + tvList.length;
+    paintQuality(entry);
     tv.querySelector('.tv__prev').disabled = index === 0;
     tv.querySelector('.tv__next').disabled = index === tvList.length - 1;
-
-    var started = player.play();
-    if (started && started.catch) started.catch(function(){});
+    tv.paint();
   }
 
   function onTheaterKey(e){
     if (!tv || tv.hidden) return;
-    if (e.key === 'Escape'){ closeTheater(); e.preventDefault(); }
-    else if (e.key === 'n' || e.key === 'N'){ step(1); }
-    else if (e.key === 'p' || e.key === 'P'){ step(-1); }
+    // Внутри дорожки и ползунка громкости стрелки принадлежат им самим.
+    var on = e.target;
+    if (on && (on.classList.contains('pl__track') || on.classList.contains('tv__vol'))) return;
+    var v = tv.video, k = e.key;
+    if (k === 'Escape'){ closeTheater(); }
+    else if (k === 'ArrowRight'){ tv.nudge(SKIP); }
+    else if (k === 'ArrowLeft'){ tv.nudge(-SKIP); }
+    else if (k === 'ArrowUp'){ v.volume = Math.min(1, v.volume + 0.1); v.muted = false; }
+    else if (k === 'ArrowDown'){ v.volume = Math.max(0, v.volume - 0.1); }
+    else if (k === 'Home'){ if (isFinite(v.duration)) v.currentTime = 0; }
+    else if (k === 'End'){ if (isFinite(v.duration)) v.currentTime = v.duration - 0.1; }
+    else if (k === ' ' || k === 'k' || k === 'K'){ tv.toggle(); }
+    else if (k === 'm' || k === 'M'){ v.muted = !v.muted; }
+    else if (k === 'f' || k === 'F'){ tv.querySelector('.tv__full').click(); }
+    else if (k === 'n' || k === 'N'){ step(1); return; }
+    else if (k === 'p' || k === 'P'){ step(-1); return; }
+    else return;
+    e.preventDefault();
   }
 
   function openTheater(list, index, opener){
+    if (!tv){
+      tv = buildTheater();
+      document.addEventListener('keydown', onTheaterKey);
+    }
+    tvList = list;
     tvReturn = opener || null;
-    loadOnce().then(function(){
-      if (!tv){
-        tv = buildTheater();
-        document.addEventListener('keydown', onTheaterKey);
-      }
-      startPlayer();
-      globalKeys(true);
-      tvList = list;
-      tv.hidden = false;
-      document.body.style.overflow = 'hidden';
-      showInTheater(index);
-      tv.querySelector('.tv__close').focus();
-    }).catch(function(){
-      // Библиотека не доехала — открываем ролик напрямую, чтобы человек
-      // всё-таки его посмотрел.
-      var item = list[index] && list[index].item;
-      if (item) window.open(item.src, '_blank', 'noopener');
-    });
+    tv.hidden = false;
+    document.body.style.overflow = 'hidden';
+    // Пока окно открыто, страницы под ним для читалок экрана не существует.
+    var main = document.getElementById('main');
+    if (main) main.setAttribute('aria-hidden', 'true');
+    tv.paintRate();
+    tv.paintSound();
+    showInTheater(index);
+    tv.querySelector('.tv__close').focus();
   }
 
   function closeTheater(){
     if (!tv || tv.hidden) return;
-    if (player){
-      player.pause();
-      if (player.fullscreen && player.fullscreen.active) player.fullscreen.exit();
-      globalKeys(false);
-    }
+    var v = tv.video;
+    v.pause();
+    v.removeAttribute('src');
+    v.load();
+    tv.classList.remove('is-waiting', 'is-failed');
     tv.hidden = true;
     document.body.style.overflow = '';
+    var main = document.getElementById('main');
+    if (main) main.removeAttribute('aria-hidden');
     if (tvReturn && tvReturn.focus) tvReturn.focus();
   }
 

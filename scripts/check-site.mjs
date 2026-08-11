@@ -79,7 +79,7 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   }
 
   // Известные раздатчики библиотек — даже если попали не в атрибут ресурса.
-  const раздатчики = /(cdn\.plyr\.io|unpkg\.com|jsdelivr\.net|cdnjs\.|fonts\.googleapis\.com|fonts\.gstatic\.com|ajax\.googleapis\.com)/gi;
+  const раздатчики = /(cdn\.plyr\.io|video\.js|videojs|unpkg\.com|jsdelivr\.net|cdnjs\.|fonts\.googleapis\.com|fonts\.gstatic\.com|ajax\.googleapis\.com)/gi;
   for (const m of код.matchAll(раздатчики)) чужие.add(m[0]);
 
   if (чужие.size){
@@ -134,22 +134,14 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   const нужно = [
     ['окно просмотра',        /function openTheater\s*\(/],
     ['переход к соседнему',   /function step\s*\(/],
-    ['выбор качества',        /function bestHeight\s*\(/],
-    ['подключение плеера',    /assets\/vendor\/plyr\/plyr\.min\.js/],
-    ['пропорции кадра',       /player\.config\.ratio/],
-    ['снятие клавиш',         /function globalKeys\s*\(/],
+    ['выбор качества',        /function fitsScreen\s*\(/],
+    ['панель управления',     /function buildTheater\s*\(/],
+    ['перемотка',             /function seekPart\s*\(/],
+    ['пропорции кадра',       /--tv-ratio/],
+    ['сообщение об ошибке',   /tv__fail/],
   ];
   const нет = нужно.filter(([, re]) => !re.test(html)).map(([имя]) => имя);
   if (нет.length) throw new Error('пропало: ' + нет.join(', '));
-});
-
-шаг('плеер лежит в репозитории', () => {
-  const нет = ['plyr.min.js','plyr.css','plyr.svg','LICENSE.md']
-    .filter((f) => !existsSync(ROOT + 'assets/vendor/plyr/' + f));
-  if (нет.length) throw new Error('в assets/vendor/plyr/ не хватает: ' + нет.join(', '));
-  if (!existsSync(ROOT + 'assets/vendor/plyr/blank.mp4')){
-    предупреждения.push('нет assets/vendor/plyr/blank.mp4 — его создаст сборка при следующем запуске');
-  }
 });
 
 /* ── 5. Быстрая загрузка ── */

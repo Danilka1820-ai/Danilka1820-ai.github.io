@@ -412,6 +412,13 @@ async function collect() {
 
 const raw = await collect();
 console.log(`Найдено постов: ${raw.length}`);
+// Самое частое недоумение — «отправил пост, а его нет». Печатаем, что робот
+// вообще увидел в канале: если свежей записи тут нет, дело не в сайте.
+if (raw.length) {
+  const свежий = raw[0];
+  console.log(`Самый свежий в канале: ${свежий.id} от ${свежий.date} — ${
+    (свежий.text || '').trim().slice(0, 60).replace(/\s+/g, ' ') || '(без текста)'}`);
+}
 
 await mkdir(MEDIA_DIR, { recursive: true });
 await mkdir(path.dirname(DATA_FILE), { recursive: true });
@@ -428,10 +435,16 @@ if (savedRecipe !== MEDIA_RECIPE && FFMPEG) {
 }
 
 const posts = [];
+const выброшены = [];
 for (const post of raw) {
   const media = await downloadMedia(post.id, post.media);
   const text = post.text.trim();
-  if (!text && !media.length) continue;
+  // Пустая запись без медиа на сайте выглядела бы дырой. Раньше такие
+  // выбрасывались молча, и понять, почему пост не доехал, было нельзя.
+  if (!text && !media.length) {
+    выброшены.push(`${post.id} (${post.media.length ? 'медиа не скачалось' : 'ни текста, ни медиа — стикер, опрос или голосовое?'})`);
+    continue;
+  }
   posts.push({
     id: post.id,
     date: formatDate(post.date),
@@ -442,6 +455,8 @@ for (const post of raw) {
     media,
   });
 }
+
+if (выброшены.length) console.log('Пропущено записей:', выброшены.join('; '));
 
 const counts = posts.flatMap((p) => p.media).reduce((acc, m) => ({ ...acc, [m.type]: (acc[m.type] || 0) + 1 }), {});
 console.log('Медиа:', counts);

@@ -694,12 +694,62 @@ a{ color:inherit; text-decoration:none; }
 
 /* В профиле пока не фотография, а знак — поэтому небольшой квадрат
    в нейтральном тоне, а не портрет во всю колонку. */
+/* ─── Настоящее стекло ───
+   Плита с прозрачностью и тенью — это ещё не стекло. Живым его делают четыре
+   вещи, и здесь есть все:
+
+   1. Преломление по кромке. Настоящая грань собирает и искажает то, что за
+      ней. В CSS искажения нет, но лупу по краю можно подделать: узкая полоса
+      вдоль рамки размывает и подсвечивает фон сильнее, чем середина.
+   2. Блик, который живёт. Неподвижный отсвет читается как наклейка. Этот
+      ходит за курсором: скрипт кладёт в --mx/--my место указателя, а блик
+      разворачивается к нему, как к источнику света.
+   3. Цветная кайма. На грани настоящего стекла свет расходится в спектр —
+      еле заметная тёплая линия сверху и холодная снизу.
+   4. Толщина. Свет ложится на верхнюю фаску, тень собирается в нижней. Без
+      этого поверхность выглядит нарисованной, а не отлитой. */
+.glass-real{
+  position:relative;
+  isolation:isolate;
+  border-radius:calc(var(--pane-round) + 4px);
+  background:linear-gradient(157deg, rgba(255,255,255,.46), rgba(255,255,255,.22));
+  -webkit-backdrop-filter:blur(14px) saturate(1.5);
+  backdrop-filter:blur(14px) saturate(1.5);
+  border:1px solid rgba(255,255,255,.5);
+  box-shadow:
+    0 24px 50px -28px rgba(17,21,27,.55),
+    0 2px 10px -6px rgba(17,21,27,.2),
+    inset 0 1px 0 rgba(255,255,255,.95),          /* свет на верхней фаске */
+    inset 0 -1px 0 rgba(17,21,27,.10),            /* тень в нижней */
+    inset 0 0 0 1px rgba(255,255,255,.22);        /* толщина стенки */
+}
+/* Кромка-лупа: размывает и подсвечивает фон сильнее, чем середина. */
+.glass-real::before{
+  content:""; position:absolute; inset:0; z-index:-1;
+  border-radius:inherit;
+  -webkit-backdrop-filter:blur(26px) saturate(2) brightness(1.06);
+  backdrop-filter:blur(26px) saturate(2) brightness(1.06);
+  -webkit-mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
+  padding:9px;                                   /* ширина кромки */
+  pointer-events:none;
+}
+/* Блик, идущий за курсором, и цветная кайма на грани. */
+.glass-real::after{
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  pointer-events:none;
+  background:
+    radial-gradient(22rem 16rem at var(--mx,30%) var(--my,0%),
+                    rgba(255,255,255,.55), rgba(255,255,255,0) 62%),
+    linear-gradient(180deg, rgba(255,214,170,.16), rgba(255,214,170,0) 22%),
+    linear-gradient(0deg,   rgba(150,190,255,.16), rgba(150,190,255,0) 22%);
+  transition:background-position .2s;
+}
+
 .hero__fig{
   margin:0 0 0 auto; position:relative; max-width:300px; width:100%;
-  padding:10px; border-radius:calc(var(--pane-round) + 4px);
-  background:var(--pane);
-  border:1px solid var(--pane-edge);
-  box-shadow:var(--pane-lift), var(--pane-glow);
+  padding:10px;
 }
 .hero__fig img{
   width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;
@@ -1443,7 +1493,7 @@ html.thin .entry:hover{ transform:none; }
         </div>
       </div>
 
-      <figure class="hero__fig lead-3">
+      <figure class="glass-real hero__fig lead-3">
         <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="600" height="600" loading="eager" decoding="async">
         <figcaption>Данил · автор дневника</figcaption>
       </figure>
@@ -1798,6 +1848,33 @@ html.thin .entry:hover{ transform:none; }
   }
   // Полосу разделов можно прокрутить — капсула едет вместе с ней.
   if (navMenu) navMenu.addEventListener('scroll', movePill, { passive:true });
+
+  /* ── Живой блик на стекле ──
+     Неподвижный отсвет выглядит наклейкой. Этот ходит за указателем: кладём
+     в переменные место курсора внутри стекла, а рисует уже CSS. Считаем не
+     чаще кадра и только там, где есть мышь: на телефоне двигать нечем, а
+     лишние вычисления на прокрутке ни к чему. */
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches &&
+      !reduce && !THIN){
+    var стёкла = [].slice.call(document.querySelectorAll('.glass-real'));
+    var бликЖдёт = false, бликСобытие = null;
+    if (стёкла.length){
+      window.addEventListener('pointermove', function(e){
+        бликСобытие = e;
+        if (бликЖдёт) return;
+        бликЖдёт = true;
+        requestAnimationFrame(function(){
+          бликЖдёт = false;
+          стёкла.forEach(function(el){
+            var b = el.getBoundingClientRect();
+            if (!b.width) return;
+            el.style.setProperty('--mx', ((бликСобытие.clientX - b.left) / b.width * 100).toFixed(1) + '%');
+            el.style.setProperty('--my', ((бликСобытие.clientY - b.top) / b.height * 100).toFixed(1) + '%');
+          });
+        });
+      }, { passive:true });
+    }
+  }
 
   /* ── Капсула в выпадающем меню ──
      На телефоне разделы лежат столбиком, и та, что ездит по шапке, туда не

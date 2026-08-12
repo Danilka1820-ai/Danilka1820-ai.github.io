@@ -213,6 +213,18 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   }
 });
 
+шаг('экономный режим ловит медленный канал, а не только «2g»', () => {
+  // effectiveType на канале 400 кбит/с — эталон замеров этого сайта — Chrome
+  // репортит как «3g», не «2g»: проверено эмуляцией throttling. Без запасной
+  // проверки по downlink html.thin на таком канале не включался бы вовсе.
+  if (!/c\.saveData\s*===\s*true/.test(html) || !/2g\$/.test(html)){
+    throw new Error('пропала проверка saveData/effectiveType для html.thin');
+  }
+  if (!/c\.downlink/.test(html)){
+    throw new Error('пропала проверка downlink для html.thin — на 400 кбит/с эконом-режим перестанет включаться');
+  }
+});
+
 шаг('шрифты подключаются после ленты', () => {
   if (!/id="fontStyles"[^>]*media="print"/.test(html)){
     throw new Error('пропал media="print" у #fontStyles — страница снова будет ждать шрифты');

@@ -66,11 +66,11 @@
         "type": "round",
         "src": "assets/posts/danilka2028k-519-0.mp4",
         "poster": "assets/posts/danilka2028k-519-0p.jpg",
-        "size": 1202853,
+        "size": 1202811,
         "w": 512,
         "h": 512,
         "srcLow": "assets/posts/danilka2028k-519-0-low.mp4",
-        "sizeLow": 643819,
+        "sizeLow": 643495,
         "wLow": 360,
         "hLow": 360
       }
@@ -92,7 +92,7 @@
         "w": 512,
         "h": 512,
         "srcLow": "assets/posts/danilka2028k-518-0-low.mp4",
-        "sizeLow": 910018,
+        "sizeLow": 909231,
         "wLow": 360,
         "hLow": 360
       }
@@ -179,11 +179,11 @@
         "type": "video",
         "src": "assets/posts/danilka2028k-506-0.mp4",
         "poster": "assets/posts/danilka2028k-506-0p.jpg",
-        "size": 6991952,
-        "w": 1280,
-        "h": 720,
+        "size": 3303418,
+        "w": 854,
+        "h": 480,
         "srcLow": "assets/posts/danilka2028k-506-0-low.mp4",
-        "sizeLow": 2028314,
+        "sizeLow": 1930423,
         "wLow": 640,
         "hLow": 360
       }
@@ -359,13 +359,13 @@
         "type": "video",
         "src": "assets/posts/danilka2028k-485-0.mp4",
         "poster": "assets/posts/danilka2028k-485-0p.jpg",
-        "size": 3933427,
-        "w": 960,
-        "h": 1280,
+        "size": 2496382,
+        "w": 854,
+        "h": 1138,
         "srcLow": "assets/posts/danilka2028k-485-0-low.mp4",
-        "sizeLow": 1462105,
+        "sizeLow": 1409500,
         "wLow": 640,
-        "hLow": 854
+        "hLow": 852
       }
     ]
   },
@@ -514,11 +514,11 @@
         "type": "round",
         "src": "assets/posts/danilka2028k-465-0.mp4",
         "poster": "assets/posts/danilka2028k-465-0p.jpg",
-        "size": 2179187,
+        "size": 2179272,
         "w": 512,
         "h": 512,
         "srcLow": "assets/posts/danilka2028k-465-0-low.mp4",
-        "sizeLow": 1195930,
+        "sizeLow": 1194996,
         "wLow": 360,
         "hLow": 360
       }
@@ -557,11 +557,11 @@
         "type": "video",
         "src": "assets/posts/danilka2028k-460-0.mp4",
         "poster": "",
-        "size": 5692719,
-        "w": 1280,
-        "h": 720,
+        "size": 2868740,
+        "w": 854,
+        "h": 480,
         "srcLow": "assets/posts/danilka2028k-460-0-low.mp4",
-        "sizeLow": 1829104,
+        "sizeLow": 1761047,
         "wLow": 640,
         "hLow": 360
       }
@@ -637,7 +637,7 @@
         "w": 512,
         "h": 512,
         "srcLow": "assets/posts/danilka2028k-454-0-low.mp4",
-        "sizeLow": 139765,
+        "sizeLow": 140106,
         "wLow": 360,
         "hLow": 360
       }
@@ -659,7 +659,7 @@
         "w": 512,
         "h": 512,
         "srcLow": "assets/posts/danilka2028k-453-0-low.mp4",
-        "sizeLow": 323762,
+        "sizeLow": 323751,
         "wLow": 360,
         "hLow": 360
       }
@@ -681,7 +681,7 @@
         "w": 512,
         "h": 512,
         "srcLow": "assets/posts/danilka2028k-452-0-low.mp4",
-        "sizeLow": 375753,
+        "sizeLow": 374814,
         "wLow": 360,
         "hLow": 360
       }

@@ -1,19 +1,23 @@
 name: Telegram Gemini bot
 
 # GitHub Actions не умеет держать процесс запущенным постоянно, поэтому
-# вместо одного вечно висящего бота workflow запускается по расписанию
-# и каждый раз недолго (несколько минут) опрашивает Telegram —
-# см. telegram-gemini-bot/poll_once.py.
+# вместо одного вечно висящего бота каждый запуск (~7 минут прослушки)
+# в конце сам запускает свою следующую копию через GitHub API —
+# см. telegram-gemini-bot/poll_once.py -> trigger_next_run(). Получается
+# почти непрерывная работа без своего сервера. Расписание ниже — не
+# основной механизм, а подстраховка на случай, если цепочка самозапусков
+# где-то оборвётся (например, упавший запуск не успел запустить следующий).
 on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
-# Боту не нужно ничего коммитить в репозиторий — только читать секреты и
-# ходить в Telegram/Gemini API, поэтому прав на запись содержимого не даём
-# (принцип минимальных привилегий).
+# Боту не нужно ничего коммитить в репозиторий — только читать секреты,
+# ходить в Telegram/Gemini API и запускать сам себя дальше (actions: write
+# нужен именно для самозапуска через API, contents: write не нужен).
 permissions:
   contents: read
+  actions: write
 
 # Не даём двум запускам опрашивать Telegram одновременно (иначе Telegram
 # ответит ошибкой конфликта getUpdates). Новый запуск отменяет застрявший
@@ -44,5 +48,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
           ADMIN_ID: ${{ secrets.ADMIN_ID }}
-          POLL_SECONDS: "240"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          POLL_SECONDS: "420"
         run: python poll_once.py

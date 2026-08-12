@@ -61,11 +61,51 @@
    (Мбит/с, откликается на throttling сразу, в отличие от effectiveType) —
    0.6 берёт с запасом канал из замера и оставляет живым обычный 3G/4G/wifi. */
 (function(){
+  var html = document.documentElement;
+  var thin = false;
   try{
     var c = navigator.connection || navigator.mozConnection || {};
     var slow = typeof c.downlink === 'number' && c.downlink > 0 && c.downlink < 0.6;
     if (c.saveData === true || /(^|\-)2g$/.test(c.effectiveType || '') || slow){
-      document.documentElement.className += ' thin';
+      thin = true;
+      html.className += ' thin';
+    }
+  }catch(e){}
+
+  /* Тип устройства — не по строке User-Agent (она врёт, и под каждый новый
+     телевизор пришлось бы дописывать список), а по тому, чем им управляют:
+     палец против мыши, есть ли наведение вообще. Экран без наведения и
+     широкий, как в блоке БОЛЬШИЕ ЭКРАНЫ И ТЕЛЕВИЗОРЫ — обычно пульт, то
+     есть телевизор или приставка. */
+  var device = 'desktop';
+  try{
+    var coarse = matchMedia('(pointer:coarse)').matches;
+    var noHover = matchMedia('(hover:none)').matches;
+    var tabletUp = matchMedia('(min-width:768px)').matches;
+    var tvSize = matchMedia('(min-width:1600px)').matches;
+    if (noHover && coarse && tvSize) device = 'tv';
+    else if (coarse) device = tabletUp ? 'tablet' : 'phone';
+    html.setAttribute('data-device', device);
+  }catch(e){}
+
+  /* Богатый режим — зеркало экономного, только не «на всякий случай гасим»,
+     а «включаем, лишь когда точно уверены»: сеть должна сама сообщить о
+     максимальной категории (без Network Information API — а его нет в
+     Safari — сайт остаётся в обычном виде, никогда не гадаем в плюс), а
+     железо — не отчитаться о слабости, если вообще умеет об этом сообщать.
+     Экран без мыши и без огромной диагонали (телефон, планшет) не включаем
+     даже на отличном канале: перегрев видеокарты на подряд идущих блюрах —
+     это стоимость самого блюра, а не байтов, и телефон её платит тяжелее
+     компьютера или телевизора — это уже мерено при отказе от блюра на
+     поверхностях (см. README, «Два разных стекла»). */
+  try{
+    var fastNet = c.saveData !== true && c.effectiveType === '4g' &&
+                  (typeof c.downlink !== 'number' || c.downlink >= 5);
+    var ableMem = typeof navigator.deviceMemory !== 'number' || navigator.deviceMemory >= 4;
+    var ableCpu = typeof navigator.hardwareConcurrency !== 'number' || navigator.hardwareConcurrency >= 4;
+    var ableDevice = device === 'desktop' || device === 'tv';
+    if (!thin && fastNet && ableMem && ableCpu && ableDevice){
+      html.className += ' rich';
     }
   }catch(e){}
 
@@ -1224,23 +1264,49 @@ html.thin .contact, html.thin .hero__fig{
   background:var(--paper-lift); box-shadow:none; border-color:var(--rule);
 }
 html.thin .top, html.thin .foot, html.thin .tv__backdrop, html.thin .nav__pill,
-html.thin .filters button, html.thin .tv__bar, html.thin .tv__close, html.thin .tv__nav{
+html.thin .filters button, html.thin .tv__bar, html.thin .tv__close, html.thin .tv__nav,
+html.thin .up{
   -webkit-backdrop-filter:none; backdrop-filter:none;
 }
 html.thin .entry{ transition:none; }
 html.thin .entry:hover{ transform:none; }
 
+/* Оба списка ниже намеренно через «html X», а не голым «.x»: у голого класса
+   та же специфичность, что у собственных правил .entry/.about/.foot и так
+   далее ниже по файлу, и они моложе — без этой приставки на исходном месте
+   отключение молча проигрывало и не действовало вовсе. Ту же ловушку однажды
+   уже описали для html.thin (см. README, «Экономный режим») — здесь она была
+   и в этом блоке, просто без класса-щита. */
 @media (prefers-reduced-transparency: reduce){
-  body{ background-image:none; }
-  .entry, .about, .qa, .thesis, .contact, .hero__fig{
+  html body{ background-image:none; }
+  html .entry, html .about, html .qa, html .thesis, html .contact, html .hero__fig{
     background:var(--paper-lift); border-color:var(--rule);
   }
-  .foot{ background:var(--paper-lift); }
-  .tv__backdrop{ background:var(--paper); }
-  .top, .foot, .tv__backdrop, .nav__pill, .filters button, .tv__bar,
-  .tv__close, .tv__nav{
+  html .foot{ background:var(--paper-lift); }
+  html .tv__backdrop{ background:var(--paper); }
+  html .top, html .foot, html .tv__backdrop, html .nav__pill, html .filters button, html .tv__bar,
+  html .tv__close, html .tv__nav, html .up{
     -webkit-backdrop-filter:none; backdrop-filter:none;
   }
+}
+
+/* ─── Когда стекла можно больше ───
+   Зеркало экономного режима: класс ставит тот же скрипт в шапке, но только
+   когда сеть сама подтвердила высшую категорию и железо не отчиталось о
+   слабости — при любом сомнении, включая браузеры без Network Information
+   API (Safari), сайт остаётся в обычном, уже вылизанном виде. Меняем только
+   токен панелей — прозрачнее карточки записей и «О дневнике». Больший
+   радиус блюра на плавающем стекле пробовали и убрали: даже на технически
+   «подходящем» железе (4 ядра, 8 ГБ) прилипшая шапка поверх ленты при
+   прокрутке заметно проседала — до 200 мс на кадр вместо ровных 17-33,
+   потому что видеокарта пересчитывает блюр каждый кадр, а его радиус ни
+   ядра, ни память не измеряют. Явно исключён телефон и планшет — тем же
+   ядрам и памяти он гоняет ту же прокрутку тяжелее компьютера или
+   телевизора. prefers-reduced-transparency выше выигрывает у этого блока в
+   любом случае: там задаются не токены, а сами свойства. */
+html.rich{
+  --pane:        linear-gradient(157deg, rgba(255,255,255,.48), rgba(255,255,255,.20));
+  --pane-edge:   rgba(255,255,255,.56);
 }
 
 /* Фотографии */

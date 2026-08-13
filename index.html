@@ -22,6 +22,8 @@
      ═══════════════════════════════════════════════════════════════════════ -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>Данил Сарыков — Вокруг меня</title>
 <meta name="author" content="Данил Сарыков">
 <meta name="description" content="Дневник Данила Сарыкова. Москва и Подмосковье, танцы, волонтёрство, заметки о жизни вокруг.">
@@ -520,7 +522,7 @@ a{ color:inherit; text-decoration:none; }
 }
 /* Имя — это и есть кнопка «Главная», поэтому ведёт себя как раздел. */
 .top__name:hover{ color:var(--ink); }
-.top__name[aria-selected="true"]{ color:var(--ink); }
+.top__name[aria-current="page"]{ color:var(--ink); }
 .top__nav{
   position:relative;
   display:flex; align-items:stretch; gap:var(--s3);
@@ -569,8 +571,8 @@ a{ color:inherit; text-decoration:none; }
   transition:transform .28s cubic-bezier(.2,.7,.3,1);
 }
 .tab:hover{ color:var(--ink); }
-.tab[aria-selected="true"]{ color:var(--ink); }
-.tab[aria-selected="true"]::after{ transform:scaleX(1); }
+.tab[aria-current="page"]{ color:var(--ink); }
+.tab[aria-current="page"]::after{ transform:scaleX(1); }
 
 /* На широком экране «Контакты» — обычный раздел: их отмечает та же
    переезжающая капсула, что и остальные. Отдельная рамка только в меню
@@ -664,8 +666,8 @@ a{ color:inherit; text-decoration:none; }
   }
   .tab::after{ display:none; }
   /* Подсветку выбранного держит капсула — своя заливка ей только мешает. */
-  .top__nav:not(.has-pill) .tab[aria-selected="true"]{ background:rgba(17,21,27,.07); }
-  .tab[aria-selected="true"]{ color:var(--ink); }
+  .top__nav:not(.has-pill) .tab[aria-current="page"]{ background:rgba(17,21,27,.07); }
+  .tab[aria-current="page"]{ color:var(--ink); }
   .tab--cta{
     align-self:stretch; margin-top:4px; text-align:left;
     background:rgba(17,21,27,.06); border-color:rgba(255,255,255,.55);
@@ -673,8 +675,8 @@ a{ color:inherit; text-decoration:none; }
   }
   /* Выбранное отмечает капсула. Своя заливка «Контактов» её закрывала —
      оставляем заливку только там, где капсулы нет. */
-  .top__nav:not(.has-pill) .tab--cta[aria-selected="true"]{ background:var(--ink); color:var(--paper); }
-  .top__nav.has-pill .tab--cta[aria-selected="true"]{ background:transparent; color:var(--ink); }
+  .top__nav:not(.has-pill) .tab--cta[aria-current="page"]{ background:var(--ink); color:var(--paper); }
+  .top__nav.has-pill .tab--cta[aria-current="page"]{ background:transparent; color:var(--ink); }
   .top__nav.has-pill .tab--cta{ background:transparent; border-color:transparent; }
 
   /* Часы встают в строку сразу за тремя точками, а не улетают к правому краю:
@@ -1536,13 +1538,13 @@ html.rich{
    незачем. Ужимаем на 3 процента и притемняем — заметно пальцу, но не прыгает
    в глаза, как это делала бы заливка. */
 @media (hover: none), (pointer: coarse){
-  a, button, summary, [role="tab"], .pl__track{
+  a, button, summary, .tab, .pl__track{
     -webkit-tap-highlight-color:transparent;
   }
   /* Подписи на кнопках выделять незачем: долгое нажатие на телефоне вместо
      нажатия показывало бы лупу и «Скопировать». Текст записей не трогаем —
      его как раз копируют. */
-  button, [role="tab"], .top__more, .pl__btn, .tv__close, .tv__nav, .up{
+  button, .tab, .top__more, .pl__btn, .tv__close, .tv__nav, .up{
     -webkit-user-select:none; user-select:none;
   }
   .btn:active, .filters button:active, .entry__more:active,
@@ -1647,17 +1649,17 @@ html.rich{
 
 <header class="top" id="top">
   <div class="top__in">
-    <a class="top__name" href="#/glavnaya" role="tab" data-tab="home"
-       aria-selected="true" aria-controls="tab-home">Данил Сарыков</a>
+    <a class="top__name" href="#/glavnaya" data-tab="home"
+       aria-current="page">Данил Сарыков</a>
     <span class="nav__pill" id="navPill" aria-hidden="true"></span>
     <button type="button" class="glass-real top__more" id="moreBtn"
             aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
-    <nav class="top__nav" id="navMenu" role="tablist" aria-label="Разделы сайта">
+    <nav class="top__nav" id="navMenu" aria-label="Разделы сайта">
       <span class="nav__pillY" id="navPillY" aria-hidden="true"></span>
-      <a class="tab" role="tab" href="#/dnevnik"  data-tab="diary"    aria-selected="false" aria-controls="tab-diary">Записи</a>
-      <a class="tab" role="tab" href="#/o-sebe"   data-tab="about"    aria-selected="false" aria-controls="tab-about">О дневнике</a>
-      <a class="tab" role="tab" href="#/voprosy"  data-tab="faq"      aria-selected="false" aria-controls="tab-faq">Вопросы</a>
-      <a class="tab tab--cta" role="tab" href="#/kontakty" data-tab="contacts" aria-selected="false" aria-controls="tab-contacts">Контакты</a>
+      <a class="tab" href="#/dnevnik"  data-tab="diary">Записи</a>
+      <a class="tab" href="#/o-sebe"   data-tab="about">О дневнике</a>
+      <a class="tab" href="#/voprosy"  data-tab="faq">Вопросы</a>
+      <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
     </nav>
     <div class="top__now" id="nowBlock">
       <span class="dot" aria-hidden="true"></span>
@@ -1673,12 +1675,12 @@ html.rich{
 <main class="wrap" id="main">
 
   <!-- ══════════ ГЛАВНАЯ ══════════ -->
-  <div class="panel" id="tab-home" role="tabpanel">
+  <div class="panel" id="tab-home">
 
     <section class="hero">
       <div>
         <p class="label hero__place lead-1">Москва · Подмосковье · с 2024 года</p>
-        <h1 class="hero__title lead-2">Вокруг<em>меня</em></h1>
+        <h1 class="hero__title lead-2">Вокруг <em>меня</em></h1>
         <p class="hero__lede lead-3">
           Дневник обычной жизни. Танцы, волонтёрство, люди и улицы — то, что происходит
           вокруг, записанное по горячим следам. Без масок и ролей.
@@ -1717,7 +1719,7 @@ html.rich{
   </div>
 
   <!-- ══════════ ЗАПИСИ ══════════ -->
-  <div class="panel" id="tab-diary" role="tabpanel" hidden>
+  <div class="panel" id="tab-diary" hidden>
     <section class="feed">
       <div class="feed__head">
         <h2>Записи</h2>
@@ -1737,7 +1739,7 @@ html.rich{
   </div>
 
   <!-- ══════════ О ДНЕВНИКЕ ══════════ -->
-  <div class="panel" id="tab-about" role="tabpanel" hidden>
+  <div class="panel" id="tab-about" hidden>
     <section class="about">
       <p class="label">О дневнике</p>
       <div class="about__body">
@@ -1770,7 +1772,7 @@ html.rich{
   </div>
 
   <!-- ══════════ ВОПРОСЫ ══════════ -->
-  <div class="panel" id="tab-faq" role="tabpanel" hidden>
+  <div class="panel" id="tab-faq" hidden>
     <section class="qa">
       <p class="label">Часто спрашивают</p>
       <div class="qa__list">
@@ -1799,7 +1801,7 @@ html.rich{
   </div>
 
   <!-- ══════════ КОНТАКТЫ ══════════ -->
-  <div class="panel" id="tab-contacts" role="tabpanel" hidden>
+  <div class="panel" id="tab-contacts" hidden>
     <section class="contact">
       <p class="label" style="margin:0 0 var(--s3)">Связь</p>
       <h2 class="contact__cta">Проще и <em>честнее</em>. Без лишнего.</h2>
@@ -2020,7 +2022,7 @@ html.rich{
     var narrow = window.matchMedia('(max-width:900px)').matches;
     // Под курсором капсула забегает вперёд, к тому разделу, на который
     // человек смотрит. Отпустил — вернулась к открытому.
-    var active = pillHover || document.querySelector('[data-tab][aria-selected="true"]');
+    var active = pillHover || document.querySelector('[data-tab][aria-current="page"]');
     if (narrow || !active || !active.offsetWidth){
       topIn.classList.remove('has-pill');
       pillPlaced = false;
@@ -2090,7 +2092,7 @@ html.rich{
   function moveYPill(){
     if (!pillY || !navMenu) return;
     var wide = window.matchMedia('(min-width:901px)').matches;
-    var цель = pillYTouch || navMenu.querySelector('[data-tab][aria-selected="true"]');
+    var цель = pillYTouch || navMenu.querySelector('[data-tab][aria-current="page"]');
     if (wide || !navMenu.classList.contains('is-open') || !цель || !цель.offsetHeight){
       navMenu.classList.remove('has-pill');
       pillYPlaced = false;
@@ -2157,7 +2159,8 @@ html.rich{
     });
     tabLinks.forEach(function(link){
       var active = link.getAttribute('data-tab') === tab.key;
-      link.setAttribute('aria-selected', active ? 'true' : 'false');
+      if (active) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
       // Если строка разделов не помещается и прокручивается — подводим выбранный.
       // В выпадающем меню на телефоне прокручивать нечего.
       if (active && link.scrollIntoView && navMenu && navMenu.scrollWidth > navMenu.clientWidth + 1){
@@ -2180,17 +2183,20 @@ html.rich{
      GitHub Action каждые 15 минут читает публичную превью-страницу Telegram-канала,
      складывает тексты в data/posts.json, а фото и видео — в assets/posts. Поэтому
      всё отдаёт сам сайт: Telegram у читателя может быть закрыт. */
-  var POSTS_SOURCES = [
-    '/data/posts.json',
-    'https://raw.githubusercontent.com/Danilka1820-ai/Danilka1820-ai.github.io/main/data/posts.json'
-  ];
+  var POSTS_SOURCES = ['/data/posts.json'];
   var railEl = document.getElementById('rail');
   var latestEl = document.getElementById('latestRail');
   var filtersEl = document.getElementById('filters');
   var MAX_FILTERS = 8;
   var WEEKDAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
 
-  function isSafeUrl(url){ return /^(https?:)?\/\//i.test(url) || url.charAt(0) === '/' || /^assets\//.test(url); }
+  function isSafeMediaUrl(url){
+    return typeof url === 'string' && !url.includes('..') &&
+      (/^\/assets\//.test(url) || /^assets\//.test(url));
+  }
+  function isSafeTelegramPostUrl(url){
+    return /^https:\/\/t\.me\/danilka2028k\/\d+$/.test(url || '');
+  }
 
   function partsFromDate(post){
     var out = { short:'', day:'', iso:'' };
@@ -3049,9 +3055,12 @@ html.rich{
       text: post.text || '',
       link: post.link || '',
       tags: Array.isArray(post.tags) ? post.tags : [],
-      media: media.filter(function(m){ return m && m.src && isSafeUrl(m.src); })
+      media: media.filter(function(m){ return m && m.src && isSafeMediaUrl(m.src); })
         .map(function(m){
-          if (m.srcLow && !isSafeUrl(m.srcLow)) { m = Object.assign({}, m); delete m.srcLow; }
+          m = Object.assign({}, m);
+          ['srcLow','srcMid','poster'].forEach(function(key){
+            if (m[key] && !isSafeMediaUrl(m[key])) delete m[key];
+          });
           return m;
         })
     };
@@ -3106,13 +3115,34 @@ html.rich{
       body.appendChild(box);
     }
 
+    function appendLinkedText(parent, text){
+      var re = /(?:https?:\/\/[^\s<>]+|(?:www\.)?[a-z0-9а-яё-]+(?:\.[a-z0-9а-яё-]+)*\.[a-zа-яё]{2,}(?:\/[^\s<>]*)?)/giu;
+      var last = 0;
+      String(text).replace(re, function(raw, offset){
+        var clean = raw.replace(/[.,!?:;)\]\u00bb]+$/g, '');
+        var tail = raw.slice(clean.length);
+        parent.appendChild(document.createTextNode(text.slice(last, offset)));
+        var link = document.createElement('a');
+        link.className = 'u';
+        link.href = /^https?:\/\//i.test(clean) ? clean : 'https://' + clean;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = clean;
+        parent.appendChild(link);
+        if (tail) parent.appendChild(document.createTextNode(tail));
+        last = offset + raw.length;
+        return raw;
+      });
+      parent.appendChild(document.createTextNode(text.slice(last)));
+    }
+
     split.body.forEach(function(line){
       var p = document.createElement('p');
-      p.textContent = line;
+      appendLinkedText(p, line);
       body.appendChild(p);
     });
 
-    if (post.link && isSafeUrl(post.link)){
+    if (post.link && isSafeTelegramPostUrl(post.link)){
       var more = document.createElement('a');
       more.className = 'entry__more';
       more.href = post.link;

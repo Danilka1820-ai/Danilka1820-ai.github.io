@@ -35,11 +35,14 @@ jobs:
         env:
           TG_CHANNEL: danilka2028k
 
+      - name: Проверить данные и медиа до публикации
+        run: node scripts/check-site.mjs
+
       - name: Commit new posts
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data assets/posts
+          git add data assets/posts sitemap.xml
           if git diff --cached --quiet; then
             echo "Нет новых записей."
             exit 0
@@ -47,6 +50,7 @@ jobs:
           git commit -m "Sync diary posts from Telegram"
           for delay in 0 2 4 8 16; do
             sleep $delay
+            git rebase --abort 2>/dev/null || true
             git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
           done
           exit 1

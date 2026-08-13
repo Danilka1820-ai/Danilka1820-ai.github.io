@@ -86,6 +86,14 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   const раздатчики = /(cdn\.plyr\.io|video\.js|videojs|unpkg\.com|jsdelivr\.net|cdnjs\.|fonts\.googleapis\.com|fonts\.gstatic\.com|ajax\.googleapis\.com)/gi;
   for (const m of код.matchAll(раздатчики)) чужие.add(m[0]);
 
+  // fetch() тоже сетевой запрос. Раньше внешний запасной JSON проходил
+  // проверку, хотя нарушал правило «всё отдаёт сам сайт».
+  for (const m of код.matchAll(/\bfetch\(\s*['"]((?:https?:)?\/\/[^'"]+)['"]/gi)) {
+    const адрес = m[1];
+    const хост = (адрес.match(/^(?:https?:)?\/\/([^/]+)/i) || [])[1];
+    if (хост && !СВОИ.includes(хост.toLowerCase())) чужие.add(адрес);
+  }
+
   // Остальные страницы сайта — по тем же правилам.
   for (const файл of другие){
     const текст = безКомментариев(readFileSync(ROOT + файл, 'utf8'));
@@ -156,6 +164,24 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   const нет = ['home','diary','about','faq','contacts']
     .filter((k) => !html.includes('id="tab-' + k + '"'));
   if (нет.length) throw new Error('пропали панели: ' + нет.join(', '));
+});
+
+шаг('навигация доступна скринридерам', () => {
+  if (/role="(?:tab|tablist|tabpanel)"/.test(html) || /aria-selected=/.test(html)) {
+    throw new Error('не возвращайте tab-ARIA без полного клавиатурного паттерна; это обычные ссылки разделов');
+  }
+  if (!/data-tab="home"[^>]*aria-current="page"/.test(html)) {
+    throw new Error('текущий раздел не отмечен aria-current="page"');
+  }
+});
+
+шаг('базовая защита браузера на месте', () => {
+  if (!/<meta[^>]+http-equiv="Content-Security-Policy"/i.test(html)) {
+    throw new Error('в index.html нет Content-Security-Policy');
+  }
+  if (!/<meta[^>]+name="referrer"[^>]+strict-origin-when-cross-origin/i.test(html)) {
+    throw new Error('в index.html нет безопасной referrer policy');
+  }
 });
 
 шаг('окно просмотра и плеер на месте', () => {
@@ -273,13 +299,54 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   }
 });
 
-шаг('данные записей читаются', () => {
+шаг('данные записей целы и ссылаются на свои файлы', () => {
   const данные = JSON.parse(readFileSync(ROOT + 'data/posts.json', 'utf8'));
   if (!Array.isArray(данные) || !данные.length) throw new Error('data/posts.json пуст');
-  const битые = данные
-    .flatMap((p) => (p.media || []).map((m) => m.src))
-    .filter((src) => src && !existsSync(ROOT + src.replace(/^\//, '')));
-  if (битые.length) throw new Error('в записях ссылки на пропавшие файлы:\n      ' + битые.slice(0, 5).join('\n      '));
+  const ошибки = [];
+  const ids = new Set();
+  let previousDate = Infinity;
+
+  for (const post of данные) {
+    if (!/^danilka2028k\/\d+$/.test(post.id || '')) ошибки.push(`неверный id: ${post.id}`);
+    if (ids.has(post.id)) ошибки.push(`дубль id: ${post.id}`);
+    ids.add(post.id);
+    if (post.link !== `https://t.me/${post.id}`) ошибки.push(`неверная link у ${post.id}`);
+    const time = new Date(post.datetime).getTime();
+    if (!Number.isFinite(time)) ошибки.push(`неверная datetime у ${post.id}`);
+    else if (time > previousDate) ошибки.push(`нарушен порядок дат у ${post.id}`);
+    previousDate = time;
+    if (!(post.text || '').trim() && !(post.media || []).length) ошибки.push(`пустая запись ${post.id}`);
+
+    for (const media of post.media || []) {
+      if (!['photo', 'video', 'round'].includes(media.type)) ошибки.push(`неверный тип медиа у ${post.id}`);
+      for (const [key, sizeKey] of [['src','size'], ['srcMid','sizeMid'], ['srcLow','sizeLow'], ['poster','']]) {
+        const src = media[key];
+        if (!src) continue;
+        if (!/^\/?assets\/posts\/[\w.-]+$/.test(src) || src.includes('..')) {
+          ошибки.push(`внешний/опасный ${key} у ${post.id}: ${src}`);
+          continue;
+        }
+        const file = ROOT + src.replace(/^\//, '');
+        if (!existsSync(file)) ошибки.push(`пропал ${src}`);
+        else if (sizeKey && Number.isFinite(media[sizeKey]) && statSync(file).size !== media[sizeKey]) {
+          ошибки.push(`неверный ${sizeKey} у ${post.id}: ${src}`);
+        }
+      }
+    }
+  }
+  if (ошибки.length) throw new Error(ошибки.slice(0, 10).join('\n      '));
+});
+
+шаг('sitemap совпадает с последней записью', () => {
+  const posts = JSON.parse(readFileSync(ROOT + 'data/posts.json', 'utf8'));
+  const newest = posts.map((p) => new Date(p.datetime)).filter((d) => !Number.isNaN(d.getTime())).sort((a,b) => b-a)[0];
+  const sitemap = readFileSync(ROOT + 'sitemap.xml', 'utf8');
+  const lastmod = newest.toISOString().slice(0, 10);
+  if (!sitemap.includes('<loc>https://www.sarykov.ru/</loc>') || !sitemap.includes(`<lastmod>${lastmod}</lastmod>`)) {
+    throw new Error(`sitemap.xml должен содержать www.sarykov.ru и lastmod ${lastmod}`);
+  }
+  const robots = readFileSync(ROOT + 'robots.txt', 'utf8');
+  if (!robots.includes('Sitemap: https://www.sarykov.ru/sitemap.xml')) throw new Error('в robots.txt неверный Sitemap');
 });
 
 /* ── Итог ── */

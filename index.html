@@ -439,10 +439,17 @@ a{ color:inherit; text-decoration:none; }
   scroll-margin-bottom:24px;
 }
 
+/* В <meta> стоит viewport-fit=cover — страница намеренно уходит под скруглённые
+   углы экрана, иначе по краям остались бы белые поля. Значит боковые отступы
+   обязаны учитывать вырез: без env() в ландшафте чёлка съедает первые буквы
+   строки, а на телефонах со скруглением подрезаются края карточек. Пишем через
+   max(), чтобы на экранах без выреза (а это все компьютеры) отступ остался
+   прежним: env() там равен нулю. */
 .wrap{
   max-width:var(--page);
   margin-inline:auto;
-  padding-inline:24px;
+  padding-left:max(24px, env(safe-area-inset-left, 0px));
+  padding-right:max(24px, env(safe-area-inset-right, 0px));
 }
 
 .skip{
@@ -494,7 +501,9 @@ a{ color:inherit; text-decoration:none; }
 .top__in{
   position:relative;
   max-width:var(--page); margin-inline:auto;
-  padding:0 24px;
+  padding-block:0;
+  padding-left:max(24px, env(safe-area-inset-left, 0px));
+  padding-right:max(24px, env(safe-area-inset-right, 0px));
   display:flex; align-items:stretch; gap:var(--s3);
   flex-wrap:nowrap;
 }
@@ -584,9 +593,12 @@ a{ color:inherit; text-decoration:none; }
 /* Кнопка разделов — та же отливка, что у портрета: кромка-лупа, толщина,
    цветная грань и блик, идущий за пальцем. Кромку берём тоньше: кнопка
    сорок точек в поперечнике, широкая грань съела бы её целиком. */
+/* Кнопка показывается только до 900 точек, то есть всегда под палец, — поэтому
+   44 задано прямо здесь, а не отдельным правилом для узких экранов. Раньше было
+   наоборот: 40 в основе и 36 на телефонах, где промахнуться проще всего. */
 .top__more{
   display:none; flex:0 0 auto; align-self:center;
-  width:40px; height:40px; border-radius:50%; cursor:pointer;
+  width:44px; height:44px; border-radius:50%; cursor:pointer;
   align-items:center; justify-content:center;
   font-family:var(--mono); font-size:15px; line-height:1;
   color:var(--ink-2);
@@ -677,7 +689,6 @@ a{ color:inherit; text-decoration:none; }
 @media (max-width:560px){
   .top__name{ font-size:11px; letter-spacing:0; word-spacing:-.2em; }
   .top__now{ font-size:10.5px; letter-spacing:.04em; gap:5px; }
-  .top__more{ width:36px; height:36px; }
 }
 /* На совсем узких дата уже не влезает — остаются город и время. */
 @media (max-width:379px){
@@ -720,6 +731,11 @@ a{ color:inherit; text-decoration:none; }
 .hero__acts{ margin-top:var(--s5); display:flex; flex-wrap:wrap; gap:var(--s2); }
 
 .btn{
+  /* Кнопки — это ссылки <a>, а у строчного элемента вертикальные отступы не
+     раздвигают строку и не действует min-height: «Все записи» так и оставалась
+     43 точки вместо 44, сколько ей ни задавай. Строчно-блочный контейнер даёт
+     кнопке настоящую высоту и заодно ровно центрует надпись со стрелкой. */
+  display:inline-flex; align-items:center; justify-content:center;
   font-family:var(--mono); font-size:12px; letter-spacing:.1em;
   text-transform:uppercase;
   padding:13px 22px;
@@ -1187,9 +1203,19 @@ a{ color:inherit; text-decoration:none; }
 /* На узком экране дорожке в одном ряду с кнопками остаётся десяток точек —
    перематывать пальцем нечего. Отправляем её на свою строку. */
 @media (max-width:700px){
-  .tv__bar{ flex-wrap:wrap; row-gap:2px; }
-  .tv__bar .pl__track{ order:-1; flex:1 0 100%; width:100%; height:28px; }
-  .tv__bar .pl__time{ order:-1; }
+  /* Кнопки по центру и с просветом между строками: на самых узких экранах ряд
+     из семи всё равно не помещается, и без этого последняя пара сваливалась
+     влево, оставляя половину строки пустой — выглядело поломкой, а не строем. */
+  .tv__bar{ flex-wrap:wrap; row-gap:4px; gap:3px; justify-content:center; }
+  /* Дорожка и время делят верхнюю строку, кнопкам достаётся нижняя целиком.
+     Перенос задан пустой строкой нулевой высоты, а не подогнанной шириной
+     дорожки: числа пришлось бы пересчитывать при каждой смене кегля времени,
+     а так строка ломается сама. Порядок: дорожка (-2), время (-1), затем этот
+     разрыв и уже кнопки. Без него время оставалось в ряду с кнопками, вытесняло
+     седьмую на свою строку, и панель выглядела развалившейся. */
+  .tv__bar .pl__track{ order:-2; flex:1 1 auto; min-width:120px; height:28px; }
+  .tv__bar .pl__time{ order:-1; flex:0 0 auto; }
+  .tv__bar::before{ content:""; order:0; flex:0 0 100%; height:0; }
 }
 /* Ползунок громкости нужен только там, где есть мышь: на телефоне и планшете
    громкость на кнопках корпуса, а iOS свойство volume вообще не слушает. */
@@ -1241,15 +1267,43 @@ a{ color:inherit; text-decoration:none; }
 /* Фон окна в полном экране не нужен — его закрывает сам кадр. */
 .tv.is-fs .tv__backdrop{ display:none; }
 
+/* Телефон в ландшафте. Крестик стоит НАД окном («минус 52»), и при высоте
+   экрана в 390 точек окно занимает её целиком — крестик уезжает за верхний
+   край, а закрыть ролик больше нечем: клавиши Esc на телефоне нет, кнопка
+   «назад» уводит со страницы. Сажаем его внутрь кадра, в угол — ровно так же,
+   как это уже сделано для полного экрана строкой выше. Условие по высоте, а
+   не по ширине: дело именно в ней. */
+@media (max-height:500px){
+  .tv__close{ top:8px; right:8px; }
+}
+
 @media (max-width:720px){
   .tv__win{ gap:10px; }
   .tv__close{ top:-52px; }
   .tv__nav{ width:40px; height:40px; margin-top:-20px; }
   .tv__prev{ left:-6px; }
   .tv__next{ right:-6px; }
-  .tv__bar{ gap:4px; padding:6px 8px; }
-  .pl__btn{ width:34px; height:34px; font-size:13px; }
+  /* Зазор задан по осям раздельно и именно здесь: этот блок идёт после
+     медиазапроса на 700 и общим gap затирал бы и его row-gap тоже. Три точки
+     по горизонтали — то, при чём семь кнопок по 38 встают в ряд на 360. */
+  .tv__bar{ column-gap:3px; row-gap:4px; padding:6px 8px; }
+  /* Пальцем, а не курсором. Прежние 34 точки — промах через раз, но и 44 сюда
+     не встают: кнопок семь, и на 320 точках им нужно 332 при доступных 264 —
+     панель разъезжалась на три строки с полупустой последней. 38 — наибольшее,
+     при котором семь кнопок встают в один ряд и на 390, и на 360 (это почти
+     все телефоны); на редких 320 они переносятся аккуратно по центру, см.
+     justify-content в медиазапросе на 700 выше. */
+  .pl__btn{ width:38px; height:38px; font-size:13px; }
   .pl__time{ font-size:10px; }
+}
+/* Самые узкие экраны (старый iPhone SE и подобные). Там на ряд остаётся 253
+   точки, а семи кнопкам по 38 нужно 284 — седьмая срывалась на свою строку и
+   висела одна. Ради целого ряда возвращаем прежний размер: лучше кнопка чуть
+   меньше, чем панель в три этажа. Сайт эту ширину поддерживает намеренно —
+   см. README, «Экраны — от 320 пикселей до телевизора». */
+@media (max-width:340px){
+  .tv__bar{ column-gap:2px; }
+  .pl__btn{ width:34px; height:34px; font-size:12px; }
 }
 /* ─── Когда стекла быть не должно ───
    Экономный режим (2G или включённая экономия трафика — класс ставит скрипт
@@ -1404,6 +1458,12 @@ html.rich{
 .foot__row{
   display:flex; flex-wrap:wrap; gap:var(--s3);
   align-items:baseline; padding-block:var(--s3);
+  /* Снизу оставлено место под кнопку «наверх»: она висит на самом низу окна
+     (46 точек плюс отступ 20), и в конце страницы ложилась прямо на «Вокруг
+     меня» — последняя надпись прижата вправо, ровно в её угол. Прятать кнопку
+     нельзя: в конце страницы она нужнее всего. Прибавка идёт снизу, поэтому
+     на широком экране, где строка одна и до кнопки далеко, ничего не меняет. */
+  padding-bottom:calc(var(--s3) + 66px + env(safe-area-inset-bottom, 0px));
 }
 /* Блёклый серый в подвале не читался — берём основной текстовый тон. */
 .foot .label{ color:var(--ink-2); }
@@ -1415,7 +1475,11 @@ html.rich{
 
 /* наверх */
 .up{
-  position:fixed; right:20px; bottom:20px;
+  /* Отступы считаются от безопасной зоны: на айфоне без этого кнопка садится
+     на полосу-домой, и смахивание вверх попадает по системе, а не по ней. */
+  position:fixed;
+  right:calc(20px + env(safe-area-inset-right, 0px));
+  bottom:calc(20px + env(safe-area-inset-bottom, 0px));
   width:46px; height:46px; border-radius:50%;
   border:1px solid var(--glass-stroke);
   background:var(--glass-tint);
@@ -1460,6 +1524,50 @@ html.rich{
   .hero__fig img{ aspect-ratio:1/1; }
 }
 
+/* ─── Отдача на нажатие пальцем ───
+   Браузер на телефоне рисует поверх нажатой ссылки серый прямоугольник — на
+   стекле он выглядит заплаткой и не повторяет форму кнопки: у круглых кнопок
+   он квадратный. Убрать его мало: почти вся отдача в сайте висит на :hover, а
+   на пальце hover не наступает вовсе — и без замены нажатия перестали бы
+   отзываться совсем, сайт стал бы казаться неживым. Поэтому здесь пара:
+   вспышку убираем и тут же даём свою.
+
+   Всё внутри @media для касания: на компьютере :hover работает и трогать его
+   незачем. Ужимаем на 3 процента и притемняем — заметно пальцу, но не прыгает
+   в глаза, как это делала бы заливка. */
+@media (hover: none), (pointer: coarse){
+  a, button, summary, [role="tab"], .pl__track{
+    -webkit-tap-highlight-color:transparent;
+  }
+  /* Подписи на кнопках выделять незачем: долгое нажатие на телефоне вместо
+     нажатия показывало бы лупу и «Скопировать». Текст записей не трогаем —
+     его как раз копируют. */
+  button, [role="tab"], .top__more, .pl__btn, .tv__close, .tv__nav, .up{
+    -webkit-user-select:none; user-select:none;
+  }
+  .btn:active, .filters button:active, .entry__more:active,
+  .tab:active, .top__name:active, .foot a:active{
+    opacity:.62;
+  }
+  .pl__btn:active, .tv__close:active, .tv__nav:active, .up:active{
+    transform:scale(.92); opacity:.75;
+  }
+  /* У кнопки разделов своё сжатие стоит выше по файлу — здесь только цвет,
+     иначе два transform перебили бы друг друга. */
+  .top__more:active{ color:var(--ink); }
+
+  /* Не хватало пары точек до нормы: «Все записи» была 43, пункты меню — 42.
+     Задаём низом, а не отступами, чтобы не разъехались надписи внутри. */
+  .btn, .filters button, .tab{ min-height:44px; }
+}
+/* Через запятую, а не через «or»: последнее — синтаксис нового уровня, и
+   старый телевизор выбросил бы всё правило целиком вместе с просьбой убрать
+   движение. Запятую понимают все. */
+@media (hover: none) and (prefers-reduced-motion: reduce),
+       (pointer: coarse) and (prefers-reduced-motion: reduce){
+  .pl__btn:active, .tv__close:active, .tv__nav:active, .up:active{ transform:none; }
+}
+
 /* ─────────────────────────────────────────────
    БОЛЬШИЕ ЭКРАНЫ И ТЕЛЕВИЗОРЫ
    На мониторе 2K и особенно на телевизоре, который смотрят с трёх метров,
@@ -1501,10 +1609,16 @@ html.rich{
 
 @media (max-width:720px){
   body{ font-size:18px; }
-  .wrap{ padding-inline:20px; }
+  .wrap{
+    padding-left:max(20px, env(safe-area-inset-left, 0px));
+    padding-right:max(20px, env(safe-area-inset-right, 0px));
+  }
   :root{ --rail:0px; }
 
-  .top__in{ padding-inline:20px; }
+  .top__in{
+    padding-left:max(20px, env(safe-area-inset-left, 0px));
+    padding-right:max(20px, env(safe-area-inset-right, 0px));
+  }
   .top__name{ padding-block:14px; }
   .tab{ padding-block:14px; }
 

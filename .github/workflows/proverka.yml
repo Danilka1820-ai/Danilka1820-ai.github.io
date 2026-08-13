@@ -29,7 +29,7 @@ jobs:
           node --check scripts/check-site.mjs
           node --check scripts/fetch-telegram-posts.mjs
           node --check scripts/vendor-fonts.mjs
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
       - name: Проверить код и тесты Telegram-бота

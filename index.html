@@ -1226,6 +1226,24 @@ a{ color:inherit; text-decoration:none; }
 }
 .tv__vol{ flex:0 0 76px; accent-color:var(--lamp); background:transparent; }
 .tv__rate span, .tv__hd span{ font-size:11px; }
+.tv__quality{ position:relative; flex:0 0 auto; }
+.tv__quality .tv__hd{ width:auto; min-width:48px; padding:0 10px; border-radius:999px; }
+.tv__qualityMenu{
+  position:absolute; right:0; bottom:calc(100% + 10px); z-index:5;
+  min-width:142px; padding:6px; margin:0; list-style:none;
+  border:1px solid var(--glass-stroke); border-radius:14px;
+  background:rgba(248,247,243,.96); box-shadow:0 18px 45px rgba(17,21,27,.22);
+  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+}
+.tv__qualityMenu[hidden]{ display:none; }
+.tv__qualityOption{
+  width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:9px 10px; border:0; border-radius:9px; cursor:pointer;
+  background:transparent; color:var(--ink); font:500 11px/1.2 var(--mono);
+}
+.tv__qualityOption:hover,.tv__qualityOption:focus-visible{ background:rgba(17,21,27,.08); outline:0; }
+.tv__qualityOption[aria-checked="true"]{ color:var(--lamp); background:rgba(166,55,38,.08); }
+.tv__qualitySize{ color:var(--ink-2); font-weight:400; }
 
 /* На узком экране дорожке в одном ряду с кнопками остаётся десяток точек —
    перематывать пальцем нечего. Отправляем её на свою строку. */
@@ -2361,7 +2379,10 @@ html.rich{
           '</div>' +
           '<span class="pl__time tv__time">0:00</span>' +
           '<button type="button" class="pl__btn tv__rate" aria-label="Скорость воспроизведения"><span aria-hidden="true">1×</span></button>' +
-          '<button type="button" class="pl__btn tv__hd" aria-label="Качество видео" hidden><span aria-hidden="true">HD</span></button>' +
+          '<div class="tv__quality" hidden>' +
+            '<button type="button" class="pl__btn tv__hd" aria-label="Качество видео" aria-haspopup="menu" aria-expanded="false"><span aria-hidden="true">HD</span></button>' +
+            '<div class="tv__qualityMenu" role="menu" aria-label="Разрешение видео" hidden></div>' +
+          '</div>' +
           '<button type="button" class="pl__btn tv__sound" aria-label="Выключить звук"><span aria-hidden="true">♪</span></button>' +
           '<input class="tv__vol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Громкость">' +
           '<button type="button" class="pl__btn tv__full" aria-label="Во весь экран"><span aria-hidden="true">⛶</span></button>' +
@@ -2525,14 +2546,24 @@ html.rich{
       paintSound(); remember();
     });
 
-    // Переключение качества: подменяем источник, но возвращаем зрителя на то
-    // же место и в то же состояние — иначе ролик начнётся сначала.
-    root.querySelector('.tv__hd').addEventListener('click', function(){
+    // Качество раскрывается списком: зритель видит все доступные разрешения,
+    // а не перебирает их вслепую по кругу.
+    var quality = root.querySelector('.tv__quality');
+    var qualityBtn = root.querySelector('.tv__hd');
+    var qualityMenu = root.querySelector('.tv__qualityMenu');
+    function closeQuality(){ qualityMenu.hidden = true; qualityBtn.setAttribute('aria-expanded', 'false'); }
+    qualityBtn.addEventListener('click', function(e){
+      e.stopPropagation();
+      qualityMenu.hidden = !qualityMenu.hidden;
+      qualityBtn.setAttribute('aria-expanded', String(!qualityMenu.hidden));
+    });
+    qualityMenu.addEventListener('click', function(e){
+      var option = e.target.closest('[data-level]');
+      if (!option) return;
       var это = сейчас();
       if (!это) return;
       var entry = это.entry, all = это.all;
-      if (all.length < 2) return;
-      root.level = (root.level + 1) % all.length;
+      root.level = Number(option.dataset.level);
       swap(all[root.level].src, v.currentTime, !v.paused);
       sizeStage(entry);
       paintQuality(entry);
@@ -2540,6 +2571,11 @@ html.rich{
       // соседние ролики открываем в том же качестве.
       root.wanted = all[root.level].h || 0;
       remember();
+      closeQuality();
+    });
+    document.addEventListener('click', function(e){ if (!quality.contains(e.target)) closeQuality(); });
+    quality.addEventListener('keydown', function(e){
+      if (e.key === 'Escape'){ closeQuality(); qualityBtn.focus(); }
     });
 
     /* Смена файла на лету. Скорость приходится ставить заново: браузер по
@@ -2932,9 +2968,10 @@ html.rich{
     return root;
   }
 
-  /* Уровни качества, от самого крупного к лёгкому. Сборщик к каждому ролику
-     делает две версии поменьше: среднюю (1280) и лёгкую (640), а основная —
-     какая пришла, вплоть до Full HD. Средняя появилась вместе с Full HD:
+  /* Уровни качества, от самого крупного к лёгкому. Сборщик хранит основную
+     версию до 1080p, среднюю 720p и лёгкую 360p. Файлы не растягиваются вверх,
+     поэтому список честно показывает только качества, доступные у оригинала.
+     Средняя появилась вместе с Full HD:
      без неё телефону пришлось бы выбирать между мылом и файлом вдвое тяжелее
      того, что его экран способен показать. */
   /* Ролик, открытый прямо сейчас, и его уровни качества. Эта тройка строк
@@ -2999,18 +3036,24 @@ html.rich{
 
   function paintQuality(entry){
     var btn = tv.querySelector('.tv__hd');
+    var wrap = tv.querySelector('.tv__quality');
+    var menu = tv.querySelector('.tv__qualityMenu');
     var all = levels(entry.item);
-    if (all.length < 2){ btn.hidden = true; return; }
-    btn.hidden = false;
+    if (all.length < 2){ wrap.hidden = true; menu.hidden = true; return; }
+    wrap.hidden = false;
 
     var here = all[tv.level] || all[0];
-    var next = all[(tv.level + 1) % all.length];
     // Показываем настоящее разрешение, а не отвлечённые «HD» и «SD».
     var имя = function(l){ return l.h ? l.h + 'p' : '?'; };
     btn.querySelector('span').textContent = имя(here);
     var сейчас = имя(here) + (megabytes(here.size) ? ' · ' + megabytes(here.size) : '');
-    btn.setAttribute('aria-label', 'Качество: ' + сейчас + '. Переключить');
-    btn.title = сейчас + ' — нажмите для ' + имя(next);
+    btn.setAttribute('aria-label', 'Качество: ' + сейчас + '. Открыть список');
+    btn.title = сейчас;
+    menu.innerHTML = all.map(function(level, index){
+      return '<button type="button" class="tv__qualityOption" role="menuitemradio" aria-checked="' +
+        (index === tv.level) + '" data-level="' + index + '"><span>' + имя(level) +
+        '</span><span class="tv__qualitySize">' + (megabytes(level.size) || '') + '</span></button>';
+    }).join('');
   }
 
   /* Место под кадр: пропорции и предел увеличения. Считается и при открытии,

@@ -200,6 +200,59 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   if (нет.length) throw new Error('пропало: ' + нет.join(', '));
 });
 
+шаг('плеер честно завершает ролик и умеет повторять', () => {
+  const нужно = [
+    ['перемотка ровно в конец', /seekPart\(1\)/],
+    ['отдельное состояние конца', /is-ended/],
+    ['понятная кнопка повтора', /Повторить видео/],
+    ['нативное событие конца', /addEventListener\('ended',\s*закончено\)/],
+  ];
+  const нет = нужно.filter(([, re]) => !re.test(код)).map(([имя]) => имя);
+  if (нет.length) throw new Error('пропало: ' + нет.join(', '));
+  if (/seekPart\(0\.999\)/.test(код)) {
+    throw new Error('дорожка снова останавливается на 99,9% вместо настоящего конца');
+  }
+});
+
+шаг('сторож плеера следит за ходом кадра', () => {
+  if (!/Math\.abs\(here\s*-\s*былоВремя\)/.test(код)) {
+    throw new Error('сторож больше не замечает тихую остановку воспроизведения');
+  }
+  const playing = код.match(/addEventListener\('playing',[\s\S]{0,300}?\}\);/);
+  if (!playing || !/сторожить\(\)/.test(playing[0])) {
+    throw new Error('сторож не запускается после начала воспроизведения');
+  }
+});
+
+шаг('у каждого раздела есть главный заголовок', () => {
+  const нет = [];
+  const ids = ['home','diary','about','faq','contacts'];
+  ids.forEach((id, i) => {
+    const start = html.indexOf(`id="tab-${id}"`);
+    const end = i + 1 < ids.length ? html.indexOf(`id="tab-${ids[i + 1]}"`) : html.indexOf('</main>');
+    if (start < 0 || end < start || !/<h1\b/.test(html.slice(start, end))) нет.push(id);
+  });
+  if (нет.length) throw new Error('нет h1 в разделах: ' + нет.join(', '));
+});
+
+шаг('ссылки в тексте заметны и не ломают ширину', () => {
+  if (!/\.entry__body a\.u[^\{]*\{[^}]*text-decoration:\s*underline/.test(код)) {
+    throw new Error('ссылки внутри записей снова выглядят как обычный текст');
+  }
+  if (!/\.entry__body a\.u[^\{]*\{[^}]*overflow-wrap:\s*anywhere/.test(код)) {
+    throw new Error('длинная ссылка снова может раздвинуть карточку');
+  }
+});
+
+шаг('крестик плеера остаётся на экране в альбомном телефоне', () => {
+  const mobileTop = код.indexOf('.tv__close{ top:-52px; }');
+  const landscape = код.lastIndexOf('@media (max-height:500px)');
+  if (mobileTop < 0 || landscape < mobileTop ||
+      !/\.tv__close\{\s*top:8px;\s*right:8px;\s*\}/.test(код.slice(landscape))) {
+    throw new Error('правило альбомной ориентации должно идти после мобильного top:-52px');
+  }
+});
+
 /* ── 5. Ничего лишнего ──
    Проверено аудитом: мёртвых стилей нет, утечек слушателей нет, осиротевших
    медиафайлов нет. Здесь караулим то, что уже накапливалось. */
@@ -335,6 +388,16 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
     }
   }
   if (ошибки.length) throw new Error(ошибки.slice(0, 10).join('\n      '));
+});
+
+шаг('синхронизация не может случайно стереть дневник', () => {
+  const сборщик = readFileSync(ROOT + 'scripts/fetch-telegram-posts.mjs', 'utf8');
+  if (!/if\s*\(!raw\.length\)/.test(сборщик) || !/TG_ALLOW_SHRINK/.test(сборщик)) {
+    throw new Error('нет защиты от пустой или резко обрезанной страницы Telegram');
+  }
+  if (!/path\.extname\(file\)/.test(сборщик) || !/\.tmp\$\{ext\}/.test(сборщик)) {
+    throw new Error('оптимизация фото снова может записать JPEG под расширением PNG/WebP');
+  }
 });
 
 шаг('sitemap совпадает с последней записью', () => {

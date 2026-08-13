@@ -13,6 +13,7 @@ const MAX_VIDEO_BYTES = Number(process.env.TG_MAX_VIDEO_MB || 45) * 1024 * 1024;
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const DATA_FILE = path.join(ROOT, 'data', 'posts.json');
+const SITEMAP_FILE = path.join(ROOT, 'sitemap.xml');
 const MEDIA_DIR = path.join(ROOT, 'assets', 'posts');
 const MEDIA_PUBLIC = 'assets/posts';
 
@@ -122,7 +123,8 @@ async function optimizeVideo(file, kind) {
   if (existsSync(remux)) await unlink(remux);
 }
 
-/* Версия поменьше. Их две: средняя и лёгкая.
+/* Версия поменьше. Сейчас при потолке 480p обычно остаётся одна
+   лёгкая версия; средняя вернётся, если основной размер снова вырастет.
 
    Средняя нужна с тех пор, как основной файл может быть Full HD: телефону
    иначе пришлось бы выбирать между мылом в 360p и вдвое более тяжёлым
@@ -489,4 +491,26 @@ if (previous === payload) {
 } else {
   await writeFile(DATA_FILE, payload);
   console.log(`Записал ${posts.length} постов в data/posts.json`);
+}
+
+// lastmod в sitemap должен обновляться вместе с лентой, а не вручную.
+const newest = posts
+  .map((post) => new Date(post.datetime))
+  .filter((date) => !Number.isNaN(date.getTime()))
+  .sort((a, b) => b - a)[0];
+const lastmod = (newest || new Date()).toISOString().slice(0, 10);
+const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.sarykov.ru/</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
+`;
+const oldSitemap = existsSync(SITEMAP_FILE) ? await readFile(SITEMAP_FILE, 'utf8') : '';
+if (oldSitemap !== sitemap) {
+  await writeFile(SITEMAP_FILE, sitemap);
+  console.log(`Обновил sitemap.xml: ${lastmod}`);
 }

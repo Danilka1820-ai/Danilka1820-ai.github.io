@@ -9,8 +9,6 @@ on:
   push:
     branches: ['**']
     paths-ignore:
-      - 'data/**'
-      - 'assets/posts/**'
       - '**.md'
   pull_request:
   workflow_dispatch:
@@ -25,3 +23,22 @@ jobs:
           node-version: '20'
       - name: Проверить сайт
         run: node scripts/check-site.mjs
+      - name: Проверить синтаксис служебных скриптов
+        run: |
+          node --check sw.js
+          node --check scripts/check-site.mjs
+          node --check scripts/fetch-telegram-posts.mjs
+          node --check scripts/vendor-fonts.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Проверить код и тесты Telegram-бота
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          for path in Path('telegram-gemini-bot').glob('*.py'):
+              ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
+              print(f'Синтаксис корректен: {path}')
+          PY
+          python -m unittest discover -s telegram-gemini-bot -p 'test_*.py'

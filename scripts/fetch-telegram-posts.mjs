@@ -4,12 +4,20 @@ import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 
+function positiveInt(raw, fallback, name) {
+  const value = Number(raw ?? fallback);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`${name} должен быть положительным целым числом`);
+  }
+  return value;
+}
+
 const CHANNEL = process.env.TG_CHANNEL || 'danilka2028k';
-const MAX_POSTS = Number(process.env.TG_MAX_POSTS || 40);
-const PAGES = Number(process.env.TG_PAGES || 3);
+const MAX_POSTS = positiveInt(process.env.TG_MAX_POSTS, 40, 'TG_MAX_POSTS');
+const PAGES = positiveInt(process.env.TG_PAGES, 3, 'TG_PAGES');
 const MAX_MEDIA_PER_POST = 6;
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const MAX_VIDEO_BYTES = Number(process.env.TG_MAX_VIDEO_MB || 45) * 1024 * 1024;
+const MAX_VIDEO_BYTES = positiveInt(process.env.TG_MAX_VIDEO_MB, 45, 'TG_MAX_VIDEO_MB') * 1024 * 1024;
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const DATA_FILE = path.join(ROOT, 'data', 'posts.json');
@@ -172,7 +180,11 @@ const makeMid = (file, kind) => (kind === 'round' ? '' : makeSmaller(file, kind,
 }));
 
 async function optimizeImage(file) {
-  const tmp = `${file}.tmp.jpg`;
+  // Временный файл обязан оставаться того же формата. Раньше любой PNG/WebP
+  // превращался в JPEG, но сохранял старое расширение; GitHub отдавал его с
+  // неверным Content-Type, и часть браузеров показывала битую картинку.
+  const ext = path.extname(file).toLowerCase() || '.jpg';
+  const tmp = `${file}.tmp${ext}`;
   let ok = false;
 
   if (MAGICK) {
@@ -340,7 +352,15 @@ async function mirror(postId, suffix, url, fallbackExt, maxBytes, kind) {
     await writeFile(dest, buf);
     console.log(`  ↓ ${file} (${Math.round(buf.length / 1024)} KB)`);
     if (kind === 'photo') await optimizeImage(dest);
-    else await optimizeVideo(dest, kind);
+    else {
+      await optimizeVideo(dest, kind);
+      const codec = videoCodec(dest);
+      if (FFMPEG && codec && codec !== 'h264') {
+        console.warn(`  ! ${file}: кодек ${codec} не удалось перевести в h264`);
+        await unlink(dest);
+        return '';
+      }
+    }
     return publicPath;
   } catch (err) {
     console.warn(`  ! не скачалось ${url.slice(0, 80)}: ${err.message}`);
@@ -425,6 +445,12 @@ async function collect() {
 
 const raw = await collect();
 console.log(`Найдено постов: ${raw.length}`);
+// Публичная страница Telegram иногда отвечает обычной HTML-заглушкой с HTTP
+// 200. Если разборщик не нашёл ни одной записи, нельзя считать это пустым
+// каналом: иначе робот удалит весь дневник и все медиа одним коммитом.
+if (!raw.length) {
+  throw new Error('Telegram не вернул ни одной записи — сохраняю прежнюю ленту');
+}
 // Самое частое недоумение — «отправил пост, а его нет». Печатаем, что робот
 // вообще увидел в канале: если свежей записи тут нет, дело не в сайте.
 if (raw.length) {
@@ -435,6 +461,14 @@ if (raw.length) {
 
 await mkdir(MEDIA_DIR, { recursive: true });
 await mkdir(path.dirname(DATA_FILE), { recursive: true });
+
+const previousPayload = existsSync(DATA_FILE) ? await readFile(DATA_FILE, 'utf8') : '';
+let previousPosts = [];
+try { previousPosts = previousPayload ? JSON.parse(previousPayload) : []; }
+catch { throw new Error('Существующий data/posts.json повреждён — автоматическая синхронизация остановлена'); }
+if (!Array.isArray(previousPosts)) {
+  throw new Error('Существующий data/posts.json должен содержать массив записей');
+}
 
 console.log(`Обработка медиа: ffmpeg ${FFMPEG ? 'есть' : 'НЕТ'}, ImageMagick ${MAGICK ? 'есть' : 'НЕТ'}`);
 
@@ -471,6 +505,18 @@ for (const post of raw) {
 
 if (выброшены.length) console.log('Пропущено записей:', выброшены.join('; '));
 
+// Резкое сокращение почти всегда означает, что Telegram поменял разметку или
+// отдал неполную страницу. Сайт не должен автоматически обменять 40 записей
+// на несколько случайно разобранных. Для намеренной массовой очистки есть
+// явный аварийный флаг, который задают только на один ручной запуск.
+if (previousPosts.length >= 10 && posts.length < previousPosts.length * 0.6 &&
+    process.env.TG_ALLOW_SHRINK !== '1') {
+  throw new Error(
+    `Telegram вернул только ${posts.length} из прежних ${previousPosts.length} записей; ` +
+    'сохраняю прежнюю ленту (для намеренного сокращения задайте TG_ALLOW_SHRINK=1)'
+  );
+}
+
 const counts = posts.flatMap((p) => p.media).reduce((acc, m) => ({ ...acc, [m.type]: (acc[m.type] || 0) + 1 }), {});
 console.log('Медиа:', counts);
 
@@ -485,8 +531,7 @@ for (const f of (await readdir(MEDIA_DIR)).filter((x) => !x.startsWith('.'))) {
 console.log(`Вес медиа: фото ${(totals.фото / 1048576).toFixed(1)} МБ, видео ${(totals.видео / 1048576).toFixed(1)} МБ`);
 
 const payload = JSON.stringify(posts, null, 2) + '\n';
-const previous = existsSync(DATA_FILE) ? await readFile(DATA_FILE, 'utf8') : '';
-if (previous === payload) {
+if (previousPayload === payload) {
   console.log('Изменений нет.');
 } else {
   await writeFile(DATA_FILE, payload);

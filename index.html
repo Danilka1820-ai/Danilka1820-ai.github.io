@@ -864,7 +864,10 @@ a{ color:inherit; text-decoration:none; }
   display:flex; flex-wrap:wrap; align-items:baseline;
   gap:var(--s3); margin-bottom:var(--s5);
 }
-.feed__head h2{ margin:0; font-weight:300; font-size:1.5rem; letter-spacing:-.01em; }
+.feed__head :is(h1,h2){
+  margin:0; font-weight:300; font-size:1.5rem; letter-spacing:-.01em;
+  text-wrap:balance;
+}
 .feed__note{
   flex-basis:100%; max-width:var(--measure);
   margin:0; font-size:.92rem; color:var(--ink-2);
@@ -942,6 +945,7 @@ a{ color:inherit; text-decoration:none; }
 .entry__title{
   margin:0 0 var(--s2);
   font-weight:400; font-size:1.42rem; line-height:1.28; letter-spacing:-.012em;
+  text-wrap:balance;
 }
 .entry__body p{ margin:0 0 var(--s2); }
 .entry__body p:last-of-type{ margin-bottom:0; }
@@ -957,6 +961,22 @@ a{ color:inherit; text-decoration:none; }
 }
 .entry__more::after{ content:""; position:absolute; inset:-14px -10px; border-radius:8px; }
 .entry__more:hover{ color:var(--lamp-ink); border-bottom-color:var(--lamp); }
+
+/* Ссылки внутри текста записи раньше выглядели как обычные слова: общий
+   сброс a{} убирает и цвет, и подчёркивание. Возвращаем им вид ссылки и
+   разрешаем длинному адресу переноситься, чтобы он не раздвигал карточку. */
+.entry__body a.u,.qa__a a.u,.feed__state a.u{
+  color:var(--lamp-ink);
+  text-decoration:underline;
+  text-decoration-color:color-mix(in srgb, currentColor 58%, transparent);
+  text-decoration-thickness:1px;
+  text-underline-offset:3px;
+  overflow-wrap:anywhere;
+}
+.entry__body a.u:hover,.qa__a a.u:hover,.feed__state a.u:hover{
+  text-decoration-thickness:2px;
+  text-decoration-color:currentColor;
+}
 
 .feed__foot{ margin-top:var(--s6); padding-left:calc(var(--rail) + var(--s5)); }
 .feed__empty,.feed__state{
@@ -1066,6 +1086,11 @@ a{ color:inherit; text-decoration:none; }
   box-shadow:0 14px 34px -12px rgba(17,21,27,.75);
 }
 .tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
+.tv.is-ended .tv__big{
+  opacity:1; pointer-events:auto;
+  background:rgba(17,21,27,.34);
+}
+.tv.is-ended .tv__big span{ padding-left:0; }
 
 /* Колечко ожидания. Раньше о задержке говорила мигающая кнопка пуска — но во
    время игры она спрятана, и зритель смотрел в замерший кадр без объяснений. */
@@ -1274,10 +1299,8 @@ a{ color:inherit; text-decoration:none; }
    край, а закрыть ролик больше нечем: клавиши Esc на телефоне нет, кнопка
    «назад» уводит со страницы. Сажаем его внутрь кадра, в угол — ровно так же,
    как это уже сделано для полного экрана строкой выше. Условие по высоте, а
-   не по ширине: дело именно в ней. */
-@media (max-height:500px){
-  .tv__close{ top:8px; right:8px; }
-}
+   не по ширине: дело именно в ней. Само правило стоит после мобильного блока,
+   чтобы его не перебил более поздний top:-52px. */
 
 @media (max-width:720px){
   .tv__win{ gap:10px; }
@@ -1306,6 +1329,11 @@ a{ color:inherit; text-decoration:none; }
 @media (max-width:340px){
   .tv__bar{ column-gap:2px; }
   .pl__btn{ width:34px; height:34px; font-size:12px; }
+}
+/* Должно идти ПОСЛЕ мобильного top:-52px выше. Иначе на телефоне в
+   альбомной ориентации каскад снова уводит крестик за верхний край. */
+@media (max-height:500px){
+  .tv__close{ top:8px; right:8px; }
 }
 /* ─── Когда стекла быть не должно ───
    Экономный режим (2G или включённая экономия трафика — класс ставит скрипт
@@ -1391,8 +1419,11 @@ html.rich{
 .about + .about{ border-top:1px solid var(--rule); }
 .about > .label{ text-align:right; margin:0; }
 .about__body{ max-width:var(--measure); }
-.about__body h2{ margin:0 0 var(--s3); font-weight:300; font-size:1.9rem; letter-spacing:-.015em; }
-.about__body h2 em{ font-style:italic; }
+.about__body :is(h1,h2){
+  margin:0 0 var(--s3); font-weight:300; font-size:1.9rem; letter-spacing:-.015em;
+  text-wrap:balance;
+}
+.about__body :is(h1,h2) em{ font-style:italic; }
 .about__body p{ margin:0 0 var(--s3); color:var(--ink-2); }
 .about__body p:last-child{ margin-bottom:0; }
 .about__body strong{ font-weight:400; color:var(--ink); }
@@ -1425,8 +1456,20 @@ html.rich{
   font-size:1.1rem; line-height:1.4;
 }
 .qa__q::-webkit-details-marker{ display:none; }
-.qa__q .pm{ font-family:var(--mono); font-size:16px; color:var(--ink-3); flex:0 0 auto; }
+.qa__title{
+  margin:0 0 var(--s3); font-weight:300; font-size:1.9rem; letter-spacing:-.015em;
+  text-wrap:balance;
+}
+.qa__q .pm{
+  position:relative; width:1em; min-height:1em;
+  font-family:var(--mono); font-size:0; color:var(--ink-3); flex:0 0 auto;
+}
+.qa__q .pm::before{
+  content:'+'; position:absolute; inset:0;
+  font-size:16px; line-height:1; text-align:center;
+}
 .qa__item[open] .pm{ color:var(--lamp-ink); }
+.qa__item[open] .pm::before{ content:'−'; }
 .qa__a{ padding-bottom:var(--s3); color:var(--ink-2); font-size:1rem; max-width:32rem; }
 
 /* ─────────────────────────────────────────────
@@ -1444,6 +1487,7 @@ html.rich{
   font-weight:300; font-size:clamp(1.6rem,4vw,2.6rem);
   line-height:1.22; letter-spacing:-.015em;
   margin:0 0 var(--s3); max-width:20ch;
+  text-wrap:balance;
 }
 .contact__cta em{ font-style:italic; color:var(--lamp-ink); }
 .contact p{ margin:0 0 var(--s5); max-width:32rem; color:var(--ink-2); }
@@ -1460,12 +1504,7 @@ html.rich{
 .foot__row{
   display:flex; flex-wrap:wrap; gap:var(--s3);
   align-items:baseline; padding-block:var(--s3);
-  /* Снизу оставлено место под кнопку «наверх»: она висит на самом низу окна
-     (46 точек плюс отступ 20), и в конце страницы ложилась прямо на «Вокруг
-     меня» — последняя надпись прижата вправо, ровно в её угол. Прятать кнопку
-     нельзя: в конце страницы она нужнее всего. Прибавка идёт снизу, поэтому
-     на широком экране, где строка одна и до кнопки далеко, ничего не меняет. */
-  padding-bottom:calc(var(--s3) + 66px + env(safe-area-inset-bottom, 0px));
+  padding-bottom:calc(var(--s3) + env(safe-area-inset-bottom, 0px));
 }
 /* Блёклый серый в подвале не читался — берём основной текстовый тон. */
 .foot .label{ color:var(--ink-2); }
@@ -1524,6 +1563,9 @@ html.rich{
   .hero{ grid-template-columns:1fr; gap:var(--s5); padding-block:var(--s6) var(--s6); }
   .hero__fig{ order:-1; max-width:220px; margin-inline:0; }
   .hero__fig img{ aspect-ratio:1/1; }
+  /* На узком экране фиксированная кнопка «наверх» стоит над подвалом.
+     Дополнительная нижняя строка не даёт ей накрыть последнюю ссылку. */
+  .foot__row{ padding-bottom:calc(var(--s3) + 66px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ─── Отдача на нажатие пальцем ───
@@ -1722,7 +1764,7 @@ html.rich{
   <div class="panel" id="tab-diary" hidden>
     <section class="feed">
       <div class="feed__head">
-        <h2>Записи</h2>
+        <h1>Записи</h1>
         <span class="label">Обновляется из Telegram</span>
         <p class="feed__note">
           Тексты, фотографии, видео и кружочки продублированы здесь целиком — в некоторых
@@ -1743,7 +1785,7 @@ html.rich{
     <section class="about">
       <p class="label">О дневнике</p>
       <div class="about__body">
-        <h2>Пишу про то, что <em>происходит вокруг</em></h2>
+        <h1>Пишу про то, что <em>происходит вокруг</em></h1>
         <p>
           Меня зовут <strong>Данил Сарыков</strong>. Живу между Москвой и Подмосковьем,
           танцую, езжу на волонтёрские смены, много хожу пешком и много смотрю по сторонам.
@@ -1754,8 +1796,8 @@ html.rich{
           по дороге домой. Без масок и ролей — всё по-настоящему.
         </p>
         <p>
-          Записи сначала выходят в Telegram, а сюда попадают сами, в течение
-          примерно пятнадцати минут.
+          Записи сначала выходят в Telegram, а сюда попадают сами — обычно
+          в течение часа, после ближайшего обновления сайта.
         </p>
       </div>
     </section>
@@ -1776,13 +1818,14 @@ html.rich{
     <section class="qa">
       <p class="label">Часто спрашивают</p>
       <div class="qa__list">
+        <h1 class="qa__title">Вопросы</h1>
         <details class="qa__item">
           <summary class="qa__q">Как часто выходят записи?<span class="pm" aria-hidden="true">+</span></summary>
           <div class="qa__a">Без строгого графика — когда случается что-то стоящее. Обычно несколько раз в неделю.</div>
         </details>
         <details class="qa__item">
           <summary class="qa__q">Как быстро запись появляется на сайте?<span class="pm" aria-hidden="true">+</span></summary>
-          <div class="qa__a">В течение примерно пятнадцати минут после публикации в канале — сайт забирает записи сам.</div>
+          <div class="qa__a">Обычно в течение часа после публикации в канале — сайт забирает записи сам при ближайшем обновлении.</div>
         </details>
         <details class="qa__item">
           <summary class="qa__q">Видео и кружочки можно смотреть здесь?<span class="pm" aria-hidden="true">+</span></summary>
@@ -1804,11 +1847,11 @@ html.rich{
   <div class="panel" id="tab-contacts" hidden>
     <section class="contact">
       <p class="label" style="margin:0 0 var(--s3)">Связь</p>
-      <h2 class="contact__cta">Проще и <em>честнее</em>. Без лишнего.</h2>
+      <h1 class="contact__cta">Проще и <em>честнее</em>. Без лишнего.</h1>
       <p>Если близко то, о чём я пишу — заходите в канал или читайте прямо здесь.</p>
       <div class="hero__acts" style="margin-top:0">
         <a class="btn" href="https://t.me/danilka2028k" target="_blank" rel="noopener">Подписаться</a>
-        <button type="button" class="btn btn--ghost" id="copyBtn" data-copy="https://t.me/danilka2028k">Скопировать @danilka2028k</button>
+        <button type="button" class="btn btn--ghost" id="copyBtn" data-copy="https://t.me/danilka2028k" aria-live="polite">Скопировать @danilka2028k</button>
       </div>
     </section>
   </div>
@@ -1892,8 +1935,13 @@ html.rich{
   if (placeEl){
     try{
       var tz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || '';
-      var city = TZ_CITY[tz] || (tz.split('/').pop() || '').replace(/_/g,' ');
-      if (city) placeEl.textContent = city;
+      if (TZ_CITY[tz]) placeEl.textContent = TZ_CITY[tz];
+      else if (tz){
+        // Не подставляем сырое «America/Chicago» в русскую шапку. Для
+        // неизвестного пояса честнее нейтральная подпись к местным часам.
+        placeEl.textContent = 'Ваше время';
+        placeEl.title = tz;
+      }
     }catch(e){}
   }
 
@@ -1962,13 +2010,26 @@ html.rich{
         copyBtn.textContent = 'Скопировано';
         setTimeout(function(){ copyBtn.textContent = was; }, 1600);
       };
-      if (navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).then(done, function(){});
-      } else {
+      var failed = function(){
+        var was = copyBtn.textContent;
+        copyBtn.textContent = 'Не удалось скопировать';
+        setTimeout(function(){ copyBtn.textContent = was; }, 2000);
+      };
+      var legacy = function(){
         var ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select();
-        try{ document.execCommand('copy'); done(); }catch(e){}
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(ta); ta.select();
+        var ok = false;
+        try{ ok = document.execCommand('copy'); }catch(e){}
         document.body.removeChild(ta);
+        if (ok) done(); else failed();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done, legacy);
+      } else {
+        legacy();
       }
     });
   }
@@ -2318,6 +2379,8 @@ html.rich{
     var hint = root.querySelector('.pl__hint');
     var timeEl = root.querySelector('.tv__time');
     var playBtn = root.querySelector('.tv__play');
+    var bigBtn = root.querySelector('.tv__big');
+    var bigGlyph = bigBtn.querySelector('span');
     var rateBtn = root.querySelector('.tv__rate');
     var soundBtn = root.querySelector('.tv__sound');
     var volEl = root.querySelector('.tv__vol');
@@ -2335,6 +2398,18 @@ html.rich{
     root.wanted = prefs.quality || 0;      // какой зритель выбрал руками
 
     function known(){ return isFinite(v.duration) && v.duration > 0; }
+
+    function showIdle(repeat){
+      root.classList.remove('is-playing', 'is-waiting');
+      root.classList.toggle('is-ended', !!repeat);
+      var glyph = repeat ? '↻' : '▶';
+      var label = repeat ? 'Повторить видео'
+        : (v.currentTime > 0.05 ? 'Продолжить видео' : 'Проиграть');
+      playBtn.querySelector('span').textContent = glyph;
+      playBtn.setAttribute('aria-label', label);
+      bigGlyph.textContent = glyph;
+      bigBtn.setAttribute('aria-label', label);
+    }
 
     function paint(){
       if (dragging) return;   // пока тянут ползунок, ведёт его палец, а не видео
@@ -2359,15 +2434,34 @@ html.rich{
       hint.textContent = clockText(known() ? (pc / 100) * v.duration : 0);
     }
 
-    function toggle(){ if (v.paused) v.play().catch(function(){}); else v.pause(); }
+    function toggle(){
+      if (v.paused){
+        // После конца браузеры обычно сами начинают заново, но не все и не
+        // после смены качества. Возвращаемся в ноль явно и одинаково везде.
+        if (v.ended || (known() && v.currentTime >= v.duration - 0.05)){
+          v.currentTime = 0;
+          root.classList.remove('is-ended');
+          paint();
+        }
+        v.play().catch(function(){});
+      } else {
+        v.pause();
+      }
+    }
     function nudge(sec){
       if (!known()) return;
-      v.currentTime = Math.max(0, Math.min(v.duration, v.currentTime + sec));
+      var target = Math.max(0, Math.min(v.duration, v.currentTime + sec));
+      v.currentTime = target;
+      if (target >= v.duration) закончено();
+      else if (v.paused) showIdle(false);
       paint();
     }
     function seekPart(part){
       if (!known()) return;
-      v.currentTime = Math.max(0, Math.min(1, part)) * v.duration;
+      var clean = Math.max(0, Math.min(1, part));
+      v.currentTime = clean * v.duration;
+      if (clean >= 1) закончено();
+      else if (v.paused) showIdle(false);
       paint();
     }
     function partFromEvent(e){
@@ -2453,7 +2547,10 @@ html.rich{
        показывала «2×» у ролика, который шёл на обычной скорости. */
     var ждётМету = null;
     function swap(src, at, play){
-      root.classList.remove('is-failed');
+      var finishAfterLoad = root.classList.contains('is-ended') || v.ended;
+      root.classList.remove('is-failed', 'is-ended');
+      bigGlyph.textContent = '▶';
+      bigBtn.setAttribute('aria-label', 'Проиграть');
       // Прошлый файл мог так и не открыться — тогда его ожидание висит на
       // элементе. На плохой связи такие ожидания копились пачкой и все разом
       // срабатывали на первом же удавшемся файле.
@@ -2463,7 +2560,8 @@ html.rich{
         ждётМету = null;
         paintRate();
         if (isFinite(at) && at > 0) v.currentTime = at;
-        if (play) v.play().catch(function(){});
+        if (finishAfterLoad || (!play && known() && at >= v.duration - 0.05)) закончено();
+        else if (play) v.play().catch(function(){});
         paint();
       };
       v.src = src;
@@ -2484,10 +2582,15 @@ html.rich{
          4. только тогда сдаёмся и предлагаем открыть файл напрямую.
 
        Автоматический спуск не запоминается: это вынужденная мера, а не выбор
-       зрителя. */
+       зрителя.
+
+       Смотрим именно на ход воспроизведения, а не только на прирост буфера.
+       Полностью скачанный файл больше не увеличивает buffered, хотя честно
+       играет дальше; а тихо зависший браузер иногда вообще не шлёт waiting. */
     var ЖДЁМ = 7000;        // столько ждём без движения, прежде чем спасать
+    var ШАГ_СТОРОЖА = 1400; // как часто проверяем ход кадра
     var спасений = 0;       // сколько раз уже выручали этот ролик
-    var сторож = null, былоЗакачано = -1;
+    var сторож = null, былоВремя = 0, молчитС = 0;
     var записка = root.querySelector('.tv__note');
     var записканаТаймер = null;
 
@@ -2504,16 +2607,33 @@ html.rich{
     function прекратить(){ if (сторож){ clearTimeout(сторож); сторож = null; } }
     function сторожить(){
       прекратить();
-      былоЗакачано = буфер();
-      сторож = setTimeout(проверить, ЖДЁМ);
+      былоВремя = isFinite(v.currentTime) ? v.currentTime : 0;
+      молчитС = Date.now();
+      сторож = setTimeout(проверить, ШАГ_СТОРОЖА);
     }
     function проверить(){
       сторож = null;
-      if (root.hidden || root.classList.contains('is-failed')) return;
+      if (root.hidden || root.classList.contains('is-failed') || v.ended) return;
       // Ролик доигран или стоит на паузе по воле зрителя — это не беда.
       if (v.paused && !root.classList.contains('is-waiting')) return;
-      if (буфер() > былоЗакачано + 0.1){ сторожить(); return; }   // всё-таки едет
-      спасти();
+      var now = Date.now();
+      var here = isFinite(v.currentTime) ? v.currentTime : 0;
+      // Модуль важен: ручная перемотка назад — тоже движение, а не зависание.
+      if (Math.abs(here - былоВремя) > 0.04){
+        былоВремя = here;
+        молчитС = now;
+      }
+      // Некоторые сборки WebView застревают буквально на последнем кадре и
+      // не присылают ended. Через один такт считаем последние 150 мс честно
+      // просмотренными и показываем состояние повтора, а не перезагружаем файл.
+      if (known() && v.duration - here <= 0.15 && now - молчитС >= ШАГ_СТОРОЖА){
+        try { v.currentTime = v.duration; } catch (e){}
+        v.pause();
+        закончено();
+        return;
+      }
+      if (now - молчитС >= ЖДЁМ){ спасти(); return; }
+      сторож = setTimeout(проверить, Math.min(ШАГ_СТОРОЖА, ЖДЁМ - (now - молчитС)));
     }
 
     function спасти(){
@@ -2690,24 +2810,36 @@ html.rich{
       else if (k === 'PageUp'){ nudge(60); }
       else if (k === 'PageDown'){ nudge(-60); }
       else if (k === 'Home'){ seekPart(0); }
-      else if (k === 'End'){ seekPart(0.999); }
+      else if (k === 'End'){ seekPart(1); }
       else return;
       e.preventDefault();
       e.stopPropagation();
     });
 
     v.addEventListener('play', function(){
+      root.classList.remove('is-ended');
       root.classList.add('is-playing');
       playBtn.querySelector('span').textContent = '❚❚';
       playBtn.setAttribute('aria-label', 'Пауза');
+      bigGlyph.textContent = '▶';
+      bigBtn.setAttribute('aria-label', 'Пауза');
     });
     var stopped = function(){
-      root.classList.remove('is-playing');
-      playBtn.querySelector('span').textContent = '▶';
-      playBtn.setAttribute('aria-label', 'Проиграть');
+      if (!root.classList.contains('is-ended')) showIdle(false);
     };
+    function закончено(){
+      if (!v.paused) v.pause();
+      if (known()){
+        place(1);
+        timeEl.textContent = clockText(v.duration) + ' / ' + clockText(v.duration);
+        track.setAttribute('aria-valuenow', '100');
+        track.setAttribute('aria-valuetext', clockText(v.duration) + ' из ' + clockText(v.duration));
+      }
+      showIdle(true);
+      прекратить();
+    }
     v.addEventListener('pause', stopped);
-    v.addEventListener('ended', stopped);
+    v.addEventListener('ended', закончено);
     v.addEventListener('loadedmetadata', function(){
       // Настоящие пропорции файла точнее записанных в данных.
       if (v.videoWidth && v.videoHeight && !win.classList.contains('tv__win--round')){
@@ -2724,11 +2856,16 @@ html.rich{
       root.classList.remove('is-waiting');
       // Поехало — значит спасать не надо, и прошлые попытки можно забыть.
       спасений = 0;
-      прекратить();
+      сторожить();
     });
-    v.addEventListener('ended', прекратить);
     v.addEventListener('pause', function(){ if (!root.classList.contains('is-waiting')) прекратить(); });
     v.addEventListener('volumechange', paintSound);
+    // Фоновая вкладка может заморозить таймеры и декодер не синхронно. Не
+    // принимаем это за обрыв связи; при возвращении начинаем отсчёт заново.
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden) прекратить();
+      else if (!root.hidden && !v.paused) сторожить();
+    });
 
     /* Ролик не открылся: оборвалась сеть, файл не той сборки, браузер не
        понимает кодек. Раньше зритель видел просто чёрный прямоугольник; теперь
@@ -2786,6 +2923,7 @@ html.rich{
     root.leaveFullscreen = leaveFullscreen;
     root.paint = paint;
     root.nudge = nudge;
+    root.seekPart = seekPart;
     root.toggle = toggle;
     root.swap = swap;
     root.paintRate = paintRate;
@@ -2940,8 +3078,8 @@ html.rich{
     else if (k === 'ArrowLeft'){ tv.nudge(-SKIP); }
     else if (k === 'ArrowUp'){ v.volume = Math.min(1, v.volume + 0.1); v.muted = false; }
     else if (k === 'ArrowDown'){ v.volume = Math.max(0, v.volume - 0.1); }
-    else if (k === 'Home'){ if (isFinite(v.duration)) v.currentTime = 0; }
-    else if (k === 'End'){ if (isFinite(v.duration)) v.currentTime = v.duration - 0.1; }
+    else if (k === 'Home'){ tv.seekPart(0); }
+    else if (k === 'End'){ tv.seekPart(1); }
     else if (k === ' ' || k === 'k' || k === 'K'){ tv.toggle(); }
     else if (k === 'm' || k === 'M'){ v.muted = !v.muted; }
     else if (k === 'f' || k === 'F'){ tv.querySelector('.tv__full').click(); }

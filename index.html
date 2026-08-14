@@ -431,6 +431,20 @@ img{ max-width:100%; display:block; }
 a{ color:inherit; text-decoration:none; }
 [hidden]{ display:none !important; }
 
+/* ─── Без скачивания ───
+   Ни перетащить на рабочий стол, ни выделить и скопировать, ни сохранить
+   через долгое нажатие на телефоне — у браузера просто нет зацепки начать.
+   Это не защита от снимка экрана или вкладки «Сеть»: так на любом сайте,
+   и никакой код в браузере такое не закроет. Здесь только чтобы обычные,
+   одним движением способы — правый клик, перетаскивание, лонг-тап — не
+   срабатывали случайно. Настоящую же кнопку «Сохранить» браузер рисует
+   сам из контекстного меню; его же и гасим ниже в скрипте. */
+img, video{
+  -webkit-user-select:none; user-select:none;
+  -webkit-user-drag:none; user-drag:none;
+  -webkit-touch-callout:none;
+}
+
 /* Заметная рамка: сайт листают и с клавиатуры, и пультом на телевизоре,
    где курсора нет вовсе. scroll-margin не даёт шапке накрыть выбранное. */
 :focus-visible{
@@ -1322,6 +1336,49 @@ a{ color:inherit; text-decoration:none; }
 }
 .tv.is-fs.is-idle .tv__win{ cursor:none; }
 
+/* ─── Просмотр фото ───
+   Своё маленькое окно, а не то же самое, что у видео: тащить фотографию в
+   плеер ролика означало бы городить в нём развилку на каждом шагу ради
+   картинки. Стекло и крестик — те же классы, что у видео (.tv__backdrop,
+   .tv__close оформлены сами по себе, не через .tv), поэтому выглядят
+   одинаково без повторения стилей. */
+.ph{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
+.ph__win{
+  position:relative; z-index:1; display:flex; flex-direction:column;
+  align-items:center; gap:14px; width:100%; height:100%;
+  padding:clamp(8px,4vw,56px);
+  /* На телефоне с вырезом или домашней полосой кнопки иначе лезут прямо под
+     них. */
+  padding-top:calc(clamp(8px,4vw,56px) + env(safe-area-inset-top, 0px));
+  padding-bottom:calc(clamp(8px,4vw,56px) + env(safe-area-inset-bottom, 0px));
+}
+/* У видео крестик висит над окном — там вокруг него есть место, окно не на
+   весь экран. Здесь окно и есть весь экран, «над ним» уже некуда: сажаем
+   крестик внутрь угла, как у видео в полноэкранном режиме. */
+.ph .tv__close{ top:16px; right:16px; }
+.ph__stage{
+  position:relative; flex:1 1 auto; width:100%; min-height:0;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden; touch-action:none;
+}
+.ph__img{
+  max-width:100%; max-height:100%; object-fit:contain;
+  cursor:grab; touch-action:none;
+}
+.ph__img:active{ cursor:grabbing; }
+.ph__zoom{
+  display:flex; align-items:center; gap:8px; flex:0 0 auto;
+  padding:6px; border-radius:22px;
+  background:var(--glass-tint);
+  -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
+  border:1px solid var(--glass-stroke);
+  box-shadow:var(--glass-drop), var(--glass-glow);
+}
+.ph__zoom .pl__btn{ width:40px; height:40px; font-size:18px; }
+
+/* Фото — тоже кнопка: у него теперь есть что нажать. */
+.entry__photo, .hero__fig img{ cursor:zoom-in; }
+
 /* Телефон в ландшафте. Крестик стоит НАД окном («минус 52»), и при высоте
    экрана в 390 точек окно занимает её целиком — крестик уезжает за верхний
    край, а закрыть ролик больше нечем: клавиши Esc на телефоне нет, кнопка
@@ -1762,7 +1819,8 @@ html.rich{
       </div>
 
       <figure class="glass-real hero__fig lead-3">
-        <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="600" height="600" loading="eager" decoding="async">
+        <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="600" height="600" loading="eager" decoding="async"
+             tabindex="0" role="button" aria-label="Увеличить фото — Данил Сарыков">
         <figcaption>Данил · автор дневника</figcaption>
       </figure>
     </section>
@@ -2370,7 +2428,7 @@ html.rich{
         '<button type="button" class="tv__nav tv__prev" aria-label="Предыдущее видео">‹</button>' +
         '<button type="button" class="tv__nav tv__next" aria-label="Следующее видео">›</button>' +
         '<div class="tv__stage">' +
-          '<video class="tv__video" playsinline preload="metadata"></video>' +
+          '<video class="tv__video" playsinline preload="metadata" controlsList="nodownload noremoteplayback" disablePictureInPicture disableRemotePlayback></video>' +
           '<button type="button" class="tv__big" aria-label="Проиграть"><span aria-hidden="true">▶</span></button>' +
           '<div class="tv__wait" aria-hidden="true"></div>' +
           '<div class="tv__note" role="status" aria-live="polite" hidden></div>' +
@@ -3200,6 +3258,203 @@ html.rich{
     if (tvReturn && tvReturn.focus) tvReturn.focus();
   }
 
+  /* ─── Просмотр фото ───
+     Клик по любой фотографии — в шапке или в ленте — открывает её крупно.
+     Внутри можно приблизить и отдалить: колесо мыши, щипок двумя пальцами,
+     двойное нажатие, кнопки ± — а потом таскать, пока приближено. Своё окно,
+     не то же самое, что у видео: пихать сюда развилки плеера ради картинки
+     не стоило. */
+  var ph = null, phReturn = null;
+  var phScale = 1, phX = 0, phY = 0;
+  var PH_MAX = 4;
+
+  function buildPhotoViewer(){
+    var root = document.createElement('div');
+    root.className = 'ph';
+    root.hidden = true;
+    root.innerHTML =
+      '<div class="tv__backdrop"></div>' +
+      '<div class="ph__win" role="dialog" aria-modal="true" aria-label="Просмотр фото">' +
+        '<button type="button" class="tv__close" aria-label="Закрыть">✕</button>' +
+        '<div class="ph__stage">' +
+          '<img class="ph__img" alt="" draggable="false">' +
+        '</div>' +
+        '<div class="ph__zoom">' +
+          '<button type="button" class="pl__btn ph__out" aria-label="Уменьшить"><span aria-hidden="true">−</span></button>' +
+          '<button type="button" class="pl__btn ph__in" aria-label="Увеличить"><span aria-hidden="true">+</span></button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(root);
+
+    var stage = root.querySelector('.ph__stage');
+    var img = root.querySelector('.ph__img');
+
+    function apply(){
+      img.style.transform = 'translate(' + phX + 'px,' + phY + 'px) scale(' + phScale + ')';
+    }
+    // Приближаем к точке под курсором/пальцами, а не к центру — иначе то,
+    // что хотели рассмотреть, при первом же приближении уезжает из кадра.
+    function zoomTo(next, anchorX, anchorY){
+      next = Math.max(1, Math.min(PH_MAX, next));
+      if (next === phScale) return;
+      var box = stage.getBoundingClientRect();
+      var cx = (anchorX == null ? box.width / 2 : anchorX - box.left) - box.width / 2;
+      var cy = (anchorY == null ? box.height / 2 : anchorY - box.top) - box.height / 2;
+      var k = next / phScale;
+      phX = (phX - cx) * k + cx;
+      phY = (phY - cy) * k + cy;
+      phScale = next;
+      if (phScale === 1){ phX = 0; phY = 0; }
+      clamp();
+      apply();
+    }
+    // Не даём утащить картинку далеко за край пустоты — граница шире самого
+    // кадра ровно настолько, насколько кадр вышел за рамку при увеличении.
+    function clamp(){
+      var box = stage.getBoundingClientRect();
+      var slackX = Math.max(0, (img.offsetWidth * phScale - box.width) / 2);
+      var slackY = Math.max(0, (img.offsetHeight * phScale - box.height) / 2);
+      phX = Math.max(-slackX, Math.min(slackX, phX));
+      phY = Math.max(-slackY, Math.min(slackY, phY));
+    }
+
+    stage.addEventListener('wheel', function(e){
+      e.preventDefault();
+      zoomTo(phScale * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX, e.clientY);
+    }, { passive: false });
+
+    root.querySelector('.ph__in').addEventListener('click', function(){ zoomTo(phScale * 1.5); });
+    root.querySelector('.ph__out').addEventListener('click', function(){ zoomTo(phScale / 1.5); });
+    img.addEventListener('dblclick', function(e){
+      zoomTo(phScale > 1 ? 1 : 2.5, e.clientX, e.clientY);
+    });
+
+    // Перетаскивание и щипок — одними и теми же указателями, что мышь, что
+    // палец: Pointer Events не различают их отдельным кодом. Обычный объект
+    // вместо Map — тот же приём, что и везде в этом файле.
+    var pts = {}, ptsCount = 0;
+    function ptsList(){
+      var out = [];
+      for (var id in pts) if (pts.hasOwnProperty(id)) out.push(pts[id]);
+      return out;
+    }
+    function dist(a, b){
+      var dx = a.x - b.x, dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+    var pinchStart = 0, dragFrom = null;
+    stage.addEventListener('pointerdown', function(e){
+      stage.setPointerCapture(e.pointerId);
+      if (!(e.pointerId in pts)) ptsCount++;
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (ptsCount === 1 && phScale > 1) dragFrom = { x: e.clientX, y: e.clientY, px: phX, py: phY };
+      else if (ptsCount === 2){
+        dragFrom = null;
+        var arr = ptsList();
+        pinchStart = dist(arr[0], arr[1]) || 1;
+      }
+    });
+    stage.addEventListener('pointermove', function(e){
+      if (!(e.pointerId in pts)) return;
+      pts[e.pointerId] = { x: e.clientX, y: e.clientY };
+      if (ptsCount === 2){
+        var arr = ptsList();
+        var d = dist(arr[0], arr[1]) || 1;
+        var mid = { x: (arr[0].x + arr[1].x) / 2, y: (arr[0].y + arr[1].y) / 2 };
+        zoomTo(phScale * (d / pinchStart), mid.x, mid.y);
+        pinchStart = d;
+      } else if (dragFrom){
+        phX = dragFrom.px + (e.clientX - dragFrom.x);
+        phY = dragFrom.py + (e.clientY - dragFrom.y);
+        clamp();
+        apply();
+      }
+    });
+    function release(e){
+      if (e.pointerId in pts){ delete pts[e.pointerId]; ptsCount--; }
+      dragFrom = null;
+      if (ptsCount === 1 && phScale > 1){
+        var left = ptsList()[0];
+        dragFrom = { x: left.x, y: left.y, px: phX, py: phY };
+      }
+    }
+    stage.addEventListener('pointerup', release);
+    stage.addEventListener('pointercancel', release);
+
+    root.querySelector('.tv__close').addEventListener('click', closePhoto);
+    root.querySelector('.tv__backdrop').addEventListener('click', closePhoto);
+
+    // Пока окно открыто, Tab не должен уводить за него: это модальное окно.
+    root.addEventListener('keydown', function(e){
+      if (e.key !== 'Tab') return;
+      var can = [].slice.call(root.querySelectorAll(
+        'button:not([disabled]):not([hidden])')).filter(function(el){ return el.offsetParent !== null; });
+      if (!can.length) return;
+      var first = can[0], last = can[can.length - 1];
+      if (e.shiftKey && document.activeElement === first){ last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last){ first.focus(); e.preventDefault(); }
+    });
+
+    root.img = img;
+    root.reset = function(){ phScale = 1; phX = 0; phY = 0; apply(); };
+    return root;
+  }
+
+  function openPhoto(src, alt, opener){
+    if (!ph){
+      ph = buildPhotoViewer();
+      document.addEventListener('keydown', onPhotoKey);
+    }
+    phReturn = opener || null;
+    ph.img.src = src;
+    ph.img.alt = alt || '';
+    ph.reset();
+    ph.hidden = false;
+    document.body.style.overflow = 'hidden';
+    var main = document.getElementById('main');
+    if (main) main.setAttribute('aria-hidden', 'true');
+    ph.querySelector('.tv__close').focus();
+  }
+
+  function closePhoto(){
+    if (!ph || ph.hidden) return;
+    ph.hidden = true;
+    ph.img.removeAttribute('src');
+    document.body.style.overflow = '';
+    var main = document.getElementById('main');
+    if (main) main.removeAttribute('aria-hidden');
+    if (phReturn && phReturn.focus) phReturn.focus();
+  }
+
+  function onPhotoKey(e){
+    if (!ph || ph.hidden) return;
+    if (e.key === 'Escape') closePhoto();
+  }
+
+  // Открытие по клику или по Enter/Пробелу — работает и для фото в шапке,
+  // и для любой фотографии в ленте, без отдельного слушателя на каждую:
+  // фотографии в ленте появляются уже после того, как этот код исполнился.
+  document.addEventListener('click', function(e){
+    var img = e.target.closest('.entry__photo, .hero__fig img');
+    if (img && img.src) openPhoto(img.src, img.alt, img);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var img = e.target.closest('.entry__photo, .hero__fig img');
+    if (!img) return;
+    e.preventDefault();
+    openPhoto(img.src, img.alt, img);
+  });
+
+  // Ни сохранить через контекстное меню, ни перетащить на рабочий стол —
+  // у любой картинки и любого видео на странице, не только у этих двух.
+  document.addEventListener('contextmenu', function(e){
+    if (e.target.closest('img, video')) e.preventDefault();
+  });
+  document.addEventListener('dragstart', function(e){
+    if (e.target.closest('img, video')) e.preventDefault();
+  });
+
   function buildPoster(item, list, date){
     var round = item.type === 'round';
 
@@ -3255,6 +3510,9 @@ html.rich{
       img.setAttribute('fetchpriority', 'low');
       img.src = item.src;
       img.onerror = function(){ img.style.display = 'none'; };
+      img.tabIndex = 0;
+      img.setAttribute('role', 'button');
+      img.setAttribute('aria-label', 'Увеличить фото');
       return img;
     }
     return buildPoster(item, list, date);

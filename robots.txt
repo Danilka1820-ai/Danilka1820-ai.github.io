@@ -1,4 +1,15 @@
 User-agent: *
 Allow: /
 
+# Личные фотографии — вне поиска по картинкам: иначе их можно открыть и
+# сохранить прямо из выдачи Google/Яндекс.Картинок, в обход любой защиты
+# на самой странице.
+User-agent: Googlebot-Image
+Disallow: /assets/posts/
+Disallow: /assets/images/
+
+User-agent: YandexImages
+Disallow: /assets/posts/
+Disallow: /assets/images/
+
 Sitemap: https://www.sarykov.ru/sitemap.xml

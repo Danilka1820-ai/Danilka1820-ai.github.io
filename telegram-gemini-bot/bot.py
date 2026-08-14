@@ -1,40 +1,31 @@
 """
-Telegram-бот на pyTelegramBotAPI + xAI Grok.
+Telegram-бот на pyTelegramBotAPI + Google Gemini.
 
 Возможности:
-  - Текст -> бот просит Grok сделать из него красивый пост.
-  - Фото -> бот скачивает файл, отдаёт его Grok Vision,
+  - Текст -> бот просит Gemini сделать из него красивый пост.
+  - Фото/видео -> бот скачивает файл, отдаёт его Gemini,
     получает описание сюжета/текста и превращает в пост.
-  - Видео -> Grok не умеет «смотреть» видео целиком через API (в отличие от
-    Gemini): бот вытаскивает несколько кадров ffmpeg'ом, отдельно
-    расшифровывает звук через Grok Speech-to-Text и просит Grok Vision
-    написать пост по кадрам и расшифровке вместе. Похоже на просмотр, но
-    не то же самое — то, что случилось между кадрами и без звука, мимо.
-  - Кружочки (video_note) и голосовые (voice) -> бот расшифровывает речь
-    через Grok Speech-to-Text и формирует готовый пост по тексту.
+  - Кружочки (video_note) и голосовые (voice) -> бот скачивает аудио/видео,
+    Gemini расшифровывает речь и формирует готовый пост.
   - /post <текст>            — публикует пост в канал, возвращает ID сообщения.
   - /edit <ID> <новый текст> — редактирует пост в канале по ID.
   - /delete <ID>             — удаляет пост из канала по ID.
 
 Настройка — через переменные окружения (см. README.md рядом с этим файлом):
   TELEGRAM_BOT_TOKEN — токен бота от @BotFather
-  XAI_API_KEY        — ключ xAI API (https://console.x.ai)
+  GEMINI_API_KEY     — ключ Gemini API (https://aistudio.google.com/apikey)
   CHANNEL_ID         — id или @username канала, куда бот публикует посты
   ADMIN_ID           — обязательный numeric Telegram user id владельца;
                         без него бот не запускается
 """
 
-import base64
-import mimetypes
 import os
-import shutil
-import subprocess
+import time
 import tempfile
 
-import requests
 import telebot
+from google import genai
 from dotenv import load_dotenv
-from openai import OpenAI
 
 from bot_utils import (
     TELEGRAM_MESSAGE_LIMIT,
@@ -52,48 +43,33 @@ from bot_utils import (
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-XAI_API_KEY = os.getenv("XAI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 CHANNEL_ID = os.getenv("CHANNEL_ID")
 ADMIN_ID = os.getenv("ADMIN_ID")
-GROK_FILE_TIMEOUT_SECONDS = int(os.getenv("GROK_FILE_TIMEOUT_SECONDS", "120"))
+GEMINI_FILE_TIMEOUT_SECONDS = int(os.getenv("GEMINI_FILE_TIMEOUT_SECONDS", "120"))
 
 if not TELEGRAM_BOT_TOKEN:
     raise RuntimeError("Не задан TELEGRAM_BOT_TOKEN (переменная окружения)")
-if not XAI_API_KEY:
-    raise RuntimeError("Не задан XAI_API_KEY (переменная окружения)")
+if not GEMINI_API_KEY:
+    raise RuntimeError("Не задан GEMINI_API_KEY (переменная окружения)")
 if not CHANNEL_ID:
     raise RuntimeError("Не задан CHANNEL_ID (переменная окружения)")
 
 ADMIN_ID = require_admin_id(ADMIN_ID)
 
 # ---------------------------------------------------------------------------
-# 2. Инициализация бота и Grok
+# 2. Инициализация бота и Gemini
 # ---------------------------------------------------------------------------
 
-# Текст приходит от пользователя и Grok. Глобальный HTML parse_mode здесь
+# Текст приходит от пользователя и Gemini. Глобальный HTML parse_mode здесь
 # опасен: обычные символы вроде "<" могли превращаться в битую разметку и
 # полностью ронять отправку ответа или публикацию в канал.
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN, parse_mode=None)
 
-# У xAI обычный OpenAI-совместимый /chat/completions — используем их же SDK,
-# только с другим base_url. Имена моделей у xAI меняются заметно быстрее,
-# чем у Gemini, поэтому это переменные окружения с разумным умолчанием, а не
-# жёстко вшитая строка: если xAI переименует модель, чинить — не в коде.
-XAI_BASE_URL = "https://api.x.ai/v1"
-xai_client = OpenAI(api_key=XAI_API_KEY, base_url=XAI_BASE_URL, timeout=GROK_FILE_TIMEOUT_SECONDS)
-GROK_TEXT_MODEL = os.getenv("GROK_TEXT_MODEL", "grok-4")
-GROK_VISION_MODEL = os.getenv("GROK_VISION_MODEL", "grok-2-vision-latest")
+gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = "gemini-flash-latest"
 
-# Речь в аудио/видео расшифровывает отдельный эндпоинт Grok Speech-to-Text —
-# он не часть /chat/completions и не покрыт OpenAI SDK, поэтому обычный
-# HTTP-запрос.
-XAI_STT_URL = f"{XAI_BASE_URL}/stt"
-
-# ffmpeg нужен только для кадров из обычного видео (см. extract_video_frames).
-# Кружочки и голосовые уходят в Speech-to-Text как есть, без него.
-FFMPEG_AVAILABLE = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
-
-# Промпт, который просит Grok всегда возвращать готовый к публикации текст
+# Промпт, который просит Gemini всегда возвращать готовый к публикации текст
 # без лишних пояснений и без markdown-разметки, которую Telegram не понимает.
 POST_STYLE_HINT = (
     "Ответь только готовым текстом поста на русском языке, без вступлений "
@@ -151,166 +127,65 @@ def download_telegram_file(file_id: str, suffix: str) -> str:
     return tmp.name
 
 
-def ask_grok_text(user_text: str) -> str:
-    """Отправляет обычный текст в Grok и просит сделать из него пост."""
+def ask_gemini_text(user_text: str) -> str:
+    """Отправляет обычный текст в Gemini и просит сделать из него пост."""
     user_text = validate_source_text(user_text)
     prompt = (
         "Перепиши следующий текст в виде красивого поста для Telegram-канала.\n"
         f"{POST_STYLE_HINT}\n\n"
         f"Исходный текст:\n{user_text}"
     )
-    response = xai_client.chat.completions.create(
-        model=GROK_TEXT_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return validate_source_text(response.choices[0].message.content or "")
+    response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+    return validate_source_text(getattr(response, "text", ""))
 
 
-def _image_content_part(image_path: str) -> dict:
-    """Кодирует картинку в data URL для content вида image_url — так Grok
-    Vision принимает изображение прямо в теле запроса, без отдельной
-    загрузки файла (в отличие от Gemini File API, у Grok такого шага нет)."""
-    mime = mimetypes.guess_type(image_path)[0] or "image/jpeg"
-    with open(image_path, "rb") as file:
-        encoded = base64.b64encode(file.read()).decode("ascii")
-    return {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{encoded}"}}
+def ask_gemini_about_media(local_path: str, task_description: str) -> str:
+    """Загружает медиафайл (фото/видео/аудио) в Gemini и просит сделать пост.
 
-
-def ask_grok_about_image(local_path: str, task_description: str) -> str:
-    """Отдаёт фото в Grok Vision и просит сделать пост."""
-    content = [
-        _image_content_part(local_path),
-        {"type": "text", "text": f"{task_description}\n{POST_STYLE_HINT}"},
-    ]
-    response = xai_client.chat.completions.create(
-        model=GROK_VISION_MODEL,
-        messages=[{"role": "user", "content": content}],
-    )
-    return validate_source_text(response.choices[0].message.content or "")
-
-
-def transcribe_with_grok(local_path: str) -> str:
-    """Расшифровывает речь в аудио- или видеофайле через Grok Speech-to-Text.
-
-    Пустая строка, если речи не нашлось (например, немое видео) — это не
-    ошибка, вызывающий код сам решает, что делать дальше.
+    task_description — что именно нужно сделать с содержимым
+    (например, "опиши фото и напиши пост" или "расшифруй речь и напиши пост").
     """
-    with open(local_path, "rb") as file:
-        response = requests.post(
-            XAI_STT_URL,
-            headers={"Authorization": f"Bearer {XAI_API_KEY}"},
-            files={"file": file},
-            timeout=GROK_FILE_TIMEOUT_SECONDS,
-        )
-    response.raise_for_status()
-    return response.json().get("text", "").strip()
-
-
-def ask_grok_about_speech(local_path: str, task_description: str) -> str:
-    """Кружочки и голосовые: расшифровать речь и написать пост по тексту."""
-    transcript = transcribe_with_grok(local_path)
-    if not transcript:
-        raise RuntimeError("Grok не расслышал речь в файле")
-    prompt = f"{task_description}\n{POST_STYLE_HINT}\n\nРасшифровка речи:\n{transcript}"
-    response = xai_client.chat.completions.create(
-        model=GROK_TEXT_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return validate_source_text(response.choices[0].message.content or "")
-
-
-def _ffprobe_duration(path: str) -> float | None:
-    result = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    # Загружаем файл в Gemini File API. Для фото это происходит мгновенно,
+    # для видео/аудио файлу нужно время на обработку на стороне Google —
+    # поэтому дожидаемся, пока его состояние станет ACTIVE.
+    uploaded_file = gemini_client.files.upload(file=local_path)
     try:
-        return float(result.stdout.strip())
-    except (TypeError, ValueError):
-        return None
+        deadline = time.monotonic() + GEMINI_FILE_TIMEOUT_SECONDS
+        while uploaded_file.state.name == "PROCESSING":
+            if time.monotonic() >= deadline:
+                raise TimeoutError(
+                    f"Gemini не обработал файл за {GEMINI_FILE_TIMEOUT_SECONDS} секунд"
+                )
+            time.sleep(2)
+            uploaded_file = gemini_client.files.get(name=uploaded_file.name)
 
+        if uploaded_file.state.name == "FAILED":
+            raise RuntimeError("Gemini не смог обработать присланный файл")
 
-def extract_video_frames(video_path: str, count: int = 3) -> list[str]:
-    """Достаёт count кадров, равномерно распределённых по длине ролика.
-
-    Возвращает пути к временным jpg. Пустой список, если ffmpeg недоступен
-    или у файла не вышло определить длительность — вызывающий код тогда
-    обходится одной расшифровкой звука.
-    """
-    if not FFMPEG_AVAILABLE:
-        return []
-    duration = _ffprobe_duration(video_path)
-    if not duration or duration <= 0:
-        return []
-
-    frames = []
-    for i in range(count):
-        timestamp = duration * (i + 1) / (count + 1)
-        out_path = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg").name
-        result = subprocess.run(
-            ["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{timestamp:.2f}",
-             "-i", video_path, "-frames:v", "1", out_path],
-            capture_output=True,
-            check=False,
+        prompt = f"{task_description}\n{POST_STYLE_HINT}"
+        response = gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=[uploaded_file, prompt],
         )
-        if result.returncode == 0 and os.path.exists(out_path) and os.path.getsize(out_path) > 0:
-            frames.append(out_path)
-        elif os.path.exists(out_path):
-            os.remove(out_path)
-    return frames
-
-
-def ask_grok_about_video(local_path: str, task_description: str) -> str:
-    """Обычное видео: у Grok, в отличие от Gemini, нет API, понимающего видео
-    целиком. Показываем ему несколько кадров плюс расшифровку звука —
-    приближение, а не настоящий просмотр: то, что случилось между кадрами и
-    без звука, в пост не попадёт.
-    """
-    frames = extract_video_frames(local_path)
-    transcript = ""
-    try:
-        transcript = transcribe_with_grok(local_path)
-    except Exception as error:  # noqa: BLE001 - звук необязателен, кадры могут заменить
-        print(f"Не удалось расшифровать звук видео: {error}")
-
-    if not frames and not transcript:
-        raise RuntimeError("не удалось ни разобрать кадры, ни расслышать звук в видео")
-
-    text_parts = [task_description]
-    if transcript:
-        text_parts.append(f"Расшифровка произнесённой речи:\n{transcript}")
-    if not frames:
-        text_parts.append("(кадры видео недоступны — пост только по звуку)")
-    text_parts.append(POST_STYLE_HINT)
-
-    content = [_image_content_part(frame) for frame in frames]
-    content.append({"type": "text", "text": "\n\n".join(text_parts)})
-
-    try:
-        response = xai_client.chat.completions.create(
-            model=GROK_VISION_MODEL,
-            messages=[{"role": "user", "content": content}],
-        )
-        return validate_source_text(response.choices[0].message.content or "")
+        return validate_source_text(getattr(response, "text", ""))
     finally:
-        for frame in frames:
-            if os.path.exists(frame):
-                os.remove(frame)
+        # Файл больше не нужен на серверах Google — удаляем, чтобы не копились.
+        try:
+            gemini_client.files.delete(name=uploaded_file.name)
+        except Exception as error:  # удаление не должно скрыть основной ответ
+            print(f"Не удалось удалить временный файл Gemini: {error}")
 
 
 def process_media_message(
     message,
     file_id: str,
     suffix: str,
-    asker,
+    task_description: str,
     file_size: int | None = None,
 ):
     """Общий сценарий для фото/видео/кружочков/голосовых:
 
-    скачать файл -> asker(local_path) -> ответить готовым постом. asker —
-    одна из ask_grok_about_* выше, разная для каждого типа медиа.
+    скачать файл -> отдать в Gemini -> ответить готовым постом.
     """
     try:
         validate_media_size(file_size)
@@ -321,7 +196,7 @@ def process_media_message(
     local_path = None
     try:
         local_path = download_telegram_file(file_id, suffix)
-        post_text = asker(local_path)
+        post_text = ask_gemini_about_media(local_path, task_description)
         edit_reply(processing_msg, f"✅ Готовый пост:\n\n{post_text}")
     except Exception as error:  # noqa: BLE001 - хотим сообщить пользователю о любой ошибке
         print(f"Не удалось обработать файл: {error}")
@@ -342,7 +217,7 @@ def handle_start(message):
     reply(
         message,
         "Привет! Я помогу превратить текст, фото, видео, кружочки и голосовые "
-        "сообщения в готовые посты через Grok.\n\n"
+        "сообщения в готовые посты через Gemini.\n\n"
         "Команды для управления каналом:\n"
         "/post <текст> — опубликовать пост в канал\n"
         "/edit <ID> <новый текст> — изменить пост по ID\n"
@@ -427,7 +302,7 @@ def handle_text(message):
         return
 
     # Если переслали сообщение из канала/чата — просто сообщаем его точный
-    # ID и username вместо запроса к Grok. Это удобный способ узнать,
+    # ID и username вместо запроса к Gemini. Это удобный способ узнать,
     # что писать в CHANNEL_ID (особенно для приватных каналов без @username).
     if message.forward_from_chat is not None:
         chat = message.forward_from_chat
@@ -448,13 +323,13 @@ def handle_text(message):
         reply(message, f"❌ {error}")
         return
 
-    processing_msg = reply(message, "⏳ Спрашиваю у Grok...")
+    processing_msg = reply(message, "⏳ Спрашиваю у Gemini...")
     try:
-        post_text = ask_grok_text(source_text)
+        post_text = ask_gemini_text(source_text)
         edit_reply(processing_msg, f"✅ Готовый пост:\n\n{post_text}")
     except Exception as error:  # noqa: BLE001
-        print(f"Ошибка запроса к Grok: {error}")
-        edit_reply(processing_msg, f"❌ Ошибка запроса к Grok: {error}")
+        print(f"Ошибка запроса к Gemini: {error}")
+        edit_reply(processing_msg, f"❌ Ошибка запроса к Gemini: {error}")
 
 
 @bot.message_handler(content_types=["photo"])
@@ -465,11 +340,7 @@ def handle_photo(message):
     # последний элемент — самое высокое разрешение.
     file_id = message.photo[-1].file_id
     task = "Посмотри на фотографию, опиши, что на ней происходит (включая любой видимый текст), и на основе этого напиши пост."
-    process_media_message(
-        message, file_id, ".jpg",
-        lambda path: ask_grok_about_image(path, task),
-        message.photo[-1].file_size,
-    )
+    process_media_message(message, file_id, ".jpg", task, message.photo[-1].file_size)
 
 
 @bot.message_handler(content_types=["video"])
@@ -478,11 +349,7 @@ def handle_video(message):
         return
     file_id = message.video.file_id
     task = "Посмотри видео, перескажи его сюжет и содержание (включая произносимую речь, если есть) и на основе этого напиши пост."
-    process_media_message(
-        message, file_id, ".mp4",
-        lambda path: ask_grok_about_video(path, task),
-        message.video.file_size,
-    )
+    process_media_message(message, file_id, ".mp4", task, message.video.file_size)
 
 
 @bot.message_handler(content_types=["video_note"])
@@ -491,11 +358,7 @@ def handle_video_note(message):
         return
     file_id = message.video_note.file_id
     task = "Это видео-кружок. Расшифруй речь, которая на нём звучит, переведи её в текст и на основе сказанного напиши пост."
-    process_media_message(
-        message, file_id, ".mp4",
-        lambda path: ask_grok_about_speech(path, task),
-        message.video_note.file_size,
-    )
+    process_media_message(message, file_id, ".mp4", task, message.video_note.file_size)
 
 
 @bot.message_handler(content_types=["voice"])
@@ -504,11 +367,7 @@ def handle_voice(message):
         return
     file_id = message.voice.file_id
     task = "Это голосовое сообщение. Расшифруй речь, переведи её в текст и на основе сказанного напиши пост."
-    process_media_message(
-        message, file_id, ".ogg",
-        lambda path: ask_grok_about_speech(path, task),
-        message.voice.file_size,
-    )
+    process_media_message(message, file_id, ".ogg", task, message.voice.file_size)
 
 
 # ---------------------------------------------------------------------------

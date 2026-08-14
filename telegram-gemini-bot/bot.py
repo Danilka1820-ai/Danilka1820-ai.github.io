@@ -127,6 +127,37 @@ def download_telegram_file(file_id: str, suffix: str) -> str:
     return tmp.name
 
 
+GEMINI_RETRY_ATTEMPTS = 4
+# Google присылает эти коды и в тексте ошибки, и в теле ответа — единого
+# удобного атрибута у всех версий SDK на этот случай нет, поэтому проверяем
+# по тексту, благо он всегда содержит код и статус (см. скриншот с 503
+# UNAVAILABLE, из-за которого этот повтор и появился).
+GEMINI_RETRY_MARKERS = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded")
+
+
+def _is_transient_gemini_error(error: Exception) -> bool:
+    """503 UNAVAILABLE и 429 RESOURCE_EXHAUSTED — модель временно перегружена
+    на стороне Google, не ошибка самого запроса. Обычно проходит за секунды."""
+    text = str(error)
+    return any(marker in text for marker in GEMINI_RETRY_MARKERS)
+
+
+def _generate_content(**kwargs):
+    """generate_content с повтором при временной перегрузке Gemini — иначе
+    зритель видит сырой '503 UNAVAILABLE' вместо готового поста ровно в тот
+    момент, когда с самим запросом всё было в порядке."""
+    delay = 2
+    for attempt in range(1, GEMINI_RETRY_ATTEMPTS + 1):
+        try:
+            return gemini_client.models.generate_content(model=GEMINI_MODEL, **kwargs)
+        except Exception as error:  # noqa: BLE001 - решаем здесь же, ретраить или нет
+            if attempt == GEMINI_RETRY_ATTEMPTS or not _is_transient_gemini_error(error):
+                raise
+            print(f"Gemini временно перегружен (попытка {attempt}/{GEMINI_RETRY_ATTEMPTS}): {error}")
+            time.sleep(delay)
+            delay *= 2
+
+
 def ask_gemini_text(user_text: str) -> str:
     """Отправляет обычный текст в Gemini и просит сделать из него пост."""
     user_text = validate_source_text(user_text)
@@ -135,7 +166,7 @@ def ask_gemini_text(user_text: str) -> str:
         f"{POST_STYLE_HINT}\n\n"
         f"Исходный текст:\n{user_text}"
     )
-    response = gemini_client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+    response = _generate_content(contents=prompt)
     return validate_source_text(getattr(response, "text", ""))
 
 
@@ -163,10 +194,7 @@ def ask_gemini_about_media(local_path: str, task_description: str) -> str:
             raise RuntimeError("Gemini не смог обработать присланный файл")
 
         prompt = f"{task_description}\n{POST_STYLE_HINT}"
-        response = gemini_client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=[uploaded_file, prompt],
-        )
+        response = _generate_content(contents=[uploaded_file, prompt])
         return validate_source_text(getattr(response, "text", ""))
     finally:
         # Файл больше не нужен на серверах Google — удаляем, чтобы не копились.

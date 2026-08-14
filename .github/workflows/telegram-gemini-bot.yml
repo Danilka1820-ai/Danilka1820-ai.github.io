@@ -1,4 +1,4 @@
-name: Telegram Gemini bot
+name: Telegram Grok bot
 
 # GitHub Actions не умеет держать процесс запущенным постоянно, поэтому
 # вместо одного вечно висящего бота каждый запуск (~7 минут прослушки)
@@ -13,7 +13,7 @@ on:
   workflow_dispatch: {}
 
 # Боту не нужно ничего коммитить в репозиторий — только читать секреты,
-# ходить в Telegram/Gemini API и запускать сам себя дальше (actions: write
+# ходить в Telegram/xAI API и запускать сам себя дальше (actions: write
 # нужен именно для самозапуска через API, contents: write не нужен).
 permissions:
   contents: read
@@ -45,14 +45,20 @@ jobs:
         working-directory: telegram-gemini-bot
         run: pip install -r requirements.txt
 
+      # Только для обычного видео: несколько кадров через ffmpeg, раз у Grok
+      # нет API, понимающего видео целиком (см. extract_video_frames в bot.py).
+      # Кружочки и голосовые в нём не нуждаются — уходят в Speech-to-Text как есть.
+      - name: Установить ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
       - name: Опросить Telegram и обработать сообщения
         working-directory: telegram-gemini-bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
           ADMIN_ID: ${{ secrets.ADMIN_ID }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           POLL_SECONDS: "300"
-          GEMINI_FILE_TIMEOUT_SECONDS: "120"
+          GROK_FILE_TIMEOUT_SECONDS: "120"
         run: python poll_once.py

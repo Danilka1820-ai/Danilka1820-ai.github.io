@@ -1156,6 +1156,7 @@ a{ color:inherit; text-decoration:none; }
 .tv__cap{
   font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-2); text-align:center;
+  transition:opacity .25s ease;
 }
 
 .tv__bar{
@@ -1167,6 +1168,7 @@ a{ color:inherit; text-decoration:none; }
   backdrop-filter:var(--glass-blur);
   border:1px solid var(--glass-stroke);
   box-shadow:var(--glass-drop), var(--glass-glow);
+  transition:opacity .25s ease;
 }
 .pl__btn{
   flex:0 0 auto; width:36px; height:36px; border-radius:50%;
@@ -1311,6 +1313,15 @@ a{ color:inherit; text-decoration:none; }
 .tv.is-fs .tv__next{ right:16px; }
 /* Фон окна в полном экране не нужен — его закрывает сам кадр. */
 .tv.is-fs .tv__backdrop{ display:none; }
+
+/* Пока ролик идёт и никто не шевелится, панель прячется — как в Ютубе.
+   Любое движение мышью, касание или клавиша её возвращают (см. wake() в
+   скрипте); на паузе не прячем никогда, класс попросту не ставится. */
+.tv.is-fs.is-idle .tv__bar, .tv.is-fs.is-idle .tv__cap,
+.tv.is-fs.is-idle .tv__close, .tv.is-fs.is-idle .tv__nav{
+  opacity:0; pointer-events:none;
+}
+.tv.is-fs.is-idle .tv__win{ cursor:none; }
 
 /* Телефон в ландшафте. Крестик стоит НАД окном («минус 52»), и при высоте
    экрана в 390 точек окно занимает её целиком — крестик уезжает за верхний
@@ -2739,13 +2750,32 @@ html.rich{
       }catch(e){}
       root.classList.remove('is-fs');
       unlockTurn();
+      wake();
     }
     function markFullscreen(){
       var on = fsElement() === win;
       root.classList.toggle('is-fs', on);
       if (!on) unlockTurn();
       if (on) upLevel();
+      wake();
     }
+
+    /* Панель, подписи и стрелки прячутся в полном экране, если ролик идёт и
+       никто не шевелится — как в Ютубе: иначе они весь фильм лежат поверх
+       кадра. Любое движение мышью, касание или клавиша будят панель заново;
+       на паузе прятать нечего — is-playing снят, таймер не заводится. */
+    var IDLE_DELAY = 2600;
+    var idleTimer = null;
+    function wake(){
+      root.classList.remove('is-idle');
+      clearTimeout(idleTimer);
+      if (root.classList.contains('is-fs') && root.classList.contains('is-playing')){
+        idleTimer = setTimeout(function(){ root.classList.add('is-idle'); }, IDLE_DELAY);
+      }
+    }
+    win.addEventListener('mousemove', wake);
+    win.addEventListener('touchstart', wake, { passive: true });
+    win.addEventListener('keydown', wake);
     /* Развернули на весь экран — кадру стало нужно больше точек. Поднимаем
        уровень, если он есть, сохраняя место и состояние. Вниз при выходе не
        опускаем: файл уже скачан, толку не будет. */
@@ -2859,9 +2889,11 @@ html.rich{
       playBtn.setAttribute('aria-label', 'Пауза');
       bigGlyph.textContent = '▶';
       bigBtn.setAttribute('aria-label', 'Пауза');
+      wake();
     });
     var stopped = function(){
       if (!root.classList.contains('is-ended')) showIdle(false);
+      wake();
     };
     function закончено(){
       if (!v.paused) v.pause();

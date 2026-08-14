@@ -3039,7 +3039,11 @@ html.rich{
     var wrap = tv.querySelector('.tv__quality');
     var menu = tv.querySelector('.tv__qualityMenu');
     var all = levels(entry.item);
-    if (all.length < 2){ wrap.hidden = true; menu.hidden = true; return; }
+    // Меньше двух уровней — выбирать не из чего. А если даже лучший уровень
+    // не дотягивает до 720p, показывать список из мелких чисел вроде «512p
+    // / 360p» — не выбор качества, а недоумение: реальной альтернативы нет,
+    // ролик просто маленький с самой съёмки.
+    if (all.length < 2 || (all[0].h || 0) < 720){ wrap.hidden = true; menu.hidden = true; return; }
     wrap.hidden = false;
 
     var here = all[tv.level] || all[0];

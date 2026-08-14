@@ -336,7 +336,7 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
       `потолок основной версии ${потолок} — Full HD больше недоступен; ` +
       'см. README, «Три качества»');
   }
-  if (!/width:\s*1280[^\n]+suffix:\s*'mid'/.test(сборщик)) throw new Error('пропала версия 720p (ширина 1280)');
+  if (!/width:\s*kind === 'round' \? 720 : 1280[^\n]+suffix:\s*'mid'/.test(сборщик)) throw new Error('пропала версия 720p (ширина 1280, у кружочка — 720)');
   if (!/width:\s*kind === 'round' \? 360 : 640/.test(сборщик)) throw new Error('пропала лёгкая версия 360p');
   if (!/class="tv__qualityMenu"[^>]*role="menu"/.test(html)) throw new Error('выбор качества больше не раскрывается списком');
 });

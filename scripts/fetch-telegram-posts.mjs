@@ -27,7 +27,7 @@ const MEDIA_PUBLIC = 'assets/posts';
 
 // Меняется, когда меняются настройки сжатия: старые файлы тогда перекачиваются
 // и проходят обработку заново.
-const MEDIA_RECIPE = 'v10-1080';
+const MEDIA_RECIPE = 'v11-round1080';
 const RECIPE_FILE = path.join(MEDIA_DIR, '.recipe');
 
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
@@ -94,10 +94,13 @@ async function optimizeVideo(file, kind) {
 
   const ok = tool(FFMPEG, [
     '-y', '-loglevel', 'error', '-i', file,
-    // Обычное видео сохраняем вплоть до Full HD. Дополнительные 720p и 360p
-    // дают плееру честный выбор для ноутбука и слабого соединения; исходники
-    // меньшего размера никогда не растягиваем вверх.
-    '-vf', `scale='min(${round ? 540 : 1920},iw)':-2`,
+    // Обычное видео сохраняем вплоть до Full HD, кружочки — до 1080×1080: в
+    // полный экран кружок растягивается почти во весь монитор (см. CSS
+    // .tv.is-fs .tv__win--round), и прежний потолок 540 обрезал реальное
+    // качество исходника даже там, где Telegram снял крупнее. Дополнительные
+    // 720p и 360p дают плееру честный выбор для ноутбука и слабого
+    // соединения; исходники меньшего размера никогда не растягиваем вверх.
+    '-vf', `scale='min(${round ? 1080 : 1920},iw)':-2`,
     '-c:v', 'libx264', '-crf', round ? '32' : '28', '-preset', 'veryfast',
     '-profile:v', 'main', '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', round ? '64k' : '96k', '-ac', '1',
@@ -161,10 +164,11 @@ const makeLight = (file, kind) => makeSmaller(file, kind, {
   width: kind === 'round' ? 360 : 640, crf: kind === 'round' ? 34 : 32,
   suffix: 'low', profile: 'baseline',
 });
-/* Средний уровень 1280×720 — баланс для телефонов и ноутбуков. */
-const makeMid = (file, kind) => (kind === 'round' ? '' : makeSmaller(file, kind, {
-  width: 1280, crf: 28, suffix: 'mid', profile: 'main',
-}));
+/* Средний уровень — 1280×720 у обычного видео, 720×720 у кружочка: тот же
+   баланс для телефонов и ноутбуков, только под квадратный кадр. */
+const makeMid = (file, kind) => makeSmaller(file, kind, {
+  width: kind === 'round' ? 720 : 1280, crf: 28, suffix: 'mid', profile: 'main',
+});
 
 async function optimizeImage(file) {
   // Временный файл обязан оставаться того же формата. Раньше любой PNG/WebP

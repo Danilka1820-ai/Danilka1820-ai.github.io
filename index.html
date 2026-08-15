@@ -428,6 +428,13 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
   display:flex; flex-direction:column; min-height:100vh;
+  /* 100vh на телефоне — это старая раскладочная высота, в которую браузер
+     закладывает место под адресную строку, даже когда она скрыта. Подвал
+     держится на margin-top:auto и упирается в этот запас, а не в реальный
+     низ экрана — отсюда лишняя пустота под контентом при первой отрисовке.
+     dvh пересчитывается под фактическую видимую область; браузеры без
+     поддержки просто не применяют вторую строку и остаются на vh. */
+  min-height:100dvh;
 }
 #main{ flex:1 0 auto; }
 
@@ -1671,9 +1678,15 @@ html.rich{
    МОБИЛЬНЫЕ
    ───────────────────────────────────────────── */
 @media (max-width:900px){
-  .hero{ grid-template-columns:1fr; gap:var(--s5); padding-block:var(--s6) var(--s6); }
+  .hero{ grid-template-columns:1fr; gap:var(--s5); padding-block:var(--s4) var(--s5); }
   .hero__fig{ order:-1; max-width:220px; margin-inline:0; }
   .hero__fig img{ aspect-ratio:1/1; }
+  /* На телефоне тезис и лента шли через полный десктопный отступ (64–128px)
+     подряд — на узком экране, где секции и так короче, это читалось как
+     провалы пустоты между ними. Сжимаем ритм, не трогая сами токены. */
+  .thesis{ padding:var(--s5) var(--s4); margin-block:var(--s5); }
+  .feed--home{ padding-block:var(--s6); }
+  .feed{ padding-block:var(--s5) var(--s6); }
   /* На узком экране фиксированная кнопка «наверх» стоит над подвалом.
      Дополнительная нижняя строка не даёт ей накрыть последнюю ссылку. */
   .foot__row{ padding-bottom:calc(var(--s3) + 66px + env(safe-area-inset-bottom, 0px)); }

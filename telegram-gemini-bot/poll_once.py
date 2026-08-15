@@ -5,7 +5,8 @@ GitHub Actions не даёт держать процесс запущенным 
 поэтому вместо bot.infinity_polling() (см. bot.py) этот скрипт:
   1. опрашивает Telegram (getUpdates) в течение POLL_SECONDS секунд;
   2. обрабатывает все пришедшие сообщения теми же хендлерами, что описаны
-     в bot.py (текст/фото/видео/кружочки/голосовые/команды);
+     в bot.py (текст/фото/видео/кружочки/голосовые/команды), а фото одного
+     альбома сначала собирает в один пост (см. dispatch_updates ниже);
   3. подтверждает получение обработанных обновлений, чтобы Telegram не
      прислал их повторно;
   4. запускает копию самого себя через GitHub API (self-chaining) — так
@@ -20,12 +21,38 @@ import time
 import requests
 from telebot.apihelper import ApiTelegramException
 
-from bot import bot  # импорт bot.py регистрирует все @bot.message_handler
+from bot import bot, group_photo_messages, process_album  # импорт bot.py регистрирует все @bot.message_handler
 
 # Сколько секунд опрашивать Telegram за один запуск workflow.
 # Должно быть заметно меньше лимита job'а в Actions (timeout-minutes).
 POLL_SECONDS = int(os.getenv("POLL_SECONDS", "300"))
 MAX_TELEGRAM_ERRORS = 3
+
+
+def dispatch_updates(updates: list) -> None:
+    """Фото одного альбома (общий media_group_id) собираются в process_album
+    и уходят в Gemini одним постом; всё остальное — как раньше, через
+    обычную раздачу telebot по @bot.message_handler.
+
+    Работает только для альбомов, целиком попавших в один getUpdates —
+    почти всегда так и есть, Telegram присылает все фото альбома вместе.
+    Если редкий случай разрежет альбом на два запуска, вторая половина
+    обработается как отдельные фото — не идеально, но не теряется.
+    """
+    albums: dict = {}
+    singles = []
+    for update in updates:
+        grouped = group_photo_messages(update)
+        if grouped is not None:
+            albums.setdefault(grouped.media_group_id, []).append(grouped)
+        else:
+            singles.append(update)
+
+    if singles:
+        bot.process_new_updates(singles)
+    for messages in albums.values():
+        messages.sort(key=lambda m: m.message_id)
+        process_album(messages)
 
 
 class FatalTelegramError(RuntimeError):
@@ -113,7 +140,7 @@ def poll() -> bool:
         consecutive_errors = 0
 
         if updates:
-            bot.process_new_updates(updates)
+            dispatch_updates(updates)
             offset = updates[-1].update_id + 1
             processed += len(updates)
 

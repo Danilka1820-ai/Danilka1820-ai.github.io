@@ -5,6 +5,11 @@ Telegram-бот на pyTelegramBotAPI + Google Gemini.
   - Текст -> бот просит Gemini сделать из него красивый пост.
   - Фото/видео -> бот скачивает файл, отдаёт его Gemini,
     получает описание сюжета/текста и превращает в пост.
+  - Альбом (несколько фото одним сообщением, media_group_id) -> собирается
+    в ОДИН пост по всем фото сразу, а не в N отдельных (см. process_album).
+    Работает при запуске через poll_once.py (см. dispatch_updates там же);
+    при локальном bot.infinity_polling() альбом обрабатывается по старому,
+    фото за фото — это известное отличие ручного режима от прода.
   - Кружочки (video_note) и голосовые (voice) -> бот скачивает аудио/видео,
     Gemini расшифровывает речь и формирует готовый пост.
   - /post <текст>            — публикует пост в канал, возвращает ID сообщения.
@@ -202,6 +207,89 @@ def ask_gemini_about_media(local_path: str, task_description: str) -> str:
             gemini_client.files.delete(name=uploaded_file.name)
         except Exception as error:  # удаление не должно скрыть основной ответ
             print(f"Не удалось удалить временный файл Gemini: {error}")
+
+
+def ask_gemini_about_album(local_paths: list, task_description: str) -> str:
+    """Как ask_gemini_about_media, но с несколькими фото альбома разом: все
+    файлы и один общий промпт уходят в Gemini одним запросом, чтобы получился
+    один пост, а не N ответов на N частей одной подборки.
+    """
+    uploaded = []
+    try:
+        for path in local_paths:
+            uploaded.append(gemini_client.files.upload(file=path))
+        prompt = f"{task_description}\n{POST_STYLE_HINT}"
+        response = _generate_content(contents=[*uploaded, prompt])
+        return validate_source_text(getattr(response, "text", ""))
+    finally:
+        for uploaded_file in uploaded:
+            try:
+                gemini_client.files.delete(name=uploaded_file.name)
+            except Exception as error:  # удаление не должно скрыть основной ответ
+                print(f"Не удалось удалить временный файл Gemini: {error}")
+
+
+def group_photo_messages(update):
+    """Апдейт — фото из альбома (media_group_id есть)? Возвращает Message,
+    иначе None. Только фото: у видео и голосовых альбомов не бывает."""
+    message = getattr(update, "message", None)
+    if message is None or message.content_type != "photo" or not message.media_group_id:
+        return None
+    return message
+
+
+def process_album(messages: list) -> None:
+    """Собирает альбом (несколько фото с общим media_group_id) в ОДИН пост.
+
+    Telegram присылает каждое фото альбома отдельным апдейтом, а подпись —
+    только у одного из них. Раньше каждое фото уходило в Gemini само по
+    себе, и вместо одной подборки зритель получал столько же черновиков
+    поста, сколько было фото — этой функции раньше не было вовсе.
+    """
+    if not messages:
+        return
+    first = messages[0]
+    if not is_admin(first):
+        bot.reply_to(first, "⛔ Этот бот доступен только владельцу.")
+        return
+
+    caption = ""
+    for message in messages:
+        if getattr(message, "caption", None):
+            caption = message.caption
+            break
+
+    photos = [m for m in messages if m.photo]
+    total_size = sum((m.photo[-1].file_size or 0) for m in photos)
+    try:
+        validate_media_size(total_size or None)
+    except ValueError as error:
+        bot.reply_to(first, f"❌ {error}")
+        return
+
+    processing_msg = bot.reply_to(
+        first, f"⏳ Обрабатываю альбом из {len(photos)} фото, подождите немного..."
+    )
+    local_paths = []
+    try:
+        for message in photos:
+            local_paths.append(download_telegram_file(message.photo[-1].file_id, ".jpg"))
+        task = (
+            f"Посмотри на эти {len(local_paths)} фотографий из одного альбома — "
+            "это один сюжет или подборка, а не отдельные снимки. Опиши, что на "
+            "них происходит в целом, и на основе этого напиши ОДИН пост."
+        )
+        if caption:
+            task += f"\nАвтор подписал альбом так: «{caption}». Учти это в посте."
+        post_text = ask_gemini_about_album(local_paths, task)
+        edit_reply(processing_msg, f"✅ Готовый пост по альбому ({len(local_paths)} фото):\n\n{post_text}")
+    except Exception as error:  # noqa: BLE001 - хотим сообщить пользователю о любой ошибке
+        print(f"Не удалось обработать альбом: {error}")
+        edit_reply(processing_msg, f"❌ Не удалось обработать альбом: {error}")
+    finally:
+        for path in local_paths:
+            if os.path.exists(path):
+                os.remove(path)
 
 
 def process_media_message(

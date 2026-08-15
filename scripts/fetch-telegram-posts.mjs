@@ -550,3 +550,44 @@ if (oldSitemap !== sitemap) {
   await writeFile(SITEMAP_FILE, sitemap);
   console.log(`Обновил sitemap.xml: ${lastmod}`);
 }
+
+async function makeSmaller(file, kind, { width, height, crf, suffix, profile }) {
+  if (!FFMPEG) return '';
+  const out = file.replace(/\.mp4$/, `-${suffix}.mp4`);
+  if (existsSync(out)) return out;
+
+  const size = await videoSize(file);
+  if (size && size.w <= width * 1.1 && size.h <= height * 1.1) return '';
+
+  const ok = await run(FFMPEG, [
+    '-y', '-loglevel', 'error', '-i', file,
+    '-vf', `scale='min(${width},iw)':'min(${height},ih)':force_original_aspect_ratio=decrease:force_divisible_by=2`,
+    '-c:v', 'libx264', '-crf', String(crf), '-preset', 'veryfast',
+    '-profile:v', profile, ...(profile === 'baseline' ? ['-level', '3.0'] : []),
+    '-pix_fmt', 'yuv420p',
+    '-c:a', 'aac', '-b:a', suffix === 'low' ? '48k' : '96k', '-ac', '1',
+    '-movflags', '+faststart', out,
+  ]);
+  if (!ok) { if (existsSync(out)) await unlink(out); return ''; }
+
+  const [full, small] = [await sizeOf(file), await sizeOf(out)];
+  if (small < 1024 || small >= full * 0.85) { await unlink(out); return ''; }
+  console.log(` ${suffix === 'low' ? 'легкая' : 'средняя'} версия: ${Math.round(full / 1024)} -> ${Math.round(small / 1024)} KB`);
+  return out;
+}
+
+const makeLight = (file, kind) => makeSmaller(file, kind, {
+  width: kind === 'round' ? 360 : 640,
+  height: 360,
+  crf: kind === 'round' ? 34 : 32,
+  suffix: 'low',
+  profile: 'baseline',
+});
+
+const makeMid = (file, kind) => (kind === 'round' ? '' : makeSmaller(file, kind, {
+  width: 1280,
+  height: 720,
+  crf: 28,
+  suffix: 'mid',
+  profile: 'main',
+}));

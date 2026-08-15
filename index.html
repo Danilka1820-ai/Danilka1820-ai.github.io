@@ -959,10 +959,18 @@ img, video{
   font-family:var(--mono); font-size:11px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--ink-3); display:block; margin-top:2px;
 }
+/* Тег в карточке ведёт в ту же рубрику, что и наверху ленты — поэтому
+   кнопка, а не просто подпись; сброс стилей кнопки, оформление то же. */
 .entry__tag{
-  display:inline-block; margin-top:var(--s2);
-  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
+  display:inline-block; margin-top:var(--s2); max-width:100%;
+  font:inherit; font-family:var(--mono); font-size:10px; letter-spacing:.18em;
   text-transform:uppercase; color:var(--lamp-ink);
+  background:none; border:0; padding:2px 0; margin-left:auto; cursor:pointer;
+  border-bottom:1px solid transparent;
+  transition:color .2s, border-color .2s;
+}
+.entry__tag:hover,.entry__tag:focus-visible{
+  color:var(--ink); border-bottom-color:var(--lamp);
 }
 
 .entry__body{ max-width:var(--measure); min-width:0; }
@@ -1685,7 +1693,7 @@ html.rich{
   button, .tab, .top__more, .pl__btn, .tv__close, .tv__nav, .up{
     -webkit-user-select:none; user-select:none;
   }
-  .btn:active, .filters button:active, .entry__more:active,
+  .btn:active, .filters button:active, .entry__tag:active, .entry__more:active,
   .tab:active, .top__name:active, .foot a:active{
     opacity:.62;
   }
@@ -3593,9 +3601,14 @@ html.rich{
       meta.appendChild(day);
     }
     if (post.tags.length){
-      var tag = document.createElement('span');
+      var tag = document.createElement('button');
+      tag.type = 'button';
       tag.className = 'entry__tag';
       tag.textContent = '#' + post.tags[0];
+      var tagValue = tagKey(post.tags[0]);
+      tag.setAttribute('data-tag', tagValue);
+      tag.setAttribute('aria-label', 'Показать записи с хэштегом #' + post.tags[0]);
+      tag.addEventListener('click', function(){ applyTagFilter(tagValue, post.tags[0], true); });
       meta.appendChild(tag);
     }
     art.appendChild(meta);
@@ -3693,6 +3706,55 @@ html.rich{
     });
   }
 
+  // Один и тот же узел под сообщение «пусто», сколько бы раз ни
+  // переключали рубрику — не плодим вторую копию.
+  function ensureFilterEmptyNotice(){
+    var empty = railEl.querySelector('.feed__empty--filter');
+    if (!empty){
+      empty = document.createElement('p');
+      empty.className = 'feed__empty feed__empty--filter';
+      empty.textContent = 'В этой рубрике пока нет записей.';
+      empty.hidden = true;
+      railEl.appendChild(empty);
+    }
+    return empty;
+  }
+
+  // Общий пульт фильтра: и рубрики наверху ленты, и тег внутри карточки
+  // (см. buildEntry) вызывают одну и ту же функцию — нет двух копий логики
+  // «что показать», а строка статуса для читалок экрана и понятное
+  // сообщение в самой ленте обновляются вместе, не порознь.
+  function applyTagFilter(value, label, jumpToDiary){
+    // Тег могли нажать в превью на главной («Последнее») — без переключения
+    // вкладки фильтр применился бы к скрытой панели «Записи», незаметно для
+    // того, кто нажал. Флаг просят только настоящие клики по тегу в
+    // карточке — иначе самый первый, служебный вызов при отрисовке ленты
+    // перекидывал бы на «Записи» любого, кто открыл сайт на главной.
+    var diaryPanel = document.getElementById('tab-diary');
+    if (jumpToDiary && diaryPanel && diaryPanel.hidden){
+      location.hash = '#/dnevnik';
+      showTab(findTab('diary'), false);
+    }
+    if (filtersEl){
+      [].slice.call(filtersEl.querySelectorAll('[data-tag]')).forEach(function(btn){
+        btn.setAttribute('aria-pressed', btn.getAttribute('data-tag') === value ? 'true' : 'false');
+      });
+    }
+    var visible = 0;
+    [].slice.call(railEl.querySelectorAll('.entry')).forEach(function(entry){
+      var show = value === 'all' || (entry._tagKeys || []).indexOf(value) !== -1;
+      entry.hidden = !show;
+      if (show) visible++;
+    });
+    if (filtersStatusEl){
+      filtersStatusEl.textContent = value === 'all'
+        ? 'Показано записей: ' + visible
+        : 'Хэштег #' + label + ' · записей: ' + visible;
+    }
+    ensureFilterEmptyNotice().hidden = visible > 0;
+    return visible;
+  }
+
   function renderFilters(tags){
     if (!filtersEl) return;
     filtersEl.innerHTML = '';
@@ -3703,29 +3765,8 @@ html.rich{
     }
     filtersEl.hidden = false;
     if (filtersStatusEl) filtersStatusEl.hidden = false;
-    var entries = [].slice.call(railEl.querySelectorAll('.entry'));
+    var entryCount = railEl.querySelectorAll('.entry').length;
     var expanded = false;
-
-    function updateStatus(visible, label){
-      if (!filtersStatusEl) return;
-      filtersStatusEl.textContent = label === 'Все'
-        ? 'Показано записей: ' + visible
-        : 'Хэштег #' + label + ' · записей: ' + visible;
-    }
-
-    function selectTag(button, value, label){
-      [].slice.call(filtersEl.querySelectorAll('[data-tag]')).forEach(function(x){
-        x.setAttribute('aria-pressed','false');
-      });
-      button.setAttribute('aria-pressed','true');
-      var visible = 0;
-      entries.forEach(function(entry){
-        var show = value === 'all' || entry._tagKeys.indexOf(value) !== -1;
-        entry.hidden = !show;
-        if (show) visible++;
-      });
-      updateStatus(visible, label);
-    }
 
     function chip(label, value, count, index){
       var b = document.createElement('button');
@@ -3739,12 +3780,12 @@ html.rich{
       if (index >= COLLAPSED_FILTERS) b.hidden = true;
       b.textContent = (value === 'all' ? 'Все' : '#' + label) + ' · ' + count;
       b.addEventListener('click', function(){
-        selectTag(b, value, label);
+        applyTagFilter(value, label);
       });
       return b;
     }
 
-    filtersEl.appendChild(chip('Все', 'all', entries.length, -1));
+    filtersEl.appendChild(chip('Все', 'all', entryCount, -1));
     tags.forEach(function(tag, index){
       filtersEl.appendChild(chip(tag.label, tag.key, tag.count, index));
     });
@@ -3765,7 +3806,7 @@ html.rich{
       });
       filtersEl.appendChild(more);
     }
-    updateStatus(entries.length, 'Все');
+    applyTagFilter('all', 'Все');
   }
 
   function failure(err){

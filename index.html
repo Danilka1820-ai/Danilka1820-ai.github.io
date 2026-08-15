@@ -1066,9 +1066,9 @@ img, video{
 }
 .tv__win{
   position:relative; z-index:1;
-  display:flex; flex-direction:column; align-items:center; gap:14px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
   max-width:min(1000px,92vw); width:100%;
-  padding:0 clamp(8px,4vw,56px);
+  padding:clamp(8px,2vw,20px) clamp(8px,4vw,56px);
 }
 .tv__stage{
   position:relative; max-width:100%; max-height:68vh;
@@ -1164,7 +1164,7 @@ img, video{
   transition:background .2s, opacity .2s;
 }
 .tv__close:hover,.tv__nav:hover{ background:rgba(255,255,255,.85); }
-.tv__close{ top:-60px; right:clamp(8px,4vw,56px); }
+.tv__close{ top:8px; right:clamp(16px,5vw,64px); }
 .tv__nav{ top:50%; margin-top:-23px; font-size:26px; }
 .tv__prev{ left:-4px; }
 .tv__next{ right:-4px; }
@@ -1173,13 +1173,14 @@ img, video{
 .tv__cap{
   font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-2); text-align:center;
+  min-height:14px; line-height:1.25;
   transition:opacity .25s ease;
 }
 
 .tv__bar{
-  display:flex; align-items:center; gap:8px;
+  display:flex; align-items:center; gap:4px;
   width:100%; max-width:720px; min-width:0;
-  padding:8px 12px; border-radius:22px;
+  padding:5px 8px; border-radius:18px;
   background:var(--glass-tint);
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
@@ -1188,7 +1189,7 @@ img, video{
   transition:opacity .25s ease;
 }
 .pl__btn{
-  flex:0 0 auto; width:36px; height:36px; border-radius:50%;
+  flex:0 0 auto; width:32px; height:32px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   border:0; background:transparent; cursor:pointer;
   font-family:var(--mono); font-size:14px; line-height:1; color:var(--ink);
@@ -1249,19 +1250,21 @@ img, video{
 .tv__quality .tv__hd{ width:auto; min-width:48px; padding:0 10px; border-radius:999px; }
 .tv__qualityMenu{
   position:absolute; right:0; bottom:calc(100% + 10px); z-index:5;
-  min-width:142px; padding:6px; margin:0; list-style:none;
-  border:1px solid var(--glass-stroke); border-radius:14px;
+  min-width:156px; padding:4px; margin:0; list-style:none;
+  border:1px solid var(--glass-stroke); border-radius:12px;
   background:rgba(248,247,243,.96); box-shadow:0 18px 45px rgba(17,21,27,.22);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
 }
 .tv__qualityMenu[hidden]{ display:none; }
 .tv__qualityOption{
   width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px;
-  padding:9px 10px; border:0; border-radius:9px; cursor:pointer;
+  padding:8px 9px; border:0; border-radius:8px; cursor:pointer;
   background:transparent; color:var(--ink); font:500 11px/1.2 var(--mono);
 }
 .tv__qualityOption:hover,.tv__qualityOption:focus-visible{ background:rgba(17,21,27,.08); outline:0; }
 .tv__qualityOption[aria-checked="true"]{ color:var(--lamp); background:rgba(166,55,38,.08); }
+.tv__qualityOption[disabled]{ color:var(--ink-3); cursor:not-allowed; opacity:.62; }
+.tv__qualityOption[disabled] .tv__qualitySize{ font-size:9px; }
 .tv__qualitySize{ color:var(--ink-2); font-weight:400; }
 
 /* На узком экране дорожке в одном ряду с кнопками остаётся десяток точек —
@@ -1383,24 +1386,19 @@ img, video{
 /* Фото — тоже кнопка: у него теперь есть что нажать. */
 .entry__photo, .hero__fig img{ cursor:zoom-in; }
 
-/* Телефон в ландшафте. Крестик стоит НАД окном («минус 52»), и при высоте
-   экрана в 390 точек окно занимает её целиком — крестик уезжает за верхний
-   край, а закрыть ролик больше нечем: клавиши Esc на телефоне нет, кнопка
-   «назад» уводит со страницы. Сажаем его внутрь кадра, в угол — ровно так же,
-   как это уже сделано для полного экрана строкой выше. Условие по высоте, а
-   не по ширине: дело именно в ней. Само правило стоит после мобильного блока,
-   чтобы его не перебил более поздний top:-52px. */
+/* На телефоне крестик всегда остаётся внутри окна: клавиши Esc там нет, а
+   кнопка браузера «назад» уведёт со страницы. */
 
 @media (max-width:720px){
-  .tv__win{ gap:10px; }
-  .tv__close{ top:-52px; }
+  .tv__win{ gap:7px; padding-block:8px; }
+  .tv__close{ top:8px; right:16px; }
   .tv__nav{ width:40px; height:40px; margin-top:-20px; }
   .tv__prev{ left:-6px; }
   .tv__next{ right:-6px; }
   /* Зазор задан по осям раздельно и именно здесь: этот блок идёт после
      медиазапроса на 700 и общим gap затирал бы и его row-gap тоже. Три точки
      по горизонтали — то, при чём семь кнопок по 38 встают в ряд на 360. */
-  .tv__bar{ column-gap:3px; row-gap:4px; padding:6px 8px; }
+  .tv__bar{ column-gap:3px; row-gap:3px; padding:4px 6px; }
   /* Пальцем, а не курсором. Прежние 34 точки — промах через раз, но и 44 сюда
      не встают: кнопок семь, и на 320 точках им нужно 332 при доступных 264 —
      панель разъезжалась на три строки с полупустой последней. 38 — наибольшее,
@@ -1419,8 +1417,7 @@ img, video{
   .tv__bar{ column-gap:2px; }
   .pl__btn{ width:34px; height:34px; font-size:12px; }
 }
-/* Должно идти ПОСЛЕ мобильного top:-52px выше. Иначе на телефоне в
-   альбомной ориентации каскад снова уводит крестик за верхний край. */
+/* В альбомной ориентации дополнительно прижимаем крестик к краю кадра. */
 @media (max-height:500px){
   .tv__close{ top:8px; right:8px; }
 }
@@ -2630,24 +2627,35 @@ html.rich{
       qualityBtn.setAttribute('aria-expanded', String(!qualityMenu.hidden));
     });
     qualityMenu.addEventListener('click', function(e){
-      var option = e.target.closest('[data-level]');
-      if (!option) return;
+      var option = e.target.closest('[data-quality]');
+      if (!option || option.disabled) return;
       var это = сейчас();
       if (!это) return;
       var entry = это.entry, all = это.all;
-      root.level = Number(option.dataset.level);
+      root.wanted = option.dataset.quality === 'auto' ? 0 : Number(option.dataset.quality);
+      root.level = root.wanted ? nearestLevel(entry.item, root.wanted) : pickLevel(entry.item);
       swap(all[root.level].src, v.currentTime, !v.paused);
       sizeStage(entry);
       paintQuality(entry);
       // Выбор руками — это решение зрителя, а не разовая случайность:
       // соседние ролики открываем в том же качестве.
-      root.wanted = all[root.level].h || 0;
       remember();
       closeQuality();
     });
     document.addEventListener('click', function(e){ if (!quality.contains(e.target)) closeQuality(); });
     quality.addEventListener('keydown', function(e){
       if (e.key === 'Escape'){ closeQuality(); qualityBtn.focus(); }
+      if (!/^(ArrowDown|ArrowUp|Home|End)$/.test(e.key)) return;
+      var options = [].slice.call(qualityMenu.querySelectorAll('.tv__qualityOption:not([disabled])'));
+      if (!options.length) return;
+      e.preventDefault();
+      if (qualityMenu.hidden){ qualityMenu.hidden = false; qualityBtn.setAttribute('aria-expanded', 'true'); }
+      var at = options.indexOf(document.activeElement);
+      if (e.key === 'Home') at = 0;
+      else if (e.key === 'End') at = options.length - 1;
+      else if (e.key === 'ArrowDown') at = (at + 1 + options.length) % options.length;
+      else at = (at - 1 + options.length) % options.length;
+      options[at].focus();
     });
 
     /* Смена файла на лету. Скорость приходится ставить заново: браузер по
@@ -3121,10 +3129,18 @@ html.rich{
     if (!wanted || THIN) return pickLevel(item);
     var all = levels(item), best = 0, diff = Infinity;
     for (var i = 0; i < all.length; i++){
-      var d = Math.abs((all[i].h || 0) - wanted);
+      var d = Math.abs(qualityHeight(all[i]) - wanted);
       if (d < diff){ diff = d; best = i; }
     }
     return best;
+  }
+
+  /* В названии качества показываем короткую сторону кадра: у вертикального
+     960×1280 это 960p, а не вводящее в заблуждение «1280p». */
+  function qualityHeight(level){
+    return Math.min(level.w || Infinity, level.h || Infinity) === Infinity
+      ? (level.h || level.w || 0)
+      : Math.min(level.w, level.h);
   }
 
   function paintQuality(entry){
@@ -3138,15 +3154,28 @@ html.rich{
 
     var here = all[tv.level] || all[0];
     // Показываем настоящее разрешение, а не отвлечённые «HD» и «SD».
-    var имя = function(l){ return l.h ? l.h + 'p' : '?'; };
+    var имя = function(l){ var h = qualityHeight(l); return h ? h + 'p' : '?'; };
     btn.querySelector('span').textContent = имя(here);
     var сейчас = имя(here) + (megabytes(here.size) ? ' · ' + megabytes(here.size) : '');
     btn.setAttribute('aria-label', 'Качество: ' + сейчас + '. Открыть список');
     btn.title = сейчас;
-    menu.innerHTML = all.map(function(level, index){
+    var available = {};
+    all.forEach(function(level, index){ available[qualityHeight(level)] = index; });
+    // Для обычного видео меню сохраняет знакомую шкалу 1080p/720p. У кружочка
+    // показываем только реальные квадратные размеры, без ложных стандартов ТВ.
+    var targets = entry.item.type === 'round' ? [] : [1080, 720];
+    Object.keys(available).map(Number).sort(function(a,b){ return b-a; }).forEach(function(h){
+      if (targets.indexOf(h) < 0) targets.push(h);
+    });
+    var auto = '<button type="button" class="tv__qualityOption" role="menuitemradio" aria-checked="' +
+      (!tv.wanted) + '" data-quality="auto"><span>Авто</span><span class="tv__qualitySize">' + имя(here) + '</span></button>';
+    menu.innerHTML = auto + targets.map(function(h){
+      var index = available[h];
+      var level = index === undefined ? null : all[index];
       return '<button type="button" class="tv__qualityOption" role="menuitemradio" aria-checked="' +
-        (index === tv.level) + '" data-level="' + index + '"><span>' + имя(level) +
-        '</span><span class="tv__qualitySize">' + (megabytes(level.size) || '') + '</span></button>';
+        (!!tv.wanted && index === tv.level) + '" data-quality="' + h + '"' +
+        (level ? '' : ' disabled aria-disabled="true"') + '><span>' + h + 'p</span><span class="tv__qualitySize">' +
+        (level ? (megabytes(level.size) || '') : 'нет в файле') + '</span></button>';
     }).join('');
   }
 

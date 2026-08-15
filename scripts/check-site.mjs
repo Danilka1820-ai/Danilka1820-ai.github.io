@@ -244,12 +244,19 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   }
 });
 
-шаг('крестик плеера остаётся на экране в альбомном телефоне', () => {
-  const mobileTop = код.indexOf('.tv__close{ top:-52px; }');
-  const landscape = код.lastIndexOf('@media (max-height:500px)');
-  if (mobileTop < 0 || landscape < mobileTop ||
-      !/\.tv__close\{\s*top:8px;\s*right:8px;\s*\}/.test(код.slice(landscape))) {
-    throw new Error('правило альбомной ориентации должно идти после мобильного top:-52px');
+шаг('крестик плеера остаётся внутри окна на любом экране', () => {
+  if (!/\.tv__close\{\s*top:8px;\s*right:clamp\(/.test(код) ||
+      !/@media \(max-width:720px\)[\s\S]*?\.tv__close\{\s*top:8px;\s*right:16px;\s*\}/.test(код)) {
+    throw new Error('крестик должен оставаться внутри окна и на телефоне, и на большом экране');
+  }
+});
+
+шаг('меню качества полное и не обещает отсутствующий файл', () => {
+  if (!/: \[1080, 720\]/.test(код) || !/>Авто</.test(код)) {
+    throw new Error('в меню качества должны быть Авто, 1080p и 720p');
+  }
+  if (!/нет в файле/.test(код) || !/disabled aria-disabled="true"/.test(код)) {
+    throw new Error('недоступное качество должно быть честно подписано и выключено');
   }
 });
 

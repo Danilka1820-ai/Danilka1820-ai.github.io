@@ -890,7 +890,7 @@ img, video{
   margin:0; font-size:.92rem; color:var(--ink-2);
 }
 
-.filters{ display:flex; flex-wrap:wrap; gap:var(--s1); margin:var(--s4) 0 var(--s6); }
+.filters{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s1); margin:var(--s4) 0 var(--s2); }
 .filters button{
   font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-2);
@@ -899,6 +899,13 @@ img, video{
   box-shadow:0 4px 14px -10px rgba(17,21,27,.5), inset 0 1px 0 rgba(255,255,255,.8);
   padding:11px 16px; min-height:42px; cursor:pointer;
   transition:color .2s, border-color .2s, background .2s, box-shadow .2s;
+}
+.filters button[hidden]{ display:none; }
+.filters__more{ color:var(--lamp-ink) !important; }
+.filters__status{
+  min-height:1.5em; margin:0 0 var(--s6);
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  color:var(--ink-3);
 }
 /* Как и остальные кнопки: стекло не заливается чёрным, подчёркивается слово.
    Выбранная рубрика держится не цветом фона, а плотным стеклом и линией —
@@ -1862,7 +1869,8 @@ html.rich{
         </p>
       </div>
 
-      <div class="filters" id="filters" role="group" aria-label="Рубрики" hidden></div>
+      <div class="filters" id="filters" role="group" aria-label="Фильтр записей по хэштегам" aria-describedby="filterStatus" hidden></div>
+      <p class="filters__status" id="filterStatus" aria-live="polite" hidden></p>
 
       <div class="rail" id="rail" aria-live="polite">
         <p class="feed__state">Загружаю записи…</p>
@@ -2338,8 +2346,27 @@ html.rich{
   var railEl = document.getElementById('rail');
   var latestEl = document.getElementById('latestRail');
   var filtersEl = document.getElementById('filters');
-  var MAX_FILTERS = 8;
+  var filtersStatusEl = document.getElementById('filterStatus');
+  var COLLAPSED_FILTERS = 12;
   var WEEKDAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+  function tagKey(tag){
+    var value = String(tag || '').trim().replace(/^#+/, '');
+    if (value.normalize) value = value.normalize('NFKC');
+    return value.toLocaleLowerCase('ru-RU');
+  }
+
+  function cleanTags(tags){
+    var seen = {};
+    return (Array.isArray(tags) ? tags : []).map(function(tag){
+      return String(tag || '').trim().replace(/^#+/, '');
+    }).filter(function(tag){
+      var key = tagKey(tag);
+      if (!key || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
 
   function isSafeMediaUrl(url){
     return typeof url === 'string' && !url.includes('..') &&
@@ -2368,7 +2395,10 @@ html.rich{
 
   /* Заголовков в Telegram нет — берём первую строку, если она короткая. */
   function splitTitle(text){
-    var lines = text.trim().split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+    var onlyTags = /^(?:#[A-Za-zА-Яа-яЁё0-9_]+\s*)+$/;
+    var lines = text.trim().split('\n').map(function(l){ return l.trim(); }).filter(function(line){
+      return line && !onlyTags.test(line);
+    });
     if (lines.length > 1 && lines[0].length <= 72 && !/[.!?]$/.test(lines[0])){
       return { title: lines[0], body: lines.slice(1) };
     }
@@ -3529,7 +3559,7 @@ html.rich{
       datetime: post.datetime || '',
       text: post.text || '',
       link: post.link || '',
-      tags: Array.isArray(post.tags) ? post.tags : [],
+      tags: cleanTags(post.tags),
       media: media.filter(function(m){ return m && m.src && isSafeMediaUrl(m.src); })
         .map(function(m){
           m = Object.assign({}, m);
@@ -3544,7 +3574,7 @@ html.rich{
   function buildEntry(post, mediaList){
     var art = document.createElement('article');
     art.className = 'entry rise';
-    if (post.tags.length) art.setAttribute('data-tags', post.tags.join(','));
+    art._tagKeys = post.tags.map(tagKey);
 
     var when = partsFromDate(post);
     var meta = document.createElement('div');
@@ -3565,7 +3595,7 @@ html.rich{
     if (post.tags.length){
       var tag = document.createElement('span');
       tag.className = 'entry__tag';
-      tag.textContent = post.tags[0];
+      tag.textContent = '#' + post.tags[0];
       meta.appendChild(tag);
     }
     art.appendChild(meta);
@@ -3635,14 +3665,20 @@ html.rich{
     target.innerHTML = '';
     var frag = document.createDocumentFragment();
     var shown = 0;
-    var tagCount = {};
+    var tagStats = {};
     var mediaList = [];   // ролики этой ленты — по ним листает окно просмотра
     posts.forEach(function(raw){
       if (limit && shown >= limit) return;
       var post = normalize(raw);
       if (!post.text.trim() && !post.media.length) return;
       shown++;
-      post.tags.forEach(function(t){ tagCount[t] = (tagCount[t] || 0) + 1; });
+      post.tags.forEach(function(label){
+        var key = tagKey(label);
+        if (!tagStats[key]) tagStats[key] = { key:key, label:label, count:0 };
+        else if (tagStats[key].label === tagStats[key].label.toLocaleLowerCase('ru-RU') &&
+                 label !== label.toLocaleLowerCase('ru-RU')) tagStats[key].label = label;
+        tagStats[key].count++;
+      });
       frag.appendChild(buildEntry(post, mediaList));
     });
     if (!shown){
@@ -3652,52 +3688,84 @@ html.rich{
     target.appendChild(frag);
     [].slice.call(target.querySelectorAll('.rise')).forEach(watch);
     // Тем набирается много — показываем те, что встречаются чаще всего.
-    return Object.keys(tagCount).sort(function(a,b){
-      return tagCount[b] - tagCount[a] || a.localeCompare(b, 'ru');
+    return Object.keys(tagStats).map(function(key){ return tagStats[key]; }).sort(function(a,b){
+      return b.count - a.count || a.label.localeCompare(b.label, 'ru');
     });
   }
 
   function renderFilters(tags){
     if (!filtersEl) return;
     filtersEl.innerHTML = '';
-    if (!tags || !tags.length){ filtersEl.hidden = true; return; }
-    filtersEl.hidden = false;
-
-    // Один и тот же узел, сколько бы раз ни перерисовывали рубрики.
-    var empty = railEl.querySelector('.feed__empty--filter');
-    if (!empty){
-      empty = document.createElement('p');
-      empty.className = 'feed__empty feed__empty--filter';
-      empty.textContent = 'В этой рубрике пока нет записей.';
-      railEl.appendChild(empty);
+    if (!tags || !tags.length){
+      filtersEl.hidden = true;
+      if (filtersStatusEl) filtersStatusEl.hidden = true;
+      return;
     }
-    empty.hidden = true;
+    filtersEl.hidden = false;
+    if (filtersStatusEl) filtersStatusEl.hidden = false;
+    var entries = [].slice.call(railEl.querySelectorAll('.entry'));
+    var expanded = false;
 
-    function chip(label, value, active){
+    function updateStatus(visible, label){
+      if (!filtersStatusEl) return;
+      filtersStatusEl.textContent = label === 'Все'
+        ? 'Показано записей: ' + visible
+        : 'Хэштег #' + label + ' · записей: ' + visible;
+    }
+
+    function selectTag(button, value, label){
+      [].slice.call(filtersEl.querySelectorAll('[data-tag]')).forEach(function(x){
+        x.setAttribute('aria-pressed','false');
+      });
+      button.setAttribute('aria-pressed','true');
+      var visible = 0;
+      entries.forEach(function(entry){
+        var show = value === 'all' || entry._tagKeys.indexOf(value) !== -1;
+        entry.hidden = !show;
+        if (show) visible++;
+      });
+      updateStatus(visible, label);
+    }
+
+    function chip(label, value, count, index){
       var b = document.createElement('button');
       b.type = 'button';
       b.setAttribute('data-tag', value);
-      b.setAttribute('aria-pressed', active ? 'true' : 'false');
-      b.textContent = label;
+      b.setAttribute('aria-controls', 'rail');
+      b.setAttribute('aria-pressed', value === 'all' ? 'true' : 'false');
+      b.setAttribute('aria-label', value === 'all'
+        ? 'Показать все записи: ' + count
+        : 'Фильтр по хэштегу ' + label + ': ' + count);
+      if (index >= COLLAPSED_FILTERS) b.hidden = true;
+      b.textContent = (value === 'all' ? 'Все' : '#' + label) + ' · ' + count;
       b.addEventListener('click', function(){
-        [].slice.call(filtersEl.querySelectorAll('button')).forEach(function(x){
-          x.setAttribute('aria-pressed','false');
-        });
-        b.setAttribute('aria-pressed','true');
-        var visible = 0;
-        [].slice.call(railEl.querySelectorAll('.entry')).forEach(function(el){
-          var own = (el.getAttribute('data-tags') || '').split(',');
-          var show = value === 'all' || own.indexOf(value) !== -1;
-          el.hidden = !show;
-          if (show) visible++;
-        });
-        empty.hidden = visible > 0;
+        selectTag(b, value, label);
       });
       return b;
     }
 
-    filtersEl.appendChild(chip('Все','all',true));
-    tags.slice(0, MAX_FILTERS).forEach(function(t){ filtersEl.appendChild(chip(t, t, false)); });
+    filtersEl.appendChild(chip('Все', 'all', entries.length, -1));
+    tags.forEach(function(tag, index){
+      filtersEl.appendChild(chip(tag.label, tag.key, tag.count, index));
+    });
+
+    if (tags.length > COLLAPSED_FILTERS){
+      var more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'filters__more';
+      more.setAttribute('aria-expanded', 'false');
+      more.textContent = 'Ещё +' + (tags.length - COLLAPSED_FILTERS);
+      more.addEventListener('click', function(){
+        expanded = !expanded;
+        [].slice.call(filtersEl.querySelectorAll('[data-tag]')).forEach(function(button, index){
+          if (index > COLLAPSED_FILTERS) button.hidden = !expanded;
+        });
+        more.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        more.textContent = expanded ? 'Свернуть' : 'Ещё +' + (tags.length - COLLAPSED_FILTERS);
+      });
+      filtersEl.appendChild(more);
+    }
+    updateStatus(entries.length, 'Все');
   }
 
   function failure(err){
@@ -3762,6 +3830,7 @@ html.rich{
         railEl.appendChild(failure(err));
         if (latestEl){ latestEl.innerHTML = ''; latestEl.appendChild(failure(err)); }
         if (filtersEl) filtersEl.hidden = true;
+        if (filtersStatusEl) filtersStatusEl.hidden = true;
       });
   }
 })();

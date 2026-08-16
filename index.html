@@ -633,13 +633,17 @@ img, video{
   font-family:var(--mono); font-size:15px; line-height:1;
   color:var(--ink-2);
   --rim:4px;
-  transition:color .2s, transform .2s cubic-bezier(.22,1,.36,1);
+  transition:color .2s, transform .2s cubic-bezier(.22,1,.36,1),
+             border-radius .22s cubic-bezier(.22,1,.36,1);
 }
 .top__more:active{ transform:scale(.94); }
 /* Открытое меню отмечаем не заливкой — она погасила бы стекло, — а тем, что
-   грань разгорается и точки темнеют. */
+   грань разгорается и точки темнеют. Нижние углы кружка распрямляются —
+   кнопка визуально перетекает в панель под собой, а не просто рядом с ней. */
 .top__more[aria-expanded="true"]{
   color:var(--ink);
+  border-bottom-left-radius:14px;
+  border-bottom-right-radius:14px;
   box-shadow:
     0 24px 50px -28px rgba(17,21,27,.55),
     0 2px 10px -6px rgba(17,21,27,.2),
@@ -655,6 +659,8 @@ img, video{
 @media (max-width:900px){
   .top__more{ display:flex; }
 
+  /* Точка роста — верхний правый угол, тот самый, где сидит кнопка: панель
+     не просто появляется рядом, а будто разворачивается из неё самой. */
   .top__nav{
     position:absolute; top:calc(100% + 10px); right:16px; min-width:220px;
     flex-direction:column; align-items:stretch; gap:2px;
@@ -665,11 +671,24 @@ img, video{
     -webkit-backdrop-filter:var(--glass-blur);
     backdrop-filter:var(--glass-blur);
     box-shadow:var(--glass-drop), var(--glass-glow);
-    opacity:0; transform:translateY(-8px) scale(.97);
+    transform-origin:top right;
+    opacity:0; transform:translateY(-6px) scale(.88);
     pointer-events:none; z-index:3;
-    transition:opacity .22s ease, transform .22s cubic-bezier(.2,.7,.3,1);
+    transition:opacity .26s ease, transform .32s cubic-bezier(.22,1,.36,1);
   }
   .top__nav.is-open{ opacity:1; transform:none; pointer-events:auto; }
+  /* Пункты подъезжают следом за панелью, чуть вдогонку друг за другом —
+     раскрытие читается как одно живое движение, а не щелчок видимости. */
+  .top__nav .tab{
+    opacity:0; transform:translateY(-4px);
+    transition:opacity .18s ease, transform .22s cubic-bezier(.22,1,.36,1),
+               color .2s, background .2s;
+  }
+  .top__nav.is-open .tab{ opacity:1; transform:none; }
+  .top__nav.is-open .tab:nth-child(1){ transition-delay:.03s; }
+  .top__nav.is-open .tab:nth-child(2){ transition-delay:.06s; }
+  .top__nav.is-open .tab:nth-child(3){ transition-delay:.09s; }
+  .top__nav.is-open .tab:nth-child(4){ transition-delay:.12s; }
 
   .tab{
     position:relative; z-index:1;
@@ -711,7 +730,11 @@ img, video{
   .top__now .now-date,.top__now .sep-date{ display:none; }
 }
 @media (max-width:900px) and (prefers-reduced-motion: reduce){
-  .top__nav{ transition:none; transform:none; }
+  .top__nav, .top__nav .tab, .top__more{ transition:none; transform:none; }
+  .top__nav.is-open .tab:nth-child(1),
+  .top__nav.is-open .tab:nth-child(2),
+  .top__nav.is-open .tab:nth-child(3),
+  .top__nav.is-open .tab:nth-child(4){ transition-delay:0s; }
 }
 /* ─────────────────────────────────────────────
    РАЗДЕЛЫ

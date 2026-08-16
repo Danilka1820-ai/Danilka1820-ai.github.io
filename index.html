@@ -1625,7 +1625,7 @@ html.rich{
    кнопке тут не нужно, только мягкая тень и лёгкий отклик на нажатие. */
 .social__link{
   display:inline-flex; align-items:center; justify-content:center;
-  width:52px; height:52px; border-radius:14px;
+  width:52px; height:52px; border-radius:50%;
   box-shadow:0 10px 22px -12px rgba(17,21,27,.45);
   transition:transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s;
 }
@@ -2015,15 +2015,14 @@ html.rich{
         </a>
         <a class="social__link" href="https://vk.com/danilka2028" target="_blank" rel="noopener" aria-label="Я во ВКонтакте">
           <svg viewBox="0 0 48 48" aria-hidden="true">
-            <rect width="48" height="48" rx="14" fill="#0077FF"/>
-            <text x="24" y="31.5" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="21" letter-spacing="-1" fill="#fff" text-anchor="middle">VK</text>
+            <circle cx="24" cy="24" r="24" fill="#0077FF"/>
+            <text x="24" y="31" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="19" fill="#fff" text-anchor="middle">VK</text>
           </svg>
         </a>
         <a class="social__link" href="https://ok.ru/profile/583449107468" target="_blank" rel="noopener" aria-label="Я в Одноклассниках">
           <svg viewBox="0 0 48 48" aria-hidden="true">
-            <rect width="48" height="48" rx="14" fill="#F7931E"/>
-            <circle cx="24" cy="19" r="6.5" fill="none" stroke="#fff" stroke-width="3"/>
-            <path d="M15 30.5c2.7 3.2 5.8 4.6 9 4.6s6.3-1.4 9-4.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="24" cy="24" r="24" fill="#F7931E"/>
+            <text x="24" y="31" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="18" fill="#fff" text-anchor="middle">OK</text>
           </svg>
         </a>
       </div>

@@ -1723,9 +1723,13 @@ html.rich{
   .thesis{ padding:var(--s5) var(--s4); margin-block:var(--s5); }
   .feed--home{ padding-block:var(--s6); }
   .feed{ padding-block:var(--s5) var(--s6); }
-  /* На узком экране фиксированная кнопка «наверх» стоит над подвалом.
-     Дополнительная нижняя строка не даёт ей накрыть последнюю ссылку. */
-  .foot__row{ padding-bottom:calc(var(--s3) + 66px + env(safe-area-inset-bottom, 0px)); }
+  /* На узком экране фиксированная кнопка «наверх» стоит над подвалом —
+     нижний запас ровно под неё (46px кнопка + 20px отступ = 66px) плюс
+     небольшой воздух, а не полный var(--s3) сверху: строка подтянута
+     ближе к краю, а не подвешена в пустоте посреди подвала. Буквы тоже
+     мельче — на телефоне подвал не место для крупного текста. */
+  .foot__row{ padding-bottom:calc(12px + 66px + env(safe-area-inset-bottom, 0px)); }
+  .foot .label{ font-size:10px; letter-spacing:.12em; }
 }
 
 /* ─── Отдача на нажатие пальцем ───

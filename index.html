@@ -1723,13 +1723,14 @@ html.rich{
   .thesis{ padding:var(--s5) var(--s4); margin-block:var(--s5); }
   .feed--home{ padding-block:var(--s6); }
   .feed{ padding-block:var(--s5) var(--s6); }
-  /* Подвал сжат до полоски строго по тексту: сверху почти нет запаса,
-     снизу — ровно то, что физически нужно круглой кнопке «наверх»
-     (46px кнопка + 20px отступ = 66px), без лишнего воздуха поверх.
+  /* Подвал сжат до полоски строго по тексту — с обеих сторон только
+     реальная безопасная зона, без запаса под кнопку «наверх»: она сама
+     гаснет, как только подвал показывается на экране (см. toggleUp),
+     так что резервировать под неё место в полоске больше незачем.
      Буквы мельче — на телефоне подвал не место для крупного текста. */
   .foot__row{
     padding-top:8px;
-    padding-bottom:calc(66px + env(safe-area-inset-bottom, 0px));
+    padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));
   }
   .foot .label{ font-size:10px; letter-spacing:.12em; }
 }
@@ -2169,9 +2170,17 @@ html.rich{
 
   /* ── кнопка «наверх» ── */
   var up = document.getElementById('up');
+  var footEl = document.querySelector('.foot');
   if (up){
-    var toggleUp = function(){ up.classList.toggle('is-on', window.scrollY > window.innerHeight * 0.7); };
+    // Гасим кнопку, как только в неё же начинает въезжать подвал — тогда
+    // и не нужно держать под ней вечный запас пустого места на полоске:
+    // круг с подвалом просто не встречаются на экране одновременно.
+    var toggleUp = function(){
+      var footNear = footEl && footEl.getBoundingClientRect().top <= window.innerHeight;
+      up.classList.toggle('is-on', window.scrollY > window.innerHeight * 0.7 && !footNear);
+    };
     window.addEventListener('scroll', toggleUp, { passive:true });
+    window.addEventListener('resize', toggleUp);
     toggleUp();
     up.addEventListener('click', function(){ window.scrollTo({ top:0, behavior: reduce ? 'auto' : 'smooth' }); });
   }

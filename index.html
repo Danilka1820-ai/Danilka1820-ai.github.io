@@ -706,13 +706,17 @@ img, video{
   }
   .tab--cta[aria-current="page"]{ background:var(--ink); color:var(--paper); }
 
+  /* Кнопка и часы едут к правому краю одной группой — кнопка первой (слева
+     от «Москва»), часы следом за ней, а не порознь по разным углам. */
+  .top__more{ margin-left:auto; }
+
   /* Город, время и дата встают бутербродом — так втрое меньше по ширине,
      чем в строку. Разделители между ними были нужны только в строке —
      в столбик они лишние. */
   .top__in{ gap:10px; }
   .top__now{
     display:flex; flex-direction:column; align-items:center;
-    margin:0 0 0 auto; gap:3px;
+    gap:3px;
     font-size:10px;
     color:var(--ink-2); min-width:0;
   }
@@ -1828,6 +1832,8 @@ html.rich{
       <a class="tab" href="#/voprosy"  data-tab="faq">Вопросы</a>
       <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
     </nav>
+    <button type="button" class="glass-real top__more" id="moreBtn"
+            aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
     <div class="top__now" id="nowBlock">
       <span class="now-row">
         <span class="dot" aria-hidden="true"></span>
@@ -1838,8 +1844,6 @@ html.rich{
       <span class="sep sep-date" aria-hidden="true">·</span>
       <span class="now-date" id="nowDate">—</span>
     </div>
-    <button type="button" class="glass-real top__more" id="moreBtn"
-            aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
   </div>
 </header>
 

@@ -1644,11 +1644,14 @@ html.rich{
 .social__link:active{ transform:none; }
 
 /* Подвал прижат к низу окна: на коротких разделах под ним не остаётся
-   пустой плашки. */
+   пустой плашки. Фон — ровный тон, не градиент: снизу у подвала большой
+   пустой отступ под безопасную зону и кнопку «наверх» (без единого
+   элемента поверх), и на нём нарастающий к низу градиент был виден как
+   отдельная светлая полоса прямо над интерфейсом браузера. */
 .foot{
   margin-top:auto;
   border-top:1px solid var(--pane-edge);
-  background:linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.62));
+  background:rgba(255,255,255,.52);
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
 }

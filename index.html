@@ -603,6 +603,7 @@ img, video{
   font-family:var(--mono); font-size:11px; letter-spacing:.1em;
   color:var(--ink-3); white-space:nowrap;
 }
+.now-row{ display:flex; align-items:center; gap:8px; }
 .top__now .dot{
   width:6px; height:6px; border-radius:50%; background:var(--lamp);
   animation:pulse 2.4s ease-in-out infinite;
@@ -697,18 +698,25 @@ img, video{
   .top__nav.has-pill .tab--cta[aria-current="page"]{ background:transparent; color:var(--ink); }
   .top__nav.has-pill .tab--cta{ background:transparent; border-color:transparent; }
 
-  /* Часы встают в строку сразу за тремя точками, а не улетают к правому краю:
-     так имя, кнопка и время читаются одной группой. */
+  /* Город, время и дата встают бутербродом — так втрое меньше по ширине,
+     чем в строку, и три точки после них уже не давят на имя. Разделители
+     между ними были нужны только в строке — в столбик они лишние. */
   .top__in{ gap:10px; }
+  .top__more{ order:2; }
   .top__now{
-    display:flex; margin-left:0; margin-right:auto;
+    order:1;
+    display:flex; flex-direction:column; align-items:flex-end;
+    margin:0 0 0 auto; gap:1px;
     color:var(--ink-2); min-width:0;
   }
-  .top__now .now-date,.top__now .sep-date{ display:inline; }
+  .now-row{ gap:6px; }
+  .top__now .sep{ display:none; }
+  .top__now .now-date{ display:inline; }
 }
 @media (max-width:560px){
   .top__name{ font-size:11px; letter-spacing:0; word-spacing:-.2em; }
-  .top__now{ font-size:10.5px; letter-spacing:.04em; gap:5px; }
+  .top__now{ font-size:10.5px; letter-spacing:.04em; gap:1px; }
+  .now-row{ gap:5px; }
 }
 /* На совсем узких дата уже не влезает — остаются город и время. */
 @media (max-width:379px){
@@ -1808,8 +1816,10 @@ html.rich{
       <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
     </nav>
     <div class="top__now" id="nowBlock">
-      <span class="dot" aria-hidden="true"></span>
-      <span id="nowPlace">Москва</span>
+      <span class="now-row">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="nowPlace">Москва</span>
+      </span>
       <span class="sep" aria-hidden="true">·</span>
       <span id="nowTime">—</span>
       <span class="sep sep-date" aria-hidden="true">·</span>

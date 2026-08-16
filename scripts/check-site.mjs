@@ -10,6 +10,7 @@
 import { readFileSync, existsSync, readdirSync, statSync, lstatSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { Script } from 'node:vm';
+import { spawnSync } from 'node:child_process';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const ошибки = [];
@@ -60,6 +61,26 @@ const код = безКомментариев(html);
 
 шаг('sw.js без синтаксических ошибок', () => {
   new Script(readFileSync(ROOT + 'sw.js', 'utf8'));
+});
+
+/* Эти два — модули (import/export), vm.Script их не разберёт — она понимает
+   только классический скрипт. Раз уже роняли синхронизацию на час дублем
+   объявления в fetch-telegram-posts.mjs: он написан, запушен, а само падение
+   заметили только по упавшему workflow. Синтаксис модуля умеет проверить
+   только node --check — гоняем через него. */
+шаг('скрипты scripts/*.mjs без синтаксических ошибок', () => {
+  for (const имя of ['fetch-telegram-posts.mjs', 'vendor-fonts.mjs', 'check-site.mjs']) {
+    const путь = ROOT + 'scripts/' + имя;
+    if (!existsSync(путь)) continue;
+    const рез = spawnSync(process.execPath, ['--check', путь], { encoding: 'utf8' });
+    if (рез.status !== 0) {
+      const строки = рез.stderr.trim().split('\n');
+      // node --check печатает саму ошибку не последней строкой, а перед стеком
+      // и версией — ищем строку вида «...Error: ...», иначе берём последнюю.
+      const суть = строки.find((s) => /error:/i.test(s)) || строки.pop();
+      throw new Error(имя + ' — ' + суть.trim());
+    }
+  }
 });
 
 /* ── 2. Ни одного обращения к чужому серверу ──

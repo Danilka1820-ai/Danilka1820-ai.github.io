@@ -1733,6 +1733,10 @@ html.rich{
     padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));
   }
   .foot .label{ font-size:10px; letter-spacing:.12em; }
+  /* На широком экране «Вокруг меня» специально уезжает к правому краю —
+     на телефоне строка и так переносится, и та же отправка через всю
+     ширину только разводит её с «@danilka2028k» далеко в сторону. */
+  .foot__row .label:last-child{ margin-left:0; }
 }
 
 /* ─── Отдача на нажатие пальцем ───

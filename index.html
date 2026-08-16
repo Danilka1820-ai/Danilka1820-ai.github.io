@@ -617,94 +617,13 @@ img, video{
 }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
 
-/* Три точки рядом с именем — на широком экране не нужны, часы и так видны. */
-/* Кнопка разделов — та же отливка, что у портрета: кромка-лупа, толщина,
-   цветная грань и блик, идущий за пальцем. Кромку берём тоньше: кнопка
-   сорок точек в поперечнике, широкая грань съела бы её целиком. */
-/* Кнопка показывается только до 900 точек, то есть всегда под палец, — поэтому
-   44 задано прямо здесь, а не отдельным правилом для узких экранов. Раньше было
-   наоборот: 40 в основе и 36 на телефонах, где промахнуться проще всего. */
-.top__more{
-  display:none; flex:0 0 auto; align-self:center;
-  width:44px; height:44px; border-radius:50%; cursor:pointer;
-  align-items:center; justify-content:center;
-  font-family:var(--mono); font-size:15px; line-height:1;
-  color:var(--ink-2);
-  --rim:4px;
-  transition:color .2s, transform .2s cubic-bezier(.22,1,.36,1);
-}
-.top__more:active{ transform:scale(.94); }
-/* Открытое меню отмечаем не заливкой — она погасила бы стекло, — а тем, что
-   грань разгорается и точки темнеют. */
-.top__more[aria-expanded="true"]{
-  color:var(--ink);
-  box-shadow:
-    0 24px 50px -28px rgba(17,21,27,.55),
-    0 2px 10px -6px rgba(17,21,27,.2),
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(17,21,27,.14),
-    inset 0 0 0 1px rgba(176,121,28,.35);
-}
-
 @media (max-width:1080px){ .top__now .now-date, .top__now .sep-date{ display:none; } }
 
-/* На телефоне разделы прячутся под три точки, а их место в строке занимают
-   часы: так и время видно, и список разделов не режется по краю экрана. */
+/* На телефоне разделы больше не прячутся под «ещё» — показаны той же
+   строкой, что и на компьютере (.top__nav и так умеет сжиматься и
+   прокручиваться по горизонтали, см. базовые правила выше). Только время
+   с городом остаются собственной мобильной раскладкой ниже. */
 @media (max-width:900px){
-  .top__more{ display:flex; }
-
-  .top__nav{
-    position:absolute; top:calc(100% + 10px); left:16px; min-width:220px;
-    flex-direction:column; align-items:stretch; gap:2px;
-    padding:8px; margin:0; border-radius:20px;
-    overflow:visible;
-    border:1px solid var(--glass-stroke);
-    background:var(--glass-panel);
-    -webkit-backdrop-filter:var(--glass-blur);
-    backdrop-filter:var(--glass-blur);
-    box-shadow:var(--glass-drop), var(--glass-glow);
-    opacity:0; transform:translateY(-8px) scale(.97);
-    pointer-events:none; z-index:3;
-    transition:opacity .22s ease, transform .22s cubic-bezier(.2,.7,.3,1);
-  }
-  .top__nav.is-open{ opacity:1; transform:none; pointer-events:auto; }
-
-  /* Та же стеклянная капсула, что на компьютере, только в столбике она ездит
-     сверху вниз. Палец ведёт её так же, как мышь на большом экране. */
-  .nav__pillY{
-    position:absolute; left:8px; right:8px; top:0; height:0;
-    border-radius:12px;
-    border:1px solid rgba(255,255,255,.9);
-    background:linear-gradient(160deg, rgba(255,255,255,.95), rgba(255,255,255,.72));
-    box-shadow:0 8px 20px -12px rgba(17,21,27,.45), inset 0 1px 0 rgba(255,255,255,1);
-    opacity:0; pointer-events:none; z-index:0;
-    transition:transform .34s cubic-bezier(.22,1,.36,1),
-               height .34s cubic-bezier(.22,1,.36,1),
-               opacity .22s ease;
-  }
-  .top__nav.has-pill .nav__pillY{ opacity:1; }
-  .nav__pillY.no-anim{ transition:none; }
-
-  .tab{
-    position:relative; z-index:1;
-    padding:11px 14px; border-radius:12px;
-    font-size:12.5px; letter-spacing:.1em;
-  }
-  .tab::after{ display:none; }
-  /* Подсветку выбранного держит капсула — своя заливка ей только мешает. */
-  .top__nav:not(.has-pill) .tab[aria-current="page"]{ background:rgba(17,21,27,.07); }
-  .tab[aria-current="page"]{ color:var(--ink); }
-  .tab--cta{
-    align-self:stretch; margin-top:4px; text-align:left;
-    background:rgba(17,21,27,.06); border-color:rgba(255,255,255,.55);
-    box-shadow:none;
-  }
-  /* Выбранное отмечает капсула. Своя заливка «Контактов» её закрывала —
-     оставляем заливку только там, где капсулы нет. */
-  .top__nav:not(.has-pill) .tab--cta[aria-current="page"]{ background:var(--ink); color:var(--paper); }
-  .top__nav.has-pill .tab--cta[aria-current="page"]{ background:transparent; color:var(--ink); }
-  .top__nav.has-pill .tab--cta{ background:transparent; border-color:transparent; }
-
   /* Город, время и дата встают бутербродом — так втрое меньше по ширине,
      чем в строку. Разделители между ними были нужны только в строке —
      в столбик они лишние. */
@@ -728,10 +647,6 @@ img, video{
 @media (max-width:379px){
   .top__now .now-date,.top__now .sep-date{ display:none; }
 }
-@media (max-width:900px) and (prefers-reduced-motion: reduce){
-  .top__nav{ transition:none; transform:none; }
-}
-
 /* ─────────────────────────────────────────────
    РАЗДЕЛЫ
    ───────────────────────────────────────────── */
@@ -1710,7 +1625,7 @@ html.rich{
   /* Подписи на кнопках выделять незачем: долгое нажатие на телефоне вместо
      нажатия показывало бы лупу и «Скопировать». Текст записей не трогаем —
      его как раз копируют. */
-  button, .tab, .top__more, .pl__btn, .tv__close, .tv__nav, .up{
+  button, .tab, .pl__btn, .tv__close, .tv__nav, .up{
     -webkit-user-select:none; user-select:none;
   }
   .btn:active, .filters button:active, .entry__tag:active, .entry__more:active,
@@ -1720,9 +1635,6 @@ html.rich{
   .pl__btn:active, .tv__close:active, .tv__nav:active, .up:active{
     transform:scale(.92); opacity:.75;
   }
-  /* У кнопки разделов своё сжатие стоит выше по файлу — здесь только цвет,
-     иначе два transform перебили бы друг друга. */
-  .top__more:active{ color:var(--ink); }
 
   /* Не хватало пары точек до нормы: «Все записи» была 43, пункты меню — 42.
      Задаём низом, а не отступами, чтобы не разъехались надписи внутри. */
@@ -1818,10 +1730,7 @@ html.rich{
     <a class="top__name" href="#/glavnaya" data-tab="home"
        aria-current="page">Данил Сарыков</a>
     <span class="nav__pill" id="navPill" aria-hidden="true"></span>
-    <button type="button" class="glass-real top__more" id="moreBtn"
-            aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
     <nav class="top__nav" id="navMenu" aria-label="Разделы сайта">
-      <span class="nav__pillY" id="navPillY" aria-hidden="true"></span>
       <a class="tab" href="#/dnevnik"  data-tab="diary">Записи</a>
       <a class="tab" href="#/o-sebe"   data-tab="about">О дневнике</a>
       <a class="tab" href="#/voprosy"  data-tab="faq">Вопросы</a>
@@ -2084,34 +1993,7 @@ html.rich{
   tick();
   setInterval(tick, 30000);
 
-  /* ── три точки: на телефоне под ними прячутся разделы ── */
-  var moreBtn = document.getElementById('moreBtn');
   var navMenu = document.getElementById('navMenu');
-  if (moreBtn && navMenu){
-    var setOpen = function(open){
-      navMenu.classList.toggle('is-open', open);
-      moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    };
-    moreBtn.addEventListener('click', function(e){
-      e.stopPropagation();
-      setOpen(moreBtn.getAttribute('aria-expanded') !== 'true');
-      // Открыли — капсула сразу стоит на текущем разделе, без наезда.
-      if (typeof moveYPill === 'function') moveYPill();
-    });
-    // Выбрали раздел — меню закрывается, чтобы не перекрывать страницу.
-    navMenu.addEventListener('click', function(e){
-      if (e.target.closest('.tab')){
-        setOpen(false);
-        if (typeof moveYPill === 'function') moveYPill();
-      }
-    });
-    document.addEventListener('click', function(e){
-      if (!navMenu.contains(e.target) && e.target !== moreBtn) setOpen(false);
-    });
-    document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') setOpen(false);
-    });
-  }
 
   /* ── линия под шапкой появляется при прокрутке ── */
   var topBar = document.getElementById('top');
@@ -2200,19 +2082,18 @@ html.rich{
     return TABS[0];
   }
 
-  /* Капсула едет к выбранному разделу. На телефоне разделы лежат столбиком
-     в выпадающем меню — там она не нужна. */
+  /* Капсула едет к выбранному разделу — одинаково на любой ширине: на
+     телефоне разделы теперь в той же строке, что и на компьютере. */
   var navPill = document.getElementById('navPill');
   var topIn = document.querySelector('.top__in');
   var pillPlaced = false;
   var pillHover = null;      // раздел под курсором, если он там есть
   function movePill(){
     if (!navPill || !topIn) return;
-    var narrow = window.matchMedia('(max-width:900px)').matches;
     // Под курсором капсула забегает вперёд, к тому разделу, на который
     // человек смотрит. Отпустил — вернулась к открытому.
     var active = pillHover || document.querySelector('[data-tab][aria-current="page"]');
-    if (narrow || !active || !active.offsetWidth){
+    if (!active || !active.offsetWidth){
       topIn.classList.remove('has-pill');
       pillPlaced = false;
       return;
@@ -2270,52 +2151,6 @@ html.rich{
     }
   }
 
-  /* ── Капсула в выпадающем меню ──
-     На телефоне разделы лежат столбиком, и та, что ездит по шапке, туда не
-     достаёт. Здесь своя — ходит сверху вниз и слушается пальца: коснулся
-     раздела, капсула переехала и осталась, как на компьютере под курсором. */
-  var pillY = document.getElementById('navPillY');
-  var pillYPlaced = false;
-  var pillYTouch = null;      // раздел, которого касается палец
-
-  function moveYPill(){
-    if (!pillY || !navMenu) return;
-    var wide = window.matchMedia('(min-width:901px)').matches;
-    var цель = pillYTouch || navMenu.querySelector('[data-tab][aria-current="page"]');
-    if (wide || !navMenu.classList.contains('is-open') || !цель || !цель.offsetHeight){
-      navMenu.classList.remove('has-pill');
-      pillYPlaced = false;
-      return;
-    }
-    if (!pillYPlaced) pillY.classList.add('no-anim');
-    pillY.style.height = цель.offsetHeight + 'px';
-    pillY.style.transform = 'translateY(' + цель.offsetTop + 'px)';
-    navMenu.classList.add('has-pill');
-    if (!pillYPlaced){
-      void pillY.offsetWidth;
-      pillY.classList.remove('no-anim');
-      pillYPlaced = true;
-    }
-  }
-
-  if (pillY && navMenu){
-    navMenu.addEventListener('pointerdown', function(e){
-      var раздел = e.target.closest('[data-tab]');
-      if (раздел){ pillYTouch = раздел; moveYPill(); }
-    });
-    // Палец скользит по столбику, не отрываясь, — капсула идёт следом.
-    navMenu.addEventListener('pointermove', function(e){
-      if (!pillYTouch) return;
-      var под = document.elementFromPoint(e.clientX, e.clientY);
-      var раздел = под && под.closest && под.closest('[data-tab]');
-      if (раздел && раздел !== pillYTouch){ pillYTouch = раздел; moveYPill(); }
-    });
-    // Отпустили — капсула остаётся там, куда привёл палец: выбор уже сделан.
-    window.addEventListener('pointerup', function(){ pillYTouch = null; });
-    window.addEventListener('pointercancel', function(){ pillYTouch = null; moveYPill(); });
-    window.addEventListener('resize', moveYPill);
-  }
-
   /* Капсула следует за курсором. Только там, где есть настоящая мышь: на
      сенсорном экране браузер выдаёт «наведение» после касания, и капсула
      залипала бы на разделе, который человек просто задел пальцем. */
@@ -2350,8 +2185,8 @@ html.rich{
       var active = link.getAttribute('data-tab') === tab.key;
       if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
-      // Если строка разделов не помещается и прокручивается — подводим выбранный.
-      // В выпадающем меню на телефоне прокручивать нечего.
+      // Если строка разделов не помещается и прокручивается (в том числе на
+      // телефоне, где она такая же, как на компьютере) — подводим выбранный.
       if (active && link.scrollIntoView && navMenu && navMenu.scrollWidth > navMenu.clientWidth + 1){
         link.scrollIntoView({ block:'nearest', inline:'nearest', behavior: reduce ? 'auto' : 'smooth' });
       }

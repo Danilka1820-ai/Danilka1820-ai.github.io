@@ -32,6 +32,7 @@ import telebot
 from google import genai
 from dotenv import load_dotenv
 
+import gemini_resilience
 from bot_utils import (
     TELEGRAM_MESSAGE_LIMIT,
     clip_for_telegram,
@@ -69,10 +70,25 @@ ADMIN_ID = require_admin_id(ADMIN_ID)
 # Текст приходит от пользователя и Gemini. Глобальный HTML parse_mode здесь
 # опасен: обычные символы вроде "<" могли превращаться в битую разметку и
 # полностью ронять отправку ответа или публикацию в канал.
-bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN, parse_mode=None)
+#
+# threaded=False — не косметика. По умолчанию telebot обрабатывает апдейты
+# в фоновом пуле из 2 ДЕМОН-потоков: process_new_updates() возвращается
+# сразу, не дожидаясь ответа хендлера. В проде (poll_once.py, см. README)
+# процесс выходит через ~POLL_SECONDS секунд — и если в этот момент
+# фоновый поток ещё ждёт Gemini (видео может занять до
+# GEMINI_FILE_TIMEOUT_SECONDS), Python убивает демон-поток молча: без
+# ошибки, без ответа пользователю, при уже подтверждённом offset апдейта
+# (Telegram его больше не пришлёт). Сообщение просто пропадает. При
+# threaded=False хендлер выполняется в том же потоке, что и цикл polling,
+# poll() не перейдёт к следующему апдейту и не завершится, пока текущий
+# не обработан целиком — ровно то поведение, которое нужно единственному
+# администратору без параллельных запросов.
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN, parse_mode=None, threaded=False)
 
-gemini_client = genai.Client(api_key=GEMINI_API_KEY)
-GEMINI_MODEL = "gemini-flash-latest"
+gemini_client = genai.Client(
+    api_key=GEMINI_API_KEY,
+    http_options=gemini_resilience.build_retry_http_options(),
+)
 
 # Промпт, который просит Gemini всегда возвращать готовый к публикации текст
 # без лишних пояснений и без markdown-разметки, которую Telegram не понимает.
@@ -108,6 +124,20 @@ def reply(message, text: str):
     return bot.reply_to(message, clip_for_telegram(text))
 
 
+def _error_message_for_user(error: Exception) -> str:
+    """Текст ошибки, безопасный для показа в чате.
+
+    GeminiUnavailableError/GeminiConfigurationError несут сырой ответ Gemini
+    в str(error) (код, статус, тело JSON) — это годится для лога (см. print()
+    рядом с каждым вызовом этой функции), но не для пользователя. Остальные
+    исключения в этом боте (ValueError из validate_*, TimeoutError ожидания
+    файла и т.п.) уже сформулированы по-русски и понятны как есть.
+    """
+    if isinstance(error, (gemini_resilience.GeminiUnavailableError, gemini_resilience.GeminiConfigurationError)):
+        return gemini_resilience.friendly_error_message(error)
+    return str(error)
+
+
 def edit_reply(processing_message, text: str) -> None:
     bot.edit_message_text(
         clip_for_telegram(text),
@@ -132,35 +162,15 @@ def download_telegram_file(file_id: str, suffix: str) -> str:
     return tmp.name
 
 
-GEMINI_RETRY_ATTEMPTS = 4
-# Google присылает эти коды и в тексте ошибки, и в теле ответа — единого
-# удобного атрибута у всех версий SDK на этот случай нет, поэтому проверяем
-# по тексту, благо он всегда содержит код и статус (см. скриншот с 503
-# UNAVAILABLE, из-за которого этот повтор и появился).
-GEMINI_RETRY_MARKERS = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "overloaded")
-
-
-def _is_transient_gemini_error(error: Exception) -> bool:
-    """503 UNAVAILABLE и 429 RESOURCE_EXHAUSTED — модель временно перегружена
-    на стороне Google, не ошибка самого запроса. Обычно проходит за секунды."""
-    text = str(error)
-    return any(marker in text for marker in GEMINI_RETRY_MARKERS)
-
-
-def _generate_content(**kwargs):
-    """generate_content с повтором при временной перегрузке Gemini — иначе
-    зритель видит сырой '503 UNAVAILABLE' вместо готового поста ровно в тот
-    момент, когда с самим запросом всё было в порядке."""
-    delay = 2
-    for attempt in range(1, GEMINI_RETRY_ATTEMPTS + 1):
-        try:
-            return gemini_client.models.generate_content(model=GEMINI_MODEL, **kwargs)
-        except Exception as error:  # noqa: BLE001 - решаем здесь же, ретраить или нет
-            if attempt == GEMINI_RETRY_ATTEMPTS or not _is_transient_gemini_error(error):
-                raise
-            print(f"Gemini временно перегружен (попытка {attempt}/{GEMINI_RETRY_ATTEMPTS}): {error}")
-            time.sleep(delay)
-            delay *= 2
+def _generate_content(contents):
+    """generate_content с устойчивостью к временной перегрузке Gemini — см.
+    gemini_resilience.py: SDK сам повторяет 503/429/5xx/сетевые сбои внутри
+    одной модели, а эта обёртка ещё и переключается на резервную модель
+    (GEMINI_FALLBACK_MODELS), если основная не ответила совсем."""
+    response, used_model = gemini_resilience.generate_content_resilient(gemini_client, contents)
+    if used_model != gemini_resilience.GEMINI_PRIMARY_MODEL:
+        print(f"Gemini: использована резервная модель {used_model}")
+    return response
 
 
 def ask_gemini_text(user_text: str) -> str:
@@ -171,7 +181,7 @@ def ask_gemini_text(user_text: str) -> str:
         f"{POST_STYLE_HINT}\n\n"
         f"Исходный текст:\n{user_text}"
     )
-    response = _generate_content(contents=prompt)
+    response = _generate_content(prompt)
     return validate_source_text(getattr(response, "text", ""))
 
 
@@ -285,7 +295,7 @@ def process_album(messages: list) -> None:
         edit_reply(processing_msg, f"✅ Готовый пост по альбому ({len(local_paths)} фото):\n\n{post_text}")
     except Exception as error:  # noqa: BLE001 - хотим сообщить пользователю о любой ошибке
         print(f"Не удалось обработать альбом: {error}")
-        edit_reply(processing_msg, f"❌ Не удалось обработать альбом: {error}")
+        edit_reply(processing_msg, f"❌ Не удалось обработать альбом: {_error_message_for_user(error)}")
     finally:
         for path in local_paths:
             if os.path.exists(path):
@@ -316,7 +326,7 @@ def process_media_message(
         edit_reply(processing_msg, f"✅ Готовый пост:\n\n{post_text}")
     except Exception as error:  # noqa: BLE001 - хотим сообщить пользователю о любой ошибке
         print(f"Не удалось обработать файл: {error}")
-        edit_reply(processing_msg, f"❌ Не удалось обработать файл: {error}")
+        edit_reply(processing_msg, f"❌ Не удалось обработать файл: {_error_message_for_user(error)}")
     finally:
         if local_path and os.path.exists(local_path):
             os.remove(local_path)
@@ -337,8 +347,18 @@ def handle_start(message):
         "Команды для управления каналом:\n"
         "/post <текст> — опубликовать пост в канал\n"
         "/edit <ID> <новый текст> — изменить пост по ID\n"
-        "/delete <ID> — удалить пост по ID",
+        "/delete <ID> — удалить пост по ID\n"
+        "/status — диагностика Gemini (модели, предохранитель, последняя ошибка)",
     )
+
+
+@bot.message_handler(commands=["status"])
+def handle_status(message):
+    if not require_admin(message):
+        return
+    snapshot = gemini_resilience.diagnostics_snapshot()
+    lines = ["🩺 Диагностика Gemini:"] + [f"{key}: {value}" for key, value in snapshot.items()]
+    reply(message, "\n".join(lines))
 
 
 @bot.message_handler(commands=["post"])
@@ -445,7 +465,7 @@ def handle_text(message):
         edit_reply(processing_msg, f"✅ Готовый пост:\n\n{post_text}")
     except Exception as error:  # noqa: BLE001
         print(f"Ошибка запроса к Gemini: {error}")
-        edit_reply(processing_msg, f"❌ Ошибка запроса к Gemini: {error}")
+        edit_reply(processing_msg, f"❌ Ошибка запроса к Gemini: {_error_message_for_user(error)}")
 
 
 @bot.message_handler(content_types=["photo"])

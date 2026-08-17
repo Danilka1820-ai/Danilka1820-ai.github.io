@@ -55,4 +55,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           POLL_SECONDS: "300"
           GEMINI_FILE_TIMEOUT_SECONDS: "120"
+          # Необязательная настройка устойчивости к перегрузке Gemini — см.
+          # telegram-gemini-bot/README.md, раздел «Устойчивость к перегрузке
+          # Gemini». Пустое значение переменной = используется значение по
+          # умолчанию из gemini_resilience.py, ничего заводить не обязательно.
+          GEMINI_PRIMARY_MODEL: ${{ vars.GEMINI_PRIMARY_MODEL }}
+          GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS }}
+          GEMINI_REQUEST_TIMEOUT: ${{ vars.GEMINI_REQUEST_TIMEOUT }}
+          GEMINI_MAX_RETRIES: ${{ vars.GEMINI_MAX_RETRIES }}
         run: python poll_once.py

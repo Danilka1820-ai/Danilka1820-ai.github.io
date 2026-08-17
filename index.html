@@ -1408,11 +1408,18 @@ img, video{
   width:100%; height:100%; max-width:100vw; max-height:100vh;
   object-fit:contain;
 }
-/* Кружочек и на весь экран остаётся кругом — по меньшей стороне. */
+/* Кружочек и на весь экран остаётся кругом — по меньшей стороне. Предел
+   --tv-cap уже посчитан скриптом от настоящего размера файла (сейчас —
+   полуторакратный запас, natural × 1.6, см. sizeStage): множить его здесь
+   ещё раз незачем — на большом мониторе или телевизоре два запаса
+   складывались (1.6 × 1.4 ≈ 2.24 от исходных точек файла) и кружочек 512×512
+   цифрово растягивался заметно мыльнее, чем автор целился в комментарии у
+   sizeStage. Тот же --tv-cap, что и в оконном режиме (см. .tv__win--round
+   .pl__stage выше) — разница только в доступной высоте экрана. */
 .tv.is-fs .tv__win--round .tv__stage,
 .tv__win--round:fullscreen .tv__stage{
-  width:min(96vh, 96vw, calc(var(--tv-cap, 96vw) * 1.4));
-  height:min(96vh, 96vw, calc(var(--tv-cap, 96vw) * 1.4));
+  width:min(96vh, 96vw, var(--tv-cap, 96vw));
+  height:min(96vh, 96vw, var(--tv-cap, 96vw));
   aspect-ratio:1/1; margin:auto; border-radius:50%;
 }
 .tv.is-fs .tv__win--round .tv__video{ object-fit:cover; }

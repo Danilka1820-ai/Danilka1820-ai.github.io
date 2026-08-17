@@ -380,23 +380,25 @@
      они держатся на прозрачности, кромке, блике и тени, без backdrop-filter:
      на странице их три десятка, и каждое размытие стоило бы кадров при
      прокрутке. */
-  --pane:        linear-gradient(157deg, rgba(255,255,255,.58), rgba(255,255,255,.30));
-  --pane-edge:   rgba(255,255,255,.68);
-  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.85);
-  --pane-lift:   0 20px 44px -30px rgba(17,21,27,.5), 0 2px 8px -6px rgba(17,21,27,.18);
+  --pane:        linear-gradient(157deg, rgba(255,255,255,.40), rgba(255,255,255,.14));
+  --pane-edge:   rgba(255,255,255,.76);
+  /* Верхняя фаска светится, нижняя внутренняя грань чуть темнее — стекло
+     читается как толща, а не как крашеный контур. */
+  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.9), inset 0 -16px 26px -22px rgba(17,21,27,.16);
+  --pane-lift:   0 26px 54px -30px rgba(17,21,27,.48), 0 3px 10px -6px rgba(17,21,27,.16);
   --pane-round:  20px;
   /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
      текст и лента остаются плоскими, иначе читать тяжело. */
-  --glass-tint:   linear-gradient(160deg, rgba(255,255,255,.72), rgba(255,255,255,.34));
+  --glass-tint:   linear-gradient(160deg, rgba(255,255,255,.56), rgba(255,255,255,.20));
   /* Плотный вариант — для поверхностей с текстом. Размытие не спасает: под
      меню может оказаться почти чёрная картинка, и даже несколько процентов
      просвета превращаются в призрак под надписями. Стекло здесь держится на
      кромке, блике и тени, а не на прозрачности. */
-  --glass-panel:  linear-gradient(160deg, rgba(251,252,253,.985), rgba(238,241,245,.975));
-  --glass-blur:   blur(20px) saturate(1.8);
-  --glass-stroke: rgba(255,255,255,.7);
-  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.9);
-  --glass-drop:   0 10px 30px -14px rgba(17,21,27,.35);
+  --glass-panel:  linear-gradient(160deg, rgba(251,252,253,.97), rgba(238,241,245,.94));
+  --glass-blur:   blur(20px) saturate(2);
+  --glass-stroke: rgba(255,255,255,.78);
+  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(17,21,27,.06);
+  --glass-drop:   0 10px 30px -14px rgba(17,21,27,.38);
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
@@ -414,11 +416,11 @@ body{
      читается: преломлять нечего, и поверхности выглядят просто белёсыми.
      Чистый CSS, ни одного байта картинок. */
   background-image:
-    radial-gradient(58rem 40rem at  8% -10%, rgba(198,140,42,.20), transparent 60%),
-    radial-gradient(52rem 38rem at 96%  2%, rgba(86,124,186,.24), transparent 62%),
-    radial-gradient(46rem 42rem at 80% 78%, rgba(158,132,208,.20), transparent 64%),
-    radial-gradient(44rem 36rem at 16% 92%, rgba(96,164,178,.18), transparent 62%),
-    linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0) 40%);
+    radial-gradient(58rem 40rem at  8% -10%, rgba(198,140,42,.30), transparent 60%),
+    radial-gradient(52rem 38rem at 96%  2%, rgba(86,124,186,.34), transparent 62%),
+    radial-gradient(46rem 42rem at 80% 78%, rgba(158,132,208,.28), transparent 64%),
+    radial-gradient(44rem 36rem at 16% 92%, rgba(96,164,178,.26), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,0) 40%);
   background-attachment:fixed;
   font-family:var(--serif);
   font-weight:400;
@@ -500,7 +502,7 @@ img, video{
    ───────────────────────────────────────────── */
 .top{
   position:sticky; top:0; z-index:30;
-  background:color-mix(in srgb, var(--paper) 72%, transparent);
+  background:color-mix(in srgb, var(--paper) 55%, transparent);
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
   border-bottom:1px solid transparent;
@@ -826,9 +828,9 @@ img, video{
   position:relative;
   isolation:isolate;
   border-radius:calc(var(--pane-round) + 4px);
-  background:linear-gradient(157deg, rgba(255,255,255,.46), rgba(255,255,255,.22));
-  -webkit-backdrop-filter:blur(14px) saturate(1.5);
-  backdrop-filter:blur(14px) saturate(1.5);
+  background:linear-gradient(157deg, rgba(255,255,255,.36), rgba(255,255,255,.12));
+  -webkit-backdrop-filter:blur(14px) saturate(1.7);
+  backdrop-filter:blur(14px) saturate(1.7);
   border:1px solid rgba(255,255,255,.5);
   box-shadow:
     0 24px 50px -28px rgba(17,21,27,.55),
@@ -1515,8 +1517,8 @@ html.thin .entry:hover{ transform:none; }
    телевизора. prefers-reduced-transparency выше выигрывает у этого блока в
    любом случае: там задаются не токены, а сами свойства. */
 html.rich{
-  --pane:        linear-gradient(157deg, rgba(255,255,255,.48), rgba(255,255,255,.20));
-  --pane-edge:   rgba(255,255,255,.56);
+  --pane:        linear-gradient(157deg, rgba(255,255,255,.32), rgba(255,255,255,.10));
+  --pane-edge:   rgba(255,255,255,.62);
 }
 
 /* Фотографии */
@@ -1651,7 +1653,7 @@ html.rich{
 .foot{
   margin-top:auto;
   border-top:1px solid var(--pane-edge);
-  background:rgba(255,255,255,.52);
+  background:rgba(255,255,255,.40);
   -webkit-backdrop-filter:var(--glass-blur);
   backdrop-filter:var(--glass-blur);
 }

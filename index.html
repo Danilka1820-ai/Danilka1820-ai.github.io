@@ -2206,13 +2206,32 @@ html.rich{
   /* ── три точки: на телефоне под ними прячутся разделы ── */
   var moreBtn = document.getElementById('moreBtn');
   if (moreBtn && navMenu){
+    // Открыли — капсула встаёт на текущий раздел без касания. Мерить сразу
+    // после смены класса нельзя: панель ещё едет из transform:scale(.88)
+    // (переход только начался), и getBoundingClientRect в этот же такт
+    // возвращает не конечную геометрию, а самое начало перехода — капсула
+    // садится в масштабе этого кадра, мимо настоящего места пункта (поймано
+    // ровно на коэффициенте .88 — это и есть исходный scale закрытой панели).
+    // Поэтому сперва грубо ставим капсулу через два кадра (уже видно, не ждать
+    // же всю анимацию), а точную позицию досчитываем по transitionend, когда
+    // панель действительно домчала до конца — на медленном устройстве это
+    // может быть заметно позже двух кадров.
+    var placeOnCurrent = function(){
+      moveMobilePill(navMenu.querySelector('.tab[aria-current="page"]'));
+    };
+    var settleOnEnd = function(e){
+      if (e.target === navMenu) placeOnCurrent();
+    };
     var setOpen = function(open){
       navMenu.classList.toggle('is-open', open);
       moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      // Открыли — капсула сразу на текущем разделе, ждать касания не нужно.
-      // Закрыли — гасим, чтобы не мелькнула на старом месте при следующем открытии.
-      if (open) moveMobilePill(navMenu.querySelector('.tab[aria-current="page"]'));
-      else moveMobilePill(null);
+      if (open){
+        requestAnimationFrame(function(){ requestAnimationFrame(placeOnCurrent); });
+        navMenu.addEventListener('transitionend', settleOnEnd);
+      } else {
+        navMenu.removeEventListener('transitionend', settleOnEnd);
+        moveMobilePill(null);
+      }
     };
     moreBtn.addEventListener('click', function(e){
       e.stopPropagation();

@@ -585,6 +585,34 @@ img, video{
 .top__in.has-pill .tab::after{ display:none; }
 @media (prefers-reduced-motion: reduce){ .nav__pill{ transition:opacity .3s ease; } }
 
+/* Та же капсула — для свёрнутого меню на телефоне. Там разделы лежат
+   столбиком в отдельной панели под кнопкой «⋯», а не строкой в шапке,
+   поэтому координаты считаются от самой панели, и капсула ездит по
+   вертикали, а не по горизонтали. Лежит последним ребёнком внутри
+   .top__nav — земля под пунктами (z-index ниже их), но не сбивает
+   nth-child-задержки их появления: те считают только настоящие .tab
+   по счёту с начала, а не всех детей панели подряд. */
+.nav__pill--m{
+  position:absolute; left:0; top:0; height:0; width:0;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.92);
+  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  box-shadow:0 8px 20px -10px rgba(17,21,27,.4), inset 0 1px 0 rgba(255,255,255,1);
+  opacity:0; pointer-events:none; z-index:0;
+  transition:transform .3s cubic-bezier(.22,1,.36,1),
+             width .3s cubic-bezier(.22,1,.36,1),
+             height .3s cubic-bezier(.22,1,.36,1),
+             opacity .2s ease;
+  will-change:transform, width, height;
+}
+.top__nav.has-pill-m .nav__pill--m{ opacity:1; }
+.nav__pill--m.no-anim{ transition:none; }
+/* Капсула есть — плоская заливка на текущем разделе лишняя, дублирует её. */
+.top__nav.has-pill-m .tab[aria-current="page"]{ background:none; }
+@media (prefers-reduced-motion: reduce){ .nav__pill--m{ transition:opacity .2s ease; } }
+
 .tab{
   position:relative; flex:0 0 auto;
   display:flex; align-items:center;
@@ -1872,6 +1900,7 @@ html.rich{
       <a class="tab" href="#/o-sebe"   data-tab="about">О дневнике</a>
       <a class="tab" href="#/voprosy"  data-tab="faq">Вопросы</a>
       <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
+      <span class="nav__pill nav__pill--m" id="navPillM" aria-hidden="true"></span>
     </nav>
     <button type="button" class="glass-real top__more" id="moreBtn"
             aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
@@ -2151,6 +2180,10 @@ html.rich{
     var setOpen = function(open){
       navMenu.classList.toggle('is-open', open);
       moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      // Открыли — капсула сразу на текущем разделе, ждать касания не нужно.
+      // Закрыли — гасим, чтобы не мелькнула на старом месте при следующем открытии.
+      if (open) moveMobilePill(navMenu.querySelector('.tab[aria-current="page"]'));
+      else moveMobilePill(null);
     };
     moreBtn.addEventListener('click', function(e){
       e.stopPropagation();
@@ -2302,6 +2335,53 @@ html.rich{
   }
   // Полосу разделов можно прокрутить — капсула едет вместе с ней.
   if (navMenu) navMenu.addEventListener('scroll', movePill, { passive:true });
+
+  /* ── Та же капсула, только в свёрнутом меню на телефоне ──
+     На узком экране разделы лежат не строкой в шапке, а столбиком в панели
+     под кнопкой «⋯» — обычная капсула туда не достаёт (см. movePill выше).
+     Здесь свой указатель на свою панель: открыли меню — капсула сразу
+     встаёт на текущий раздел; повели пальцем по списку, не отпуская, —
+     капсула едет следом, как мышь на компьютере водит капсулу по строке. */
+  var navPillM = document.getElementById('navPillM');
+  var pillMPlaced = false;
+  function moveMobilePill(target){
+    if (!navPillM || !navMenu) return;
+    if (!target || !navMenu.classList.contains('is-open') || !target.offsetWidth){
+      navMenu.classList.remove('has-pill-m');
+      pillMPlaced = false;
+      return;
+    }
+    var barBox = navMenu.getBoundingClientRect();
+    var box = target.getBoundingClientRect();
+    var x = box.left - barBox.left;
+    var y = box.top - barBox.top;
+    if (!pillMPlaced) navPillM.classList.add('no-anim');
+    navPillM.style.width = box.width + 'px';
+    navPillM.style.height = box.height + 'px';
+    navPillM.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+    navMenu.classList.add('has-pill-m');
+    if (!pillMPlaced){
+      void navPillM.offsetWidth;
+      navPillM.classList.remove('no-anim');
+      pillMPlaced = true;
+    }
+  }
+  if (navMenu){
+    // Коснулись пункта — капсула тут же встаёт на него.
+    navMenu.addEventListener('pointerdown', function(e){
+      var t = e.target.closest && e.target.closest('.tab');
+      if (t) moveMobilePill(t);
+    });
+    // Не отпуская палец, повели по списку — капсула едет за ним следом.
+    // e.buttons проверяем, чтобы обычная наводка мышью без нажатия (когда
+    // окно просто узкое) не гоняла капсулу без повода.
+    navMenu.addEventListener('pointermove', function(e){
+      if (!e.buttons) return;
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var t = el && el.closest && el.closest('.tab');
+      if (t && navMenu.contains(t)) moveMobilePill(t);
+    }, { passive:true });
+  }
 
   /* ── Живой блик на стекле ──
      Неподвижный отсвет выглядит наклейкой. Этот ходит за указателем: кладём

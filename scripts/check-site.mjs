@@ -181,8 +181,8 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
 /* ── 4. Разделы и окно просмотра на месте ──
    Однажды при переделке плеера окно просмотра снесли целиком и заметили
    это только на живом сайте. */
-шаг('пять разделов на месте', () => {
-  const нет = ['home','diary','about','faq','contacts']
+шаг('четыре раздела на месте', () => {
+  const нет = ['home','diary','about','contacts']
     .filter((k) => !html.includes('id="tab-' + k + '"'));
   if (нет.length) throw new Error('пропали панели: ' + нет.join(', '));
 });
@@ -247,7 +247,7 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
 
 шаг('у каждого раздела есть главный заголовок', () => {
   const нет = [];
-  const ids = ['home','diary','about','faq','contacts'];
+  const ids = ['home','diary','about','contacts'];
   ids.forEach((id, i) => {
     const start = html.indexOf(`id="tab-${id}"`);
     const end = i + 1 < ids.length ? html.indexOf(`id="tab-${ids[i + 1]}"`) : html.indexOf('</main>');

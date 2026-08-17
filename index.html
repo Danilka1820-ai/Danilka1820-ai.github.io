@@ -11,8 +11,11 @@
                            ТЕЗИС, ЛЕНТА, Кадр в ленте, Окно просмотра,
                            Полный экран, О ДНЕВНИКЕ, ВОПРОСЫ, КОНТАКТЫ,
                            ПОЯВЛЕНИЕ, БОЛЬШИЕ ЭКРАНЫ, МОБИЛЬНЫЕ
-       ЧАСТЬ 2. РАЗМЕТКА — <body>: шапка и пять панелей #tab-home, #tab-diary,
-                           #tab-about, #tab-faq, #tab-contacts
+                           (блок ВОПРОСЫ — это класс .qa, живёт теперь внутри
+                           #tab-about, отдельной панели у него больше нет)
+       ЧАСТЬ 2. РАЗМЕТКА — <body>: шапка и четыре панели #tab-home, #tab-diary,
+                           #tab-about (внутри — и «Как устроен дневник»,
+                           бывшая страница «Вопросы»), #tab-contacts
        ЧАСТЬ 3. СКРИПТ   — в самом низу файла, перед </body>
 
      Ищите по этим названиям, они написаны заглавными в комментариях.
@@ -1950,8 +1953,8 @@ html.rich{
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════
      ЧАСТЬ 2 ИЗ 3 — РАЗМЕТКА
-     Шапка, затем пять панелей: #tab-home, #tab-diary, #tab-about, #tab-faq,
-     #tab-contacts. Каждая подписана комментарием вида ═══ ГЛАВНАЯ ═══.
+     Шапка, затем четыре панели: #tab-home, #tab-diary, #tab-about, #tab-contacts.
+     Каждая подписана комментарием вида ═══ ГЛАВНАЯ ═══.
      ═══════════════════════════════════════════════════════════════════════ -->
 <a class="skip" href="#main">К основному содержанию</a>
 
@@ -1961,9 +1964,8 @@ html.rich{
        aria-current="page">Данил Сарыков</a>
     <span class="nav__pill" id="navPill" aria-hidden="true"></span>
     <nav class="top__nav" id="navMenu" aria-label="Разделы сайта">
-      <a class="tab" href="#/dnevnik"  data-tab="diary">Записи</a>
-      <a class="tab" href="#/o-sebe"   data-tab="about">О дневнике</a>
-      <a class="tab" href="#/voprosy"  data-tab="faq">Вопросы</a>
+      <a class="tab" href="#/dnevnik"  data-tab="diary">Дневник</a>
+      <a class="tab" href="#/o-sebe"   data-tab="about">Обо мне</a>
       <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
       <span class="nav__pill nav__pill--m" id="navPillM" aria-hidden="true"></span>
     </nav>
@@ -2036,7 +2038,7 @@ html.rich{
   <div class="panel" id="tab-diary" hidden>
     <section class="feed">
       <div class="feed__head">
-        <h1>Записи</h1>
+        <h1>Дневник</h1>
         <span class="label">Обновляется из Telegram</span>
         <p class="feed__note">
           Тексты, фотографии, видео и кружочки продублированы здесь целиком — в некоторых
@@ -2044,7 +2046,7 @@ html.rich{
         </p>
       </div>
 
-      <div class="filters" id="filters" role="group" aria-label="Фильтр записей по хэштегам" aria-describedby="filterStatus" hidden></div>
+      <div class="filters" id="filters" role="group" aria-label="Фильтр записей по рубрикам и хэштегам" aria-describedby="filterStatus" hidden></div>
       <p class="filters__status" id="filterStatus" aria-live="polite" hidden></p>
 
       <div class="rail" id="rail" aria-live="polite">
@@ -2056,7 +2058,7 @@ html.rich{
   <!-- ══════════ О ДНЕВНИКЕ ══════════ -->
   <div class="panel" id="tab-about" hidden>
     <section class="about">
-      <p class="label">О дневнике</p>
+      <p class="label">Обо мне</p>
       <div class="about__body">
         <h1>Пишу про то, что <em>происходит вокруг</em></h1>
         <p>
@@ -2084,14 +2086,14 @@ html.rich{
         <li><b>Люди</b><span>Случайные попутчики и разговоры без повода</span></li>
       </ul>
     </section>
-  </div>
 
-  <!-- ══════════ ВОПРОСЫ ══════════ -->
-  <div class="panel" id="tab-faq" hidden>
-    <section class="qa">
+    <!-- Бывшая отдельная страница «Вопросы» — старый адрес #/voprosy жив
+         (см. OLD_ANCHORS в скрипте), просто ведёт сюда и докручивает вниз:
+         для личного сайта пяти вопросам не нужен свой пункт меню. -->
+    <section class="qa" id="kak-ustroen">
       <p class="label">Часто спрашивают</p>
       <div class="qa__list">
-        <h1 class="qa__title">Вопросы</h1>
+        <h2 class="qa__title">Как устроен дневник</h2>
         <details class="qa__item">
           <summary class="qa__q">Как часто выходят записи?<span class="pm" aria-hidden="true">+</span></summary>
           <div class="qa__a">Без строгого графика — когда случается что-то стоящее. Обычно несколько раз в неделю.</div>
@@ -2118,7 +2120,7 @@ html.rich{
         </details>
         <details class="qa__item">
           <summary class="qa__q">Как связаться?<span class="pm" aria-hidden="true">+</span></summary>
-          <div class="qa__a">Проще всего — в Telegram, <a class="u" href="https://t.me/danilka2028k" target="_blank" rel="noopener">@danilka2028k</a>. Открыт к разговору и новым проектам.</div>
+          <div class="qa__a">Проще всего — в Telegram: <a class="u" href="https://t.me/danilka2028k" target="_blank" rel="noopener">@danilka2028k</a>, если хотите подписаться на канал, или <a class="u" href="https://t.me/Danilka2028" target="_blank" rel="noopener">@Danilka2028</a>, чтобы написать лично.</div>
         </details>
       </div>
     </section>
@@ -2129,14 +2131,15 @@ html.rich{
     <section class="contact">
       <p class="label" style="margin:0 0 var(--s3)">Связь</p>
       <h1 class="contact__cta">Проще и <em>честнее</em>. Без лишнего.</h1>
-      <p>Если близко то, о чём я пишу — заходите в канал или читайте прямо здесь.
+      <p>Если вам близко то, о чём я пишу, — подписывайтесь на канал или читайте записи прямо здесь.
         Открыт к разговору и новым проектам — быстрее всего отвечаю в Telegram.</p>
       <div class="hero__acts" style="margin-top:0">
-        <a class="btn" href="https://t.me/danilka2028k" target="_blank" rel="noopener">Подписаться</a>
-        <button type="button" class="btn btn--ghost" id="copyBtn" data-copy="https://t.me/danilka2028k" aria-live="polite">Скопировать @danilka2028k</button>
+        <a class="btn" href="https://t.me/danilka2028k" target="_blank" rel="noopener">Подписаться на канал</a>
+        <a class="btn btn--ghost" href="https://t.me/Danilka2028" target="_blank" rel="noopener">Написать лично</a>
+        <button type="button" class="btn btn--ghost" id="copyBtn" data-copy="https://t.me/danilka2028k" aria-live="polite">Скопировать ссылку</button>
       </div>
       <div class="social">
-        <a class="social__link" href="https://t.me/danilka2028k" target="_blank" rel="noopener" aria-label="Я в Телеграме">
+        <a class="social__link" href="https://t.me/Danilka2028" target="_blank" rel="noopener" aria-label="Я в Телеграме">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.906 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
         </a>
         <a class="social__link" href="https://vk.com/danilka2028" target="_blank" rel="noopener" aria-label="Я во ВКонтакте">
@@ -2372,12 +2375,16 @@ html.rich{
   /* ── разделы: адрес вида #/dnevnik, чтобы на раздел можно было дать ссылку ── */
   var TABS = [
     { key:'home',     slug:'glavnaya', title:'Данил Сарыков — Вокруг меня' },
-    { key:'diary',    slug:'dnevnik',  title:'Записи — Данил Сарыков' },
-    { key:'about',    slug:'o-sebe',   title:'О дневнике — Данил Сарыков' },
-    { key:'faq',      slug:'voprosy',  title:'Вопросы — Данил Сарыков' },
+    { key:'diary',    slug:'dnevnik',  title:'Дневник — Данил Сарыков' },
+    { key:'about',    slug:'o-sebe',   title:'Обо мне — Данил Сарыков' },
     { key:'contacts', slug:'kontakty', title:'Контакты — Данил Сарыков' }
   ];
-  var OLD_ANCHORS = { posts:'diary', feed:'diary', main:'home', about:'about', hero:'home' };
+  // Отдельная страница «Вопросы» слилась с «Обо мне» (подраздел «Как устроен
+  // дневник») — старые адреса #/voprosy и #/faq не должны превращаться в
+  // мёртвые ссылки, поэтому оба ведут туда же, что и before, только без
+  // собственного пункта меню. См. isOldFaqHash() ниже — по ним же страница
+  // ещё и докручивает вниз, к самому подразделу.
+  var OLD_ANCHORS = { posts:'diary', feed:'diary', main:'home', about:'about', hero:'home', voprosy:'about', faq:'about' };
   // Имя в шапке — тоже раздел, поэтому ищем по data-tab, а не по классу.
   var tabLinks = [].slice.call(document.querySelectorAll('[data-tab]'));
 
@@ -2394,6 +2401,14 @@ html.rich{
     for (var i=0;i<TABS.length;i++) if (TABS[i].slug === raw) return TABS[i];
     if (OLD_ANCHORS[raw]) return findTab(OLD_ANCHORS[raw]);
     return TABS[0];
+  }
+  function isOldFaqHash(){
+    var raw = (location.hash || '').replace(/^#\/?/, '');
+    return raw === 'voprosy' || raw === 'faq';
+  }
+  function scrollToAboutFaq(){
+    var el = document.getElementById('kak-ustroen');
+    if (el) el.scrollIntoView({ block:'start', behavior: reduce ? 'auto' : 'smooth' });
   }
 
   /* Капсула едет к выбранному разделу — одинаково на любой ширине: на
@@ -2567,6 +2582,7 @@ html.rich{
   }
 
   showTab(tabByHash(), true);
+  if (isOldFaqHash()) scrollToAboutFaq();
   // Смена адреса — это и кнопка «назад» в браузере тоже, не только клик по
   // разделу. Если в этот момент открыто окно просмотра или увеличенное фото,
   // клик по разделам под ними и так невозможен (модалка перекрывает всё), но
@@ -2578,11 +2594,14 @@ html.rich{
     closeTheater();
     closePhoto();
     var pid = postIdFromHash();
+    var oldFaq = isOldFaqHash();
     // Обычный переход по разделу возвращает наверх; переход по ссылке на
-    // конкретную запись — вместо этого докручивает к ней (см. ниже), поэтому
-    // здесь верх страницы сбрасывать не нужно.
-    showTab(tabByHash(), !!pid);
+    // конкретную запись или на бывшую страницу «Вопросы» — вместо этого
+    // докручивает к нужному месту (см. ниже), поэтому здесь верх страницы
+    // сбрасывать не нужно.
+    showTab(tabByHash(), !!pid || oldFaq);
     if (pid) scrollToPost(pid);
+    else if (oldFaq) scrollToAboutFaq();
   });
 
   /* ── записи дневника ──
@@ -4089,6 +4108,43 @@ html.rich{
     return empty;
   }
 
+  /* Постоянные рубрики поверх сырых хэштегов Telegram. Хэштеги в данных не
+     трогаем (data/posts.json генерирует робот) — здесь только читаем их и
+     раскладываем по смыслу вручную, тем же способом, что уже описан на
+     странице «Обо мне» в блоке «Что здесь бывает». Список закрытый и
+     редактируется здесь же, в коде: не «умный» алгоритм по частоте (тегов
+     слишком мало и они слишком разные, чтобы группироваться сами), а ручная
+     редакционная категоризация, утверждённая автором. */
+  var RUBRICS = [
+    { key:'moskva',       label:'Москва и Подмосковье' },
+    { key:'tancy',        label:'Танцы' },
+    { key:'volonterstvo', label:'Волонтёрство и проекты' },
+    { key:'gorod',        label:'Городские события' }
+  ];
+  var RUBRIC_TAGS = {
+    moskva: ['москва','ночнойгород','городскаяэстетика','вечерняяпрогулка','поезд','жд',
+      'платформа','дорогадомой','уют','вечер','позитив','котловка','обходуправы','сао','юзао','коледино'],
+    tancy: ['танцуйчтобыжить'],
+    volonterstvo: ['аоп','добро','волонтёрство','сообщество','творчество','личныйпример',
+      'мирвфокусе','социальныепроекты','гражданскаяактивность','деньфлагароссии','триколор',
+      'мойфлагроссии','россия','патриотизм'],
+    gorod: ['знакомства','лицарайона','кзл','клубзнакомствлица','знакомствалица','лица',
+      'клубзнакомств','новыевстречи','живыеэмоции','память','друг','происшествия','пожар',
+      'новости','дождь','ночь','объявление']
+  };
+  function rubricTagsOf(value){
+    return value.indexOf('rubric:') === 0 ? RUBRIC_TAGS[value.slice(7)] || [] : null;
+  }
+  // Считаем по настоящим карточкам в ленте, не по сумме частот тегов —
+  // запись с двумя тегами одной рубрики не должна засчитаться дважды.
+  function rubricCount(tags){
+    var n = 0;
+    [].slice.call(railEl.querySelectorAll('.entry')).forEach(function(entry){
+      if ((entry._tagKeys || []).some(function(k){ return tags.indexOf(k) !== -1; })) n++;
+    });
+    return n;
+  }
+
   // Общий пульт фильтра: и рубрики наверху ленты, и тег внутри карточки
   // (см. buildEntry) вызывают одну и ту же функцию — нет двух копий логики
   // «что показать», а строка статуса для читалок экрана и понятное
@@ -4109,15 +4165,19 @@ html.rich{
         btn.setAttribute('aria-pressed', btn.getAttribute('data-tag') === value ? 'true' : 'false');
       });
     }
+    var rubric = rubricTagsOf(value);
     var visible = 0;
     [].slice.call(railEl.querySelectorAll('.entry')).forEach(function(entry){
-      var show = value === 'all' || (entry._tagKeys || []).indexOf(value) !== -1;
+      var keys = entry._tagKeys || [];
+      var show = value === 'all' ||
+        (rubric ? keys.some(function(k){ return rubric.indexOf(k) !== -1; }) : keys.indexOf(value) !== -1);
       entry.hidden = !show;
       if (show) visible++;
     });
     if (filtersStatusEl){
       filtersStatusEl.textContent = value === 'all'
         ? 'Показано записей: ' + visible
+        : rubric ? 'Рубрика «' + label + '» · записей: ' + visible
         : 'Хэштег #' + label + ' · записей: ' + visible;
     }
     ensureFilterEmptyNotice().hidden = visible > 0;
@@ -4138,6 +4198,7 @@ html.rich{
     var expanded = false;
 
     function chip(label, value, count, index){
+      var isRubric = value.indexOf('rubric:') === 0;
       var b = document.createElement('button');
       b.type = 'button';
       b.setAttribute('data-tag', value);
@@ -4145,9 +4206,13 @@ html.rich{
       b.setAttribute('aria-pressed', value === 'all' ? 'true' : 'false');
       b.setAttribute('aria-label', value === 'all'
         ? 'Показать все записи: ' + count
+        : isRubric ? 'Рубрика ' + label + ': ' + count
         : 'Фильтр по хэштегу ' + label + ': ' + count);
+      // Рубрики и «Все» всегда на виду — сворачивается только длинный хвост
+      // сырых хэштегов; отрицательный index у обеих групп специально
+      // никогда не проходит порог COLLAPSED_FILTERS.
       if (index >= COLLAPSED_FILTERS) b.hidden = true;
-      b.textContent = (value === 'all' ? 'Все' : '#' + label) + ' · ' + count;
+      b.textContent = (value === 'all' ? 'Все' : (isRubric ? label : '#' + label)) + ' · ' + count;
       b.addEventListener('click', function(){
         applyTagFilter(value, label);
       });
@@ -4155,6 +4220,11 @@ html.rich{
     }
 
     filtersEl.appendChild(chip('Все', 'all', entryCount, -1));
+    RUBRICS.forEach(function(r, i){
+      var count = rubricCount(RUBRIC_TAGS[r.key]);
+      if (!count) return; // пустую рубрику не показываем
+      filtersEl.appendChild(chip(r.label, 'rubric:' + r.key, count, -2 - i));
+    });
     tags.forEach(function(tag, index){
       filtersEl.appendChild(chip(tag.label, tag.key, tag.count, index));
     });
@@ -4167,8 +4237,14 @@ html.rich{
       more.textContent = 'Ещё +' + (tags.length - COLLAPSED_FILTERS);
       more.addEventListener('click', function(){
         expanded = !expanded;
-        [].slice.call(filtersEl.querySelectorAll('[data-tag]')).forEach(function(button, index){
-          if (index > COLLAPSED_FILTERS) button.hidden = !expanded;
+        // Именно хэштеги, в том же порядке, что и в tags[] — «Все» и рубрики
+        // стоят перед ними в DOM и не должны сбивать номер по счёту.
+        var tagButtons = [].slice.call(filtersEl.querySelectorAll('[data-tag]')).filter(function(b){
+          var v = b.getAttribute('data-tag');
+          return v !== 'all' && v.indexOf('rubric:') !== 0;
+        });
+        tagButtons.forEach(function(button, index){
+          if (index >= COLLAPSED_FILTERS) button.hidden = !expanded;
         });
         more.setAttribute('aria-expanded', expanded ? 'true' : 'false');
         more.textContent = expanded ? 'Свернуть' : 'Ещё +' + (tags.length - COLLAPSED_FILTERS);

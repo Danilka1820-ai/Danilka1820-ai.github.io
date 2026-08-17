@@ -382,9 +382,11 @@
      прокрутке. */
   --pane:        linear-gradient(157deg, rgba(255,255,255,.40), rgba(255,255,255,.14));
   --pane-edge:   rgba(255,255,255,.76);
-  /* Верхняя фаска светится, нижняя внутренняя грань чуть темнее — стекло
-     читается как толща, а не как крашеный контур. */
-  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.9), inset 0 -16px 26px -22px rgba(17,21,27,.16);
+  /* Толща, а не крашеный контур: верхняя фаска и левый край светятся сильнее
+     — оттуда как будто падает свет, — нижняя внутренняя грань чуть темнее.
+     Асимметрия и есть разница между «плоская обводка» и «настоящая грань». */
+  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.9), inset 1px 0 0 rgba(255,255,255,.5),
+                 inset 0 -16px 26px -22px rgba(17,21,27,.16);
   --pane-lift:   0 26px 54px -30px rgba(17,21,27,.48), 0 3px 10px -6px rgba(17,21,27,.16);
   --pane-round:  20px;
   /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
@@ -397,8 +399,20 @@
   --glass-panel:  linear-gradient(160deg, rgba(251,252,253,.97), rgba(238,241,245,.94));
   --glass-blur:   blur(20px) saturate(2);
   --glass-stroke: rgba(255,255,255,.78);
-  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.92), inset 0 -1px 0 rgba(17,21,27,.06);
+  /* Тот же приём асимметрии, что у --pane-glow, только слабее: плавающее
+     стекло уже держит объём за счёт настоящего блюра фона под собой. */
+  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.92), inset 1px 0 0 rgba(255,255,255,.35),
+                  inset 0 -1px 0 rgba(17,21,27,.06);
   --glass-drop:   0 10px 30px -14px rgba(17,21,27,.38);
+  /* Приподнятое стекло — то, что ложится поверх уже стеклянной страницы:
+     свёрнутое меню на телефоне, полноэкранные подсказки. Плавающему стеклу
+     тени должно быть заметно больше, иначе оно не читается как более
+     верхний слой, а сливается с тем, что под ним. */
+  --glass-drop-elevated: 0 30px 60px -24px rgba(17,21,27,.5), 0 4px 14px -8px rgba(17,21,27,.22);
+  /* Единая скорость для лёгкой «живой» реакции стекла: кромка, тень и фон
+     трогаются одной кривой везде — кнопки, капсулы, значки соцсетей. */
+  --glass-transition: background .22s ease, border-color .22s ease,
+                       box-shadow .22s ease, transform .22s cubic-bezier(.22,1,.36,1);
 }
 
 *,*::before,*::after{ box-sizing:border-box; }
@@ -700,7 +714,9 @@ img, video{
     background:var(--glass-panel);
     -webkit-backdrop-filter:var(--glass-blur);
     backdrop-filter:var(--glass-blur);
-    box-shadow:var(--glass-drop), var(--glass-glow);
+    /* Приподнятое стекло: панель ложится поверх уже стеклянной шапки, тень
+       заметно глубже обычной, иначе меню сливалось бы с тем, что под ним. */
+    box-shadow:var(--glass-drop-elevated), var(--glass-glow);
     transform-origin:top right;
     opacity:0; transform:translateY(-6px) scale(.88);
     pointer-events:none; z-index:3;
@@ -818,7 +834,7 @@ img, video{
   backdrop-filter:var(--glass-blur);
   box-shadow:var(--glass-drop), var(--glass-glow);
   color:var(--ink); cursor:pointer;
-  transition:background .22s, color .22s, transform .22s, border-color .22s, box-shadow .22s;
+  transition:var(--glass-transition), color .22s ease;
 }
 /* Нажатие не заливает кнопку чёрным — подчёркивается само слово, а стекло
    остаётся стеклом. */
@@ -832,7 +848,12 @@ img, video{
   transform:translateY(-1px);
   box-shadow:0 14px 30px -16px rgba(17,21,27,.4), var(--glass-glow);
 }
-.btn:active{ transform:none; }
+/* Палец прижал стекло к поверхности: чуть садится, тень становится мельче
+   и плотнее — вместо того, чтобы просто гасить подъём наведения. */
+.btn:active{
+  transform:scale(.98);
+  box-shadow:0 6px 16px -10px rgba(17,21,27,.4), var(--glass-glow);
+}
 .btn--ghost{ background:rgba(255,255,255,.3); color:var(--ink-2); border-color:rgba(255,255,255,.55); }
 .btn--ghost:hover,.btn--ghost:focus-visible{ color:var(--ink); }
 
@@ -946,12 +967,16 @@ img, video{
 .filters button{
   font-family:var(--mono); font-size:11px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--ink-2);
-  background:rgba(255,255,255,.42); border:1px solid rgba(255,255,255,.6);
+  /* Та же поверхность, что у карточек записей — фильтры лежат в общем потоке
+     страницы, а не плавают над лентой, поэтому и стекло у них «поверхностное»
+     (--pane-*), без своего размытия, вместо ещё одного случайного набора rgba. */
+  background:var(--pane); border:1px solid var(--pane-edge);
   border-radius:999px;
-  box-shadow:0 4px 14px -10px rgba(17,21,27,.5), inset 0 1px 0 rgba(255,255,255,.8);
+  box-shadow:0 4px 14px -10px rgba(17,21,27,.5), var(--pane-glow);
   padding:11px 16px; min-height:42px; cursor:pointer;
-  transition:color .2s, border-color .2s, background .2s, box-shadow .2s;
+  transition:color .2s, border-color .2s, background .2s, box-shadow .2s, transform .2s;
 }
+.filters button:active{ transform:scale(.97); }
 .filters button[hidden]{ display:none; }
 .filters__more{ color:var(--lamp-ink) !important; }
 .filters__status{
@@ -1662,7 +1687,7 @@ html.rich{
   backdrop-filter:var(--glass-blur);
   box-shadow:var(--glass-drop), var(--glass-glow);
   color:var(--ink);
-  transition:background .22s, color .22s, transform .22s, border-color .22s, box-shadow .22s;
+  transition:var(--glass-transition), color .22s ease;
 }
 .social__link svg{ width:22px; height:22px; fill:currentColor; display:block; }
 .social__link:hover,.social__link:focus-visible{
@@ -1671,7 +1696,10 @@ html.rich{
   transform:translateY(-1px);
   box-shadow:0 14px 30px -16px rgba(17,21,27,.4), var(--glass-glow);
 }
-.social__link:active{ transform:none; }
+.social__link:active{
+  transform:scale(.96);
+  box-shadow:0 8px 18px -12px rgba(17,21,27,.4), var(--glass-glow);
+}
 
 /* Подвал прижат к низу окна: на коротких разделах под ним не остаётся
    пустой плашки. Фон — ровный тон, не градиент: снизу у подвала большой
@@ -1714,11 +1742,12 @@ html.rich{
   color:var(--ink);
   font-family:var(--mono); font-size:15px; cursor:pointer;
   opacity:0; pointer-events:none; transform:translateY(8px);
-  transition:opacity .3s, transform .3s, border-color .2s;
+  transition:opacity .3s, transform .3s, border-color .2s, background .2s;
   z-index:15;
 }
 .up.is-on{ opacity:1; pointer-events:auto; transform:none; }
 .up:hover{ border-color:var(--ink); background:var(--ink); color:var(--paper); }
+.up.is-on:active{ transform:scale(.92); }
 
 /* ─────────────────────────────────────────────
    ПОЯВЛЕНИЕ

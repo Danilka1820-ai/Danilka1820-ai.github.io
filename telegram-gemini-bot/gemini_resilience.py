@@ -57,12 +57,14 @@ def _split_models(raw: str) -> list[str]:
 
 
 GEMINI_PRIMARY_MODEL = _env("GEMINI_PRIMARY_MODEL", "gemini-flash-latest")
-# Пусто по умолчанию: намеренно не подставляем сюда угаданное название
-# резервной модели. Доступность конкретных моделей зависит от аккаунта и
-# меняется со временем — проверьте актуальный список в вашем Google AI
-# Studio (https://ai.google.dev/gemini-api/docs/models) и впишите проверенное
-# имя в секрет GEMINI_FALLBACK_MODELS (через запятую, если моделей несколько).
-GEMINI_FALLBACK_MODELS = _split_models(_env("GEMINI_FALLBACK_MODELS", ""))
+# gemini-flash-lite-latest — официальный псевдоним облегчённого уровня Gemini
+# (https://ai.google.dev/gemini-api/docs/models), у него отдельная от
+# gemini-flash-latest квота и обычно меньше нагрузки — при 503 на основной
+# модели резерв реально спасает, а не просто откладывает тот же отказ.
+# Переопределяется через GEMINI_FALLBACK_MODELS (через запятую, если моделей
+# несколько), если владелец бота захочет проверить и указать другой список
+# в своём Google AI Studio.
+GEMINI_FALLBACK_MODELS = _split_models(_env("GEMINI_FALLBACK_MODELS", "gemini-flash-lite-latest"))
 # Таймаут одного HTTP-запроса к Gemini, секунды.
 GEMINI_REQUEST_TIMEOUT = float(_env("GEMINI_REQUEST_TIMEOUT", "30"))
 # Сколько раз SDK повторит запрос к ОДНОЙ модели (включая первую попытку)

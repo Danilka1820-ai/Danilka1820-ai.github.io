@@ -352,7 +352,17 @@
   --paper-lift: #F3F4F6;
   --ink:        #11151B;
   --ink-2:      #545C6B;
-  --ink-3:      #8A929E;
+  /* Было #8A929E: 2,6:1 к бумаге — та же блёклость, что однажды уже мешала
+     читать подпись в подвале (см. комментарий у .foot .label ниже), только
+     там это заметили и поправили точечно, а сам тон остался прежним везде,
+     где на него ссылаются напрямую — в датах записей, подписях под фото и
+     видео, вводных метках разделов. Тон стал темнее: 3,8:1 к бумаге —
+     всё ещё заметно тише --ink-2, но уже действительно читается, а не
+     только угадывается. */
+  --ink-3:      #6C7682;
+  /* Обратный текст — на своём же тёмном стекле поверх кадра (полный экран,
+     ошибка плеера): там фон инвертирован, и обычный --ink на нём не виден. */
+  --ink-inverse: #F4F6F8;
   --rule:       #CBCFD6;
   --lamp:       #BB733E;
   --lamp-ink:   #955B32;
@@ -1219,7 +1229,7 @@ img, video{
   position:absolute; inset:0; display:none;
   flex-direction:column; align-items:center; justify-content:center; gap:12px;
   padding:24px; text-align:center;
-  background:rgba(17,21,27,.92); color:#F4F6F8;
+  background:rgba(17,21,27,.92); color:var(--ink-inverse);
   font-family:var(--mono); font-size:12px; letter-spacing:.06em; line-height:1.7;
 }
 .tv.is-failed .tv__fail{ display:flex; }
@@ -1227,7 +1237,7 @@ img, video{
 .tv__fail a{ color:var(--lamp); border-bottom:1px solid currentColor; }
 .tv__again{
   font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
-  color:#F4F6F8; cursor:pointer; padding:9px 18px; border-radius:999px;
+  color:var(--ink-inverse); cursor:pointer; padding:9px 18px; border-radius:999px;
   background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35);
 }
 .tv__again:hover{ background:rgba(255,255,255,.2); }
@@ -1238,7 +1248,7 @@ img, video{
   position:absolute; left:50%; top:14px; transform:translateX(-50%);
   max-width:88%; padding:7px 14px; border-radius:999px; text-align:center;
   font-family:var(--mono); font-size:11px; letter-spacing:.06em;
-  background:rgba(17,21,27,.78); color:#F4F6F8;
+  background:rgba(17,21,27,.78); color:var(--ink-inverse);
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
 }
 
@@ -1326,7 +1336,7 @@ img, video{
   padding:3px 7px; border-radius:6px; white-space:nowrap;
   font-family:var(--mono); font-size:10px; letter-spacing:.04em;
   font-variant-numeric:tabular-nums;
-  background:rgba(17,21,27,.92); color:#F4F6F8;
+  background:rgba(17,21,27,.92); color:var(--ink-inverse);
   opacity:0; pointer-events:none; transition:opacity .15s;
 }
 .pl__track:hover .pl__hint, .pl__track.is-dragging .pl__hint{ opacity:1; }
@@ -1414,7 +1424,7 @@ img, video{
 }
 .tv.is-fs .tv__cap, .tv__win:fullscreen .tv__cap{
   position:absolute; left:0; right:0; top:18px; z-index:3;
-  color:rgba(244,246,248,.8);
+  color:color-mix(in srgb, var(--ink-inverse) 80%, transparent);
 }
 .tv.is-fs .tv__close, .tv__win:fullscreen .tv__close{ top:16px; right:16px; }
 .tv.is-fs .tv__nav, .tv__win:fullscreen .tv__nav{ margin-top:-23px; }

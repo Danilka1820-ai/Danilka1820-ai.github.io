@@ -827,6 +827,9 @@ img, video{
   font-size:1.06rem; color:var(--ink-2); line-height:1.66;
 }
 .hero__acts{ margin-top:var(--s5); display:flex; flex-wrap:wrap; gap:var(--s2); }
+/* Тихое подтверждение, что дневник живой — не панель статистики, поэтому
+   ниже кнопок и тем же тихим тоном, что метка города над заголовком. */
+.hero__meta{ margin-top:var(--s3); }
 
 .btn{
   /* Кнопки — это ссылки <a>, а у строчного элемента вертикальные отступы не
@@ -1980,6 +1983,9 @@ html.rich{
           <a class="btn" href="#/dnevnik">Читать записи</a>
           <a class="btn btn--ghost" href="https://t.me/danilka2028k" rel="noopener" target="_blank">Канал в Telegram</a>
         </div>
+        <!-- Заполняет и показывает скрипт, когда посчитает по настоящим
+             данным ленты — без них строка соврала бы числом. -->
+        <p class="label hero__meta lead-4" id="heroMeta" hidden></p>
       </div>
 
       <figure class="glass-real hero__fig lead-3">
@@ -2099,13 +2105,14 @@ html.rich{
     <section class="contact">
       <p class="label" style="margin:0 0 var(--s3)">Связь</p>
       <h1 class="contact__cta">Проще и <em>честнее</em>. Без лишнего.</h1>
-      <p>Если близко то, о чём я пишу — заходите в канал или читайте прямо здесь.</p>
+      <p>Если близко то, о чём я пишу — заходите в канал или читайте прямо здесь.
+        Открыт к разговору и новым проектам — быстрее всего отвечаю в Telegram.</p>
       <div class="hero__acts" style="margin-top:0">
         <a class="btn" href="https://t.me/danilka2028k" target="_blank" rel="noopener">Подписаться</a>
         <button type="button" class="btn btn--ghost" id="copyBtn" data-copy="https://t.me/danilka2028k" aria-live="polite">Скопировать @danilka2028k</button>
       </div>
       <div class="social">
-        <a class="social__link" href="https://t.me/Danilka2028" target="_blank" rel="noopener" aria-label="Я в Телеграме">
+        <a class="social__link" href="https://t.me/danilka2028k" target="_blank" rel="noopener" aria-label="Я в Телеграме">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.906 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
         </a>
         <a class="social__link" href="https://vk.com/danilka2028" target="_blank" rel="noopener" aria-label="Я во ВКонтакте">
@@ -2598,6 +2605,45 @@ html.rich{
       out.short = post.date;
     }
     return out;
+  }
+
+  /* Русское число с правильным окончанием: 1 запись, 2 записи, 5 записей. */
+  function ruCount(n, one, few, many){
+    var mod10 = n % 10, mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return one;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+    return many;
+  }
+
+  /* Тихая строка под кнопками на главной — подтверждает, что дневник живой,
+     без выдуманных чисел: считаем по тем же настоящим записям, что и лента,
+     и показываем, только когда есть что показать. */
+  var heroMetaEl = document.getElementById('heroMeta');
+  function paintHeroMeta(posts){
+    if (!heroMetaEl) return;
+    var real = posts.filter(function(p){
+      return (p.text && p.text.trim()) || (Array.isArray(p.media) && p.media.length);
+    });
+    if (!real.length) return;
+    var seen = {};
+    ['photo','video','round'].forEach(function(type){
+      real.some(function(p){
+        return (p.media || []).some(function(m){ if (m && m.type === type){ seen[type] = true; return true; } return false; });
+      });
+    });
+    var LABELS = { photo:'фото', video:'видео', round:'кружочки' };
+    var words = ['photo','video','round'].filter(function(t){ return seen[t]; }).map(function(t){ return LABELS[t]; });
+    var mediaPhrase = words.length > 1
+      ? words.slice(0, -1).join(', ') + ' и ' + words[words.length - 1]
+      : (words[0] || '');
+    var lastDate = real[0] && real[0].date;
+    var parts = [
+      real.length + ' ' + ruCount(real.length, 'запись', 'записи', 'записей'),
+      mediaPhrase,
+      lastDate ? 'обновлено ' + lastDate : ''
+    ].filter(Boolean);
+    heroMetaEl.textContent = parts.join(' · ');
+    heroMetaEl.hidden = false;
   }
 
   /* Заголовков в Telegram нет — берём первую строку, если она короткая. */
@@ -4068,6 +4114,7 @@ html.rich{
         var tags = renderInto(railEl, posts, 0);
         renderFilters(tags);
         if (latestEl) renderInto(latestEl, posts, 3);
+        paintHeroMeta(posts);
         enableFonts();
       })
       .catch(function(err){

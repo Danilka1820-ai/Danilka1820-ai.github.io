@@ -1072,17 +1072,33 @@ img, video{
 .entry__body p{ margin:0 0 var(--s2); }
 .entry__body p:last-of-type{ margin-bottom:0; }
 
+/* Обёртка нужна, только когда действий два («Поделиться» + «Оригинал в
+   Telegram») — тогда между ними обычный горизонтальный отступ вместо
+   каждый раз своего верхнего. */
+.entry__actions{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s3); margin-top:var(--s3); }
 .entry__more{
   display:inline-flex; align-items:center; gap:6px;
-  margin-top:var(--s3);
   font-family:var(--mono); font-size:11px; letter-spacing:.12em;
   text-transform:uppercase; color:var(--ink-2);
   border-bottom:1px solid var(--rule); padding-bottom:2px;
   position:relative;
+  /* Кнопка «Поделиться» — тот же вид, что у ссылки на оригинал, но это
+     <button>, не <a>: сбрасываем то, что браузер иначе дорисовал бы сам. */
+  border-width:0 0 1px; background:none; font:inherit; letter-spacing:inherit;
+  text-transform:inherit; cursor:pointer; padding-left:0; padding-right:0;
   transition:color .2s, border-color .2s;
 }
 .entry__more::after{ content:""; position:absolute; inset:-14px -10px; border-radius:8px; }
 .entry__more:hover{ color:var(--lamp-ink); border-bottom-color:var(--lamp); }
+
+/* Докрутили по прямой ссылке — на секунду обозначаем, до какой именно
+   карточки, мягкой кромкой лампы поверх обычной стеклянной, без прыжков
+   размера и без реального движения (только цвет тени/кромки, реагирует на
+   reduced-motion как обычный transition). */
+.entry--linked{
+  border-color:rgba(187,115,62,.55);
+  box-shadow:var(--pane-lift), var(--pane-glow), 0 0 0 3px rgba(187,115,62,.16);
+}
 
 /* Ссылки внутри текста записи раньше выглядели как обычные слова: общий
    сброс a{} убирает и цвет, и подчёркивание. Возвращаем им вид ссылки и
@@ -2363,6 +2379,10 @@ html.rich{
   }
   function tabByHash(){
     var raw = (location.hash || '').replace(/^#\/?/, '');
+    // Прямая ссылка на запись (dnevnik/540) открывает тот же раздел
+    // «Записи», что и просто dnevnik — номер записи ниже не часть маршрута
+    // разделов, а отдельная докрутка внутри него.
+    if (/^dnevnik\//.test(raw)) raw = 'dnevnik';
     for (var i=0;i<TABS.length;i++) if (TABS[i].slug === raw) return TABS[i];
     if (OLD_ANCHORS[raw]) return findTab(OLD_ANCHORS[raw]);
     return TABS[0];
@@ -2549,7 +2569,12 @@ html.rich{
   window.addEventListener('hashchange', function(){
     closeTheater();
     closePhoto();
-    showTab(tabByHash(), false);
+    var pid = postIdFromHash();
+    // Обычный переход по разделу возвращает наверх; переход по ссылке на
+    // конкретную запись — вместо этого докручивает к ней (см. ниже), поэтому
+    // здесь верх страницы сбрасывать не нужно.
+    showTab(tabByHash(), !!pid);
+    if (pid) scrollToPost(pid);
   });
 
   /* ── записи дневника ──
@@ -3814,6 +3839,7 @@ html.rich{
   function normalize(post){
     var media = Array.isArray(post.media) ? post.media : [];
     return {
+      id: typeof post.id === 'string' ? post.id : '',
       date: post.date || '',
       datetime: post.datetime || '',
       text: post.text || '',
@@ -3830,10 +3856,19 @@ html.rich{
     };
   }
 
-  function buildEntry(post, mediaList){
+  function buildEntry(post, mediaList, withPermalink){
     var art = document.createElement('article');
     art.className = 'entry rise';
     art._tagKeys = post.tags.map(tagKey);
+    // Числовой хвост id ("danilka2028k/540" → "540") — устойчивый и
+    // короткий, в отличие от позиции в массиве: та съезжает при каждой
+    // новой публикации, а этот номер Telegram не меняет никогда.
+    // Постоянная ссылка — только у карточки в полной ленте «Записи»: та же
+    // запись ещё показывается превью на главной («Последнее», не больше
+    // трёх последних) — если давать permalink-id обеим копиям, id
+    // задвоился бы в документе и getElementById стал бы находить не ту.
+    var slug = withPermalink ? (post.id.split('/').pop() || '').trim() : '';
+    if (slug) art.id = 'zapis-' + slug;
 
     var when = partsFromDate(post);
     var meta = document.createElement('div');
@@ -3911,21 +3946,96 @@ html.rich{
       body.appendChild(p);
     });
 
-    if (post.link && isSafeTelegramPostUrl(post.link)){
-      var more = document.createElement('a');
-      more.className = 'entry__more';
-      more.href = post.link;
-      more.target = '_blank';
-      more.rel = 'noopener noreferrer';
-      more.textContent = 'Оригинал в Telegram →';
-      body.appendChild(more);
+    if ((slug || (post.link && isSafeTelegramPostUrl(post.link)))){
+      var actions = document.createElement('div');
+      actions.className = 'entry__actions';
+
+      if (slug){
+        var share = document.createElement('button');
+        share.type = 'button';
+        share.className = 'entry__more';
+        share.setAttribute('aria-live', 'polite');
+        share.textContent = 'Поделиться';
+        share.addEventListener('click', function(){ shareEntry(slug, share); });
+        actions.appendChild(share);
+      }
+
+      if (post.link && isSafeTelegramPostUrl(post.link)){
+        var more = document.createElement('a');
+        more.className = 'entry__more';
+        more.href = post.link;
+        more.target = '_blank';
+        more.rel = 'noopener noreferrer';
+        more.textContent = 'Оригинал в Telegram →';
+        actions.appendChild(more);
+      }
+
+      body.appendChild(actions);
     }
 
     art.appendChild(body);
     return art;
   }
 
-  function renderInto(target, posts, limit){
+  /* Постоянная ссылка на запись — тот же адрес, что даёт кнопка снаружи
+     работает как открытие: #/dnevnik/<номер>. Копирование — как у кнопки
+     Telegram-адреса в «Контактах», тем же приёмом на случай браузера без
+     Clipboard API; на телефоне вместо копирования — системный лист «Поделиться». */
+  function shareEntry(slug, btn){
+    var url = location.origin + location.pathname + '#/dnevnik/' + slug;
+    if (navigator.share){
+      navigator.share({ url: url }).catch(function(){});
+      return;
+    }
+    var was = btn.textContent;
+    var done = function(){
+      btn.textContent = 'Ссылка скопирована';
+      setTimeout(function(){ btn.textContent = was; }, 1600);
+    };
+    var failed = function(){
+      btn.textContent = 'Не удалось скопировать';
+      setTimeout(function(){ btn.textContent = was; }, 2000);
+    };
+    var legacy = function(){
+      var ta = document.createElement('textarea');
+      ta.value = url;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try{ ok = document.execCommand('copy'); }catch(e){}
+      document.body.removeChild(ta);
+      if (ok) done(); else failed();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(done, legacy);
+    } else {
+      legacy();
+    }
+  }
+
+  /* Прямая ссылка на запись — #/dnevnik/<номер>. Раздел от этого не
+     меняется (это всё та же «Записи»), только после отрисовки ленты
+     докручиваем и на секунду подсвечиваем нужную карточку. Если она
+     сейчас скрыта фильтром — сначала снимаем фильтр: мёртвая ссылка хуже
+     потерянного выбора рубрики. */
+  function postIdFromHash(){
+    var raw = (location.hash || '').replace(/^#\/?/, '');
+    var m = /^dnevnik\/([^/?#]+)$/.exec(raw);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  function scrollToPost(id){
+    if (!id || !railEl) return false;
+    var el = document.getElementById('zapis-' + id);
+    if (!el) return false;
+    if (el.hidden) applyTagFilter('all', '');
+    el.scrollIntoView({ block:'center', behavior: reduce ? 'auto' : 'smooth' });
+    el.classList.add('entry--linked');
+    setTimeout(function(){ el.classList.remove('entry--linked'); }, 2600);
+    return true;
+  }
+
+  function renderInto(target, posts, limit, withPermalink){
     target.innerHTML = '';
     var frag = document.createDocumentFragment();
     var shown = 0;
@@ -3943,7 +4053,7 @@ html.rich{
                  label !== label.toLocaleLowerCase('ru-RU')) tagStats[key].label = label;
         tagStats[key].count++;
       });
-      frag.appendChild(buildEntry(post, mediaList));
+      frag.appendChild(buildEntry(post, mediaList, withPermalink));
     });
     if (!shown){
       target.innerHTML = '<p class="feed__empty">Записей пока нет.</p>';
@@ -4111,10 +4221,13 @@ html.rich{
 
     first
       .then(function(posts){
-        var tags = renderInto(railEl, posts, 0);
+        var tags = renderInto(railEl, posts, 0, true);
         renderFilters(tags);
         if (latestEl) renderInto(latestEl, posts, 3);
         paintHeroMeta(posts);
+        // Открыли сайт сразу по ссылке на запись — докручиваем, как только
+        // лента впервые отрисовалась (до этого момента карточки ещё нет).
+        scrollToPost(postIdFromHash());
         enableFonts();
       })
       .catch(function(err){

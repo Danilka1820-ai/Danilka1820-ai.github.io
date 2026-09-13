@@ -1,9 +1,9 @@
-name: Telegram → сайт
+name: Telegram резервная сверка
 
 on:
   schedule:
-    - cron: '3,18,33,48 * * * *'
-  workflow_dispatch:
+    - cron: '19,49 * * * *'
+  workflow_dispatch: {}
   push:
     paths:
       - 'scripts/fetch-telegram-posts.mjs'
@@ -11,7 +11,7 @@ on:
       - '.github/workflows/telegram-sync.yml'
 
 concurrency:
-  group: telegram-sync
+  group: telegram-site-publish
   cancel-in-progress: false
 
 permissions:
@@ -19,8 +19,9 @@ permissions:
   pages: write
 
 jobs:
-  sync:
+  reconcile:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -33,11 +34,7 @@ jobs:
       - name: Установить ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
 
-      - name: Дать Telegram несколько секунд на публикацию
-        if: github.event_name == 'workflow_dispatch'
-        run: sleep 8
-
-      - name: Забрать записи из Telegram
+      - name: Аварийно сверить публичный канал
         run: node scripts/fetch-telegram-posts.mjs
         env:
           TG_CHANNEL: danilka2028k
@@ -48,7 +45,7 @@ jobs:
       - name: Проверить данные и медиа до публикации
         run: node scripts/check-site.mjs
 
-      - name: Commit new posts
+      - name: Опубликовать найденные расхождения
         id: commit
         shell: bash
         run: |
@@ -56,16 +53,15 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add data assets/posts dnevnik sitemap.xml
 
           if git diff --cached --quiet; then
-            echo "Нет новых записей."
+            echo "Расхождений нет."
             echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          git commit -m "Sync diary posts from Telegram"
+          git commit -m "Reconcile diary with Telegram public channel"
           pushed=false
 
           for delay in 0 2 4 8 16; do
@@ -78,7 +74,7 @@ jobs:
           done
 
           if [ "$pushed" != "true" ]; then
-            echo "Не удалось отправить обновление после повторных попыток." >&2
+            echo "Не удалось отправить резервную сверку после повторов." >&2
             exit 1
           fi
 
@@ -88,5 +84,4 @@ jobs:
         if: steps.commit.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
+        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"

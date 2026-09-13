@@ -1,16 +1,13 @@
 name: Telegram → сайт
 
 on:
-  # Просим каждые 15 минут, но GitHub на нечастых репозиториях запускает
-  # расписание примерно раз в час и в очереди — это его право, обещаний по
-  # точности он не даёт. Нужен пост на сайте прямо сейчас — вкладка Actions,
-  # «Telegram → сайт», кнопка «Run workflow».
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '3,18,33,48 * * * *'
   workflow_dispatch:
   push:
     paths:
       - 'scripts/fetch-telegram-posts.mjs'
+      - 'scripts/generate-post-pages.mjs'
       - '.github/workflows/telegram-sync.yml'
 
 concurrency:
@@ -19,38 +16,77 @@ concurrency:
 
 permissions:
   contents: write
+  pages: write
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
 
-      # Без ffmpeg видео уезжает на сайт в том виде, в каком его отдал Telegram:
-      # индекс в конце файла и битрейт для полного экрана. На раннере его нет.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+
       - name: Установить ffmpeg
         run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
 
-      - run: node scripts/fetch-telegram-posts.mjs
+      - name: Дать Telegram несколько секунд на публикацию
+        if: github.event_name == 'workflow_dispatch'
+        run: sleep 8
+
+      - name: Забрать записи из Telegram
+        run: node scripts/fetch-telegram-posts.mjs
         env:
           TG_CHANNEL: danilka2028k
+
+      - name: Собрать постоянные страницы записей
+        run: node scripts/generate-post-pages.mjs
 
       - name: Проверить данные и медиа до публикации
         run: node scripts/check-site.mjs
 
       - name: Commit new posts
+        id: commit
+        shell: bash
         run: |
+          set -euo pipefail
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data assets/posts sitemap.xml
+
+          git add data assets/posts dnevnik sitemap.xml
+
           if git diff --cached --quiet; then
             echo "Нет новых записей."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+
           git commit -m "Sync diary posts from Telegram"
+          pushed=false
+
           for delay in 0 2 4 8 16; do
-            sleep $delay
+            sleep "$delay"
             git rebase --abort 2>/dev/null || true
-            git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              pushed=true
+              break
+            fi
           done
-          exit 1
+
+          if [ "$pushed" != "true" ]; then
+            echo "Не удалось отправить обновление после повторных попыток." >&2
+            exit 1
+          fi
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Запросить публикацию GitHub Pages
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"

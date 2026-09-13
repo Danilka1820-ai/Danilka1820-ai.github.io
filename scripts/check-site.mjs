@@ -69,7 +69,7 @@ const код = безКомментариев(html);
    заметили только по упавшему workflow. Синтаксис модуля умеет проверить
    только node --check — гоняем через него. */
 шаг('скрипты scripts/*.mjs без синтаксических ошибок', () => {
-  for (const имя of ['fetch-telegram-posts.mjs', 'vendor-fonts.mjs', 'check-site.mjs']) {
+  for (const имя of ['fetch-telegram-posts.mjs', 'vendor-fonts.mjs', 'generate-post-pages.mjs', 'check-site.mjs']) {
     const путь = ROOT + 'scripts/' + имя;
     if (!existsSync(путь)) continue;
     const рез = spawnSync(process.execPath, ['--check', путь], { encoding: 'utf8' });

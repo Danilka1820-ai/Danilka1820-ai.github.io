@@ -4,6 +4,10 @@
     <loc>https://www.sarykov.ru/</loc>
   </url>
   <url>
+    <loc>https://www.sarykov.ru/dnevnik/541/</loc>
+    <lastmod>2026-09-13</lastmod>
+  </url>
+  <url>
     <loc>https://www.sarykov.ru/dnevnik/540/</loc>
     <lastmod>2026-08-16</lastmod>
   </url>
@@ -126,13 +130,5 @@
   <url>
     <loc>https://www.sarykov.ru/dnevnik/465/</loc>
     <lastmod>2025-03-11</lastmod>
-  </url>
-  <url>
-    <loc>https://www.sarykov.ru/dnevnik/463/</loc>
-    <lastmod>2025-03-03</lastmod>
-  </url>
-  <url>
-    <loc>https://www.sarykov.ru/dnevnik/460/</loc>
-    <lastmod>2025-02-28</lastmod>
   </url>
 </urlset>

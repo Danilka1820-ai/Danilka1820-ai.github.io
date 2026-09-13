@@ -1,27 +1,14 @@
 name: Telegram Gemini bot
 
-# GitHub Actions не умеет держать процесс запущенным постоянно, поэтому
-# вместо одного вечно висящего бота каждый запуск (~7 минут прослушки)
-# в конце сам запускает свою следующую копию через GitHub API —
-# см. telegram-gemini-bot/poll_once.py -> trigger_next_run(). Получается
-# почти непрерывная работа без своего сервера. Расписание ниже — не
-# основной механизм, а подстраховка на случай, если цепочка самозапусков
-# где-то оборвётся (например, упавший запуск не успел запустить следующий).
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    - cron: '7,37 * * * *'
   workflow_dispatch: {}
 
-# Боту не нужно ничего коммитить в репозиторий — только читать секреты,
-# ходить в Telegram/Gemini API и запускать сам себя дальше (actions: write
-# нужен именно для самозапуска через API, contents: write не нужен).
 permissions:
   contents: read
   actions: write
 
-# Не даём двум запускам опрашивать Telegram одновременно. Самозапущенная
-# следующая копия ждёт завершения текущей, поэтому успешный запуск больше не
-# получает ложный conclusion: cancelled на самой последней секунде.
 concurrency:
   group: telegram-gemini-bot
   cancel-in-progress: false
@@ -29,13 +16,11 @@ concurrency:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    # Пять минут опроса + до двух минут обработки видео/голоса + установка
-    # зависимостей. Восемь минут оставляли слишком маленький запас раннеру.
     timeout-minutes: 12
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -52,13 +37,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
           ADMIN_ID: ${{ secrets.ADMIN_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
           POLL_SECONDS: "300"
           GEMINI_FILE_TIMEOUT_SECONDS: "120"
-          # Необязательная настройка устойчивости к перегрузке Gemini — см.
-          # telegram-gemini-bot/README.md, раздел «Устойчивость к перегрузке
-          # Gemini». Пустое значение переменной = используется значение по
-          # умолчанию из gemini_resilience.py, ничего заводить не обязательно.
           GEMINI_PRIMARY_MODEL: ${{ vars.GEMINI_PRIMARY_MODEL }}
           GEMINI_FALLBACK_MODELS: ${{ vars.GEMINI_FALLBACK_MODELS }}
           GEMINI_REQUEST_TIMEOUT: ${{ vars.GEMINI_REQUEST_TIMEOUT }}

@@ -1,4 +1,18 @@
-# Телеграм-бот на Gemini: локальные настройки, ключи и окружение Python
+# Telegram/Gemini bot secrets
 telegram-gemini-bot/.env
+
+# Python virtual environments
 telegram-gemini-bot/venv/
-telegram-gemini-bot/__pycache__/
+telegram-gemini-bot/.venv/
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS/editor garbage
+.DS_Store
+Thumbs.db

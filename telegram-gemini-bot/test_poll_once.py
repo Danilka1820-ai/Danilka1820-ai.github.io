@@ -35,9 +35,7 @@ class FakeBot:
 
 
 class RecordingBot(FakeBot):
-    """Как FakeBot, но запоминает пачки апдейтов вместо падения на них —
-    нужен тестам dispatch_updates, где process_new_updates как раз должен
-    вызваться (для одиночных сообщений, не альбомов)."""
+    """Как FakeBot, но запоминает пачки апдейтов вместо падения на них."""
 
     def __init__(self):
         super().__init__()
@@ -54,8 +52,7 @@ class FakeGroupedMessage:
 
 
 class FakeUpdate:
-    """update_id — как у настоящего Update. _grouped — Message из альбома,
-    если он есть у этого апдейта (see fake group_photo_messages ниже)."""
+    """update_id — как у настоящего Update. _grouped — Message из альбома."""
 
     def __init__(self, update_id, grouped=None):
         self.update_id = update_id
@@ -104,7 +101,7 @@ class PollOnceTests(unittest.TestCase):
         module = load_module(FakeBot([FakeTelegramError(409)]))
         module.POLL_SECONDS = 10
         with patch.object(module.time, "time", return_value=0):
-            self.assertFalse(module.poll())
+            self.assertEqual(module.poll(), (False, False))
 
     def test_repeated_transient_errors_fail_the_job(self):
         errors = [FakeTelegramError(500) for _ in range(3)]
@@ -121,12 +118,11 @@ class PollOnceTests(unittest.TestCase):
 
 
 class DispatchUpdatesTests(unittest.TestCase):
-    """dispatch_updates — новый код, разбирающий пачку апдейтов на одиночные
-    сообщения (как раньше) и фото одного альбома (в один process_album)."""
+    """Проверяет одиночные сообщения, альбомы и channel_post."""
 
     @staticmethod
     def grouper(update):
-        return update._grouped  # noqa: SLF001 - доступ к приватному полю фейка, это тест
+        return update._grouped  # noqa: SLF001 - приватное поле тестового объекта
 
     def test_album_photos_go_to_process_album_as_one_group(self):
         recording_bot = RecordingBot()
@@ -138,13 +134,10 @@ class DispatchUpdatesTests(unittest.TestCase):
         )
 
         text_update = FakeUpdate(10)
-        # message_id намеренно не по порядку — dispatch_updates должен сам
-        # отсортировать альбом, чтобы подпись и фото не перепутались местами.
         photo_2 = FakeUpdate(12, grouped=FakeGroupedMessage(2, "album-1"))
         photo_1 = FakeUpdate(11, grouped=FakeGroupedMessage(1, "album-1"))
 
-        module.dispatch_updates([text_update, photo_2, photo_1])
-
+        self.assertFalse(module.dispatch_updates([text_update, photo_2, photo_1]))
         self.assertEqual(recording_bot.processed_batches, [[text_update]])
         self.assertEqual(len(album_calls), 1)
         self.assertEqual([m.message_id for m in album_calls[0]], [1, 2])
@@ -165,8 +158,7 @@ class DispatchUpdatesTests(unittest.TestCase):
             FakeUpdate(2, grouped=FakeGroupedMessage(2, "b")),
             FakeUpdate(3, grouped=FakeGroupedMessage(3, "a")),
         ]
-        module.dispatch_updates(updates)
-
+        self.assertFalse(module.dispatch_updates(updates))
         self.assertEqual(recording_bot.processed_batches, [])
         self.assertEqual(sorted(len(group) for group in album_calls), [1, 2])
 
@@ -175,16 +167,26 @@ class DispatchUpdatesTests(unittest.TestCase):
         module = load_module(recording_bot, group_photo_messages=lambda update: None)
         updates = [FakeUpdate(1), FakeUpdate(2)]
 
-        module.dispatch_updates(updates)
-
+        self.assertFalse(module.dispatch_updates(updates))
         self.assertEqual(recording_bot.processed_batches, [updates])
 
     def test_no_updates_calls_nothing(self):
         recording_bot = RecordingBot()
         module = load_module(recording_bot, group_photo_messages=lambda update: None)
 
-        module.dispatch_updates([])
+        self.assertFalse(module.dispatch_updates([]))
+        self.assertEqual(recording_bot.processed_batches, [])
 
+    def test_channel_post_requests_site_sync_without_gemini_processing(self):
+        recording_bot = RecordingBot()
+        module = load_module(recording_bot, group_photo_messages=lambda update: None)
+        channel_update = types.SimpleNamespace(
+            update_id=99,
+            channel_post=object(),
+            edited_channel_post=None,
+        )
+
+        self.assertTrue(module.dispatch_updates([channel_update]))
         self.assertEqual(recording_bot.processed_batches, [])
 
 

@@ -23,7 +23,7 @@ def _fingerprint(token: str, chat_id: int, message_id: int) -> str:
 
 def _load_state() -> dict:
     if not STATE_FILE.exists():
-        return {"version": 1, "deliveries": {}}
+        return {"version": 1, "deliveries": {}, "pages_build_pending": False}
     try:
         state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
@@ -32,8 +32,10 @@ def _load_state() -> dict:
         not isinstance(state, dict)
         or state.get("version") != 1
         or not isinstance(state.get("deliveries"), dict)
+        or not isinstance(state.get("pages_build_pending", False), bool)
     ):
         raise DeliveryCheckpointError("Журнал защиты от повторов имеет неверный формат")
+    state.setdefault("pages_build_pending", False)
     return state
 
 
@@ -123,3 +125,27 @@ def finish_delivery(token: str, chat_id: int, message_id: int, status: str) -> N
         raise DeliveryCheckpointError("Попытка публикации отсутствует в журнале")
     state["deliveries"][key] = status
     _save_state(state)
+
+
+def set_pages_build_pending(pending: bool) -> None:
+    if not isinstance(pending, bool):
+        raise ValueError("pages_build_pending must be a boolean")
+    state = _load_state()
+    state["pages_build_pending"] = pending
+    _save_state(state)
+
+
+if __name__ == "__main__":
+    import sys
+
+    if sys.argv[1:] == ["--mark-pages-pending"]:
+        set_pages_build_pending(True)
+    elif sys.argv[1:] == ["--clear-pages-pending"]:
+        set_pages_build_pending(False)
+    elif sys.argv[1:] == ["--pages-pending"]:
+        print("true" if _load_state()["pages_build_pending"] else "false")
+    else:
+        raise SystemExit(
+            "Использование: telegram_delivery.py "
+            "[--mark-pages-pending|--clear-pages-pending|--pages-pending]"
+        )

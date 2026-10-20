@@ -14,6 +14,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -358,7 +359,7 @@ def _media_from_message(token: str, message: dict, post_number: int, start_index
                 }
             )
         except TelegramApiError as error:
-            print(f"Photo {message_id} skipped: {error}")
+            raise TelegramApiError(f"Не удалось сохранить фото сообщения {message_id}") from error
         return entries
 
     video = message.get("video")
@@ -402,17 +403,24 @@ def _media_from_message(token: str, message: dict, post_number: int, start_index
                     entry["wLow"], entry["hLow"] = dims
             entries.append(entry)
         except TelegramApiError as error:
-            print(f"Video {message_id} skipped in primary path: {error}")
-            if poster:
-                entries.append(
-                    {
-                        "type": "photo",
-                        "src": poster,
-                        "unplayable": True,
-                        "telegramMessageId": message_id,
-                        "telegramFileUniqueId": media_obj.get("file_unique_id"),
-                    }
-                )
+            raise TelegramApiError(f"Не удалось сохранить видео сообщения {message_id}") from error
+        return entries
+
+    voice = message.get("voice") or message.get("audio")
+    if voice:
+        try:
+            target = _download_media_file(token, voice, post_number, start_index, "ogg")
+            entries.append(
+                {
+                    "type": "audio",
+                    "src": _relative(target),
+                    "size": target.stat().st_size,
+                    "telegramMessageId": message_id,
+                    "telegramFileUniqueId": voice.get("file_unique_id"),
+                }
+            )
+        except TelegramApiError as error:
+            raise TelegramApiError(f"Не удалось сохранить аудио сообщения {message_id}") from error
         return entries
 
     return entries
@@ -476,6 +484,9 @@ def select_admin_updates(raw_updates: list[dict], admin_id: int) -> list[dict]:
             continue
         message = raw.get("message") or raw.get("edited_message") or {}
         sender = message.get("from") or {}
+        chat = message.get("chat") or {}
+        if chat.get("type") != "private":
+            continue
         try:
             sender_id = int(sender.get("id"))
         except (TypeError, ValueError):
@@ -578,8 +589,6 @@ def process_admin_updates(raw_updates: list[dict]) -> int:
 
     admin_id = require_admin_id(os.getenv("ADMIN_ID"))
     admin_raw = select_admin_updates(raw_updates, admin_id)
-    if not admin_raw:
-        return 0
 
     # Import lazily: CI unit tests can exercise the ingestion logic without
     # requiring Telegram/Gemini secrets, while the production job still reuses
@@ -587,21 +596,39 @@ def process_admin_updates(raw_updates: list[dict]) -> int:
     import telebot  # type: ignore
     import bot  # type: ignore
     from bot import group_photo_messages, process_album  # type: ignore
+    import telegram_album_state
 
-    updates = [telebot.types.Update.de_json(json.dumps(raw)) for raw in admin_raw]
-    albums: dict[str, list] = {}
-    singles = []
-    for update in updates:
-        grouped = group_photo_messages(update)
-        if grouped is None:
-            singles.append(update)
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    bot.delivery_checkpoint_errors.clear()
+    bot.processing_errors.clear()
+    album_updates = []
+    single_updates = []
+    for raw in admin_raw:
+        message = raw.get("message") or {}
+        if message.get("media_group_id") and message.get("photo"):
+            album_updates.append(raw)
         else:
-            albums.setdefault(grouped.media_group_id, []).append(grouped)
+            single_updates.append(raw)
+
+    ready_albums, _ = telegram_album_state.record_and_get_ready(
+        album_updates,
+        token,
+        time.time(),
+    )
+
+    singles = [telebot.types.Update.de_json(json.dumps(raw)) for raw in single_updates]
     if singles:
         bot.process_new_updates(singles)
-    for messages in albums.values():
+    for raw_album in ready_albums:
+        updates = [telebot.types.Update.de_json(json.dumps(raw)) for raw in raw_album]
+        messages = [group_photo_messages(update) for update in updates]
+        messages = [message for message in messages if message is not None]
         messages.sort(key=lambda item: item.message_id)
-        process_album(messages)
+        if not process_album(messages):
+            raise RuntimeError(
+                "Не удалось обработать сохранённый фотоальбом; "
+                "обновления оставлены неподтверждёнными."
+            )
     checkpoint_errors = list(bot.delivery_checkpoint_errors)
     bot.delivery_checkpoint_errors.clear()
     if checkpoint_errors:
@@ -609,7 +636,14 @@ def process_admin_updates(raw_updates: list[dict]) -> int:
             "Не удалось сохранить защиту от повторной публикации; "
             "обновления Telegram оставлены неподтверждёнными."
         ) from checkpoint_errors[0]
-    return len(updates)
+    processing_errors = list(bot.processing_errors)
+    bot.processing_errors.clear()
+    if processing_errors:
+        raise RuntimeError(
+            "Обработка личного обновления завершилась ошибкой; "
+            "обновления Telegram оставлены неподтверждёнными."
+        ) from processing_errors[0]
+    return len(admin_raw)
 
 
 def _write_cycle_outputs(max_update_id: int, channel_count: int) -> None:
@@ -631,6 +665,7 @@ def main() -> None:
 
     updates = fetch_updates(token)
     if not updates:
+        process_admin_updates([])
         print("Bot API: pending updates not found.")
         return
 

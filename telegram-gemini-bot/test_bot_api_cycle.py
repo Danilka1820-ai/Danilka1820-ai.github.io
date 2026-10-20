@@ -26,6 +26,24 @@ def channel_update(update_id, message_id, *, text="", username="danilka2028k", g
 
 
 class BotApiCycleTests(unittest.TestCase):
+    def test_ack_is_after_successful_persistence_and_pages_request_is_not_a_prerequisite(self):
+        workflow = Path(__file__).parents[1] / ".github" / "workflows" / "telegram-gemini-bot.yml"
+        content = workflow.read_text(encoding="utf-8")
+        persist_at = content.index("id: persist")
+        ack_at = content.index("Подтвердить обработанную пачку Telegram")
+        pages_at = content.index("Запросить публикацию GitHub Pages")
+        persist_failure_at = content.index('if [ "$pushed" != "true" ]; then')
+        saved_output_at = content.index('echo "saved=true"')
+        self.assertLess(persist_at, ack_at)
+        self.assertLess(ack_at, pages_at)
+        self.assertLess(persist_failure_at, saved_output_at)
+        self.assertIn("exit 1", content[persist_failure_at:saved_output_at])
+        self.assertIn(
+            "if: success() && steps.persist.outputs.saved == 'true' && steps.cycle.outputs.pending_offset != ''",
+            content,
+        )
+        self.assertIn("steps.persist.outputs.pages_pending == 'true'", content)
+
     def test_bot_api_request_error_redacts_token(self):
         token = "123456789:fake-token-value"
         error = cycle.requests.ConnectionError(
@@ -73,8 +91,9 @@ class BotApiCycleTests(unittest.TestCase):
 
     def test_admin_filter_excludes_other_senders_and_channel_posts(self):
         updates = [
-            {"update_id": 1, "message": {"from": {"id": 7}, "text": "owner"}},
-            {"update_id": 2, "message": {"from": {"id": 8}, "text": "stranger"}},
+            {"update_id": 1, "message": {"from": {"id": 7}, "chat": {"type": "private"}, "text": "owner"}},
+            {"update_id": 2, "message": {"from": {"id": 8}, "chat": {"type": "private"}, "text": "stranger"}},
+            {"update_id": 5, "message": {"from": {"id": 7}, "chat": {"type": "group"}, "text": "group"}},
             channel_update(3, 12, text="channel post"),
             {"update_id": 4, "message": {"text": "missing sender"}},
         ]
@@ -101,6 +120,25 @@ class BotApiCycleTests(unittest.TestCase):
         ):
             cycle.main()
         write_outputs.assert_called_once_with(10, 0)
+
+    def test_channel_media_failure_does_not_emit_pending_offset(self):
+        updates = [channel_update(12, 542)]
+        with (
+            patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test"}),
+            patch.object(cycle, "fetch_updates", return_value=updates),
+            patch.object(cycle, "select_channel_updates", return_value=updates),
+            patch.object(
+                cycle,
+                "ingest_channel_updates",
+                side_effect=cycle.TelegramApiError("media download failed"),
+            ),
+            patch.object(cycle, "process_admin_updates") as process_admin,
+            patch.object(cycle, "_write_cycle_outputs") as write_outputs,
+        ):
+            with self.assertRaisesRegex(cycle.TelegramApiError, "media download failed"):
+                cycle.main()
+        process_admin.assert_not_called()
+        write_outputs.assert_not_called()
 
     def test_processing_failure_does_not_emit_pending_offset(self):
         updates = [{"update_id": 11, "message": {}}]
@@ -160,6 +198,36 @@ class BotApiCycleTests(unittest.TestCase):
             self.assertEqual(payload[0]["text"], "Исправленный текст #дневник")
             self.assertEqual(payload[0]["tags"], ["дневник"])
 
+    def test_voice_channel_post_is_saved_as_playable_audio(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            target = root / "assets" / "posts" / "541-0.ogg"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"ogg-audio")
+            message = {
+                "message_id": 541,
+                "voice": {"file_id": "voice-file", "file_unique_id": "voice-unique"},
+            }
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "_download_media_file", return_value=target) as download,
+            ):
+                media = cycle._media_from_message("fake-token", message, 541, 0)
+
+            download.assert_called_once_with("fake-token", message["voice"], 541, 0, "ogg")
+            self.assertEqual(
+                media,
+                [
+                    {
+                        "type": "audio",
+                        "src": "assets/posts/541-0.ogg",
+                        "size": len(b"ogg-audio"),
+                        "telegramMessageId": 541,
+                        "telegramFileUniqueId": "voice-unique",
+                    }
+                ],
+            )
+
     def test_album_merges_across_cycles(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -191,7 +259,22 @@ class BotApiCycleTests(unittest.TestCase):
             payload = json.loads(posts.read_text("utf-8"))
             self.assertEqual(len(payload), 1)
             self.assertEqual(payload[0]["telegramMessageIds"], [600, 601])
-            self.assertEqual(len(payload[0]["media"]), 2)
+            self.assertEqual(len(payload[0]["media"]), 2            )
+
+    def test_media_download_failure_does_not_save_a_text_only_post(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            posts = root / "data" / "posts.json"
+            message = channel_update(13, 543, text="Подпись")
+            message["channel_post"]["photo"] = [{"file_id": "photo-file"}]
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "POSTS_FILE", posts),
+                patch.object(cycle, "_download_media_file", side_effect=cycle.TelegramApiError("download failed")),
+            ):
+                with self.assertRaisesRegex(cycle.TelegramApiError, "Не удалось сохранить фото"):
+                    cycle.ingest_channel_updates("fake-token", [message], "danilka2028k")
+            self.assertFalse(posts.exists())
 
 
 if __name__ == "__main__":

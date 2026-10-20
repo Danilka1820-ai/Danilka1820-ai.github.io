@@ -119,7 +119,7 @@ jobs:
           echo "site_changed=${site_changed}" >> "$GITHUB_OUTPUT"
 
       - name: Запросить публикацию GitHub Pages
-        if: steps.commit.outputs.site_changed == 'true' || steps.cycle.outputs.channel_posts != '0'
+        if: steps.commit.outputs.site_changed == 'true' || (steps.cycle.outputs.channel_posts != '' && steps.cycle.outputs.channel_posts != '0')
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"

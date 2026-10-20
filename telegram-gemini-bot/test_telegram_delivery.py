@@ -53,6 +53,7 @@ class TelegramDeliveryTests(unittest.TestCase):
             status, should_send = telegram_delivery.begin_delivery("fake-token", 10, 30)
         self.assertEqual(status, "attempted")
         self.assertFalse(should_send)
+        self.assertEqual(telegram_delivery.delivery_status("fake-token", 10, 30), "attempted")
 
     def test_definitive_failure_can_be_retried_after_new_delivery_attempt(self):
         with patch.object(telegram_delivery, "_persist_checkpoint"):

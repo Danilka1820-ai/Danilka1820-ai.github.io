@@ -1,13 +1,11 @@
 """Encrypted durable queue for personal photo albums split across Bot API batches."""
 from __future__ import annotations
 
-import hashlib
-import hmac
 import json
 import os
-import secrets
-import subprocess
 from pathlib import Path
+
+import telegram_state_crypto
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_FILE = ROOT / ".github" / "telegram-album-state.enc"
@@ -19,52 +17,17 @@ class AlbumStateError(RuntimeError):
     """Album updates could not be authenticated or persisted safely."""
 
 
-def _keys(token: str) -> tuple[bytes, bytes]:
-    if not token:
-        raise AlbumStateError("Не задан токен для защиты состояния альбома")
-    derived = hmac.new(token.encode("utf-8"), MAGIC, hashlib.sha512).digest()
-    return derived[:32], derived[32:]
-
-
 def _encrypt(payload: bytes, token: str) -> bytes:
-    encryption_key, authentication_key = _keys(token)
-    iv = secrets.token_bytes(16)
     try:
-        encrypted = subprocess.run(
-            [
-                "openssl", "enc", "-aes-256-cbc", "-K", encryption_key.hex(),
-                "-iv", iv.hex(), "-nosalt",
-            ],
-            input=payload,
-            capture_output=True,
-            check=True,
-        ).stdout
-    except (OSError, subprocess.CalledProcessError) as error:
+        return telegram_state_crypto.encrypt(payload, token, MAGIC)
+    except telegram_state_crypto.StateCryptoError as error:
         raise AlbumStateError("Не удалось зашифровать ожидающий фотоальбом") from error
-    tag = hmac.new(authentication_key, MAGIC + iv + encrypted, hashlib.sha256).digest()
-    return MAGIC + iv + tag + encrypted
 
 
 def _decrypt(blob: bytes, token: str) -> bytes:
-    if not blob.startswith(MAGIC) or len(blob) < len(MAGIC) + 48:
-        raise AlbumStateError("Зашифрованное состояние фотоальбома имеет неверный формат")
-    encryption_key, authentication_key = _keys(token)
-    start = len(MAGIC)
-    iv, tag, encrypted = blob[start:start + 16], blob[start + 16:start + 48], blob[start + 48:]
-    expected = hmac.new(authentication_key, MAGIC + iv + encrypted, hashlib.sha256).digest()
-    if not hmac.compare_digest(tag, expected):
-        raise AlbumStateError("Не удалось проверить подлинность состояния фотоальбома")
     try:
-        return subprocess.run(
-            [
-                "openssl", "enc", "-d", "-aes-256-cbc", "-K", encryption_key.hex(),
-                "-iv", iv.hex(), "-nosalt",
-            ],
-            input=encrypted,
-            capture_output=True,
-            check=True,
-        ).stdout
-    except (OSError, subprocess.CalledProcessError) as error:
+        return telegram_state_crypto.decrypt(blob, token, MAGIC)
+    except telegram_state_crypto.StateCryptoError as error:
         raise AlbumStateError("Не удалось расшифровать ожидающий фотоальбом") from error
 
 
@@ -122,12 +85,62 @@ def record_and_get_ready(
         changed = True
 
     ready = []
-    for key, group in list(state["groups"].items()):
-        if now - float(group["last_seen"]) >= settle_seconds:
+    for group in state["groups"].values():
+        ready_at = max(
+            float(group["last_seen"]) + settle_seconds,
+            float(group.get("next_attempt", 0)),
+        )
+        if now >= ready_at:
             ready.append(group["updates"])
-            del state["groups"][key]
-            changed = True
 
     if changed:
         _save(state, token)
     return ready, changed
+
+
+def remove_completed(groups: list[list[dict]], token: str) -> bool:
+    """Remove albums only after their handler and delivery checkpoint succeed."""
+    if not groups:
+        return False
+    state = _load(token)
+    completed_ids = {
+        str((update.get("message") or {}).get("media_group_id") or "")
+        for group in groups
+        for update in group
+    }
+    completed_ids.discard("")
+    removed = False
+    for group_id in completed_ids:
+        if group_id in state["groups"]:
+            del state["groups"][group_id]
+            removed = True
+    if removed:
+        _save(state, token)
+    return removed
+
+
+def defer_failed(
+    groups: list[list[dict]],
+    token: str,
+    now: float,
+    retry_after: float = 0,
+) -> bool:
+    group_ids = {
+        str((update.get("message") or {}).get("media_group_id") or "")
+        for group in groups
+        for update in group
+    }
+    group_ids.discard("")
+    if not group_ids:
+        return False
+    state = _load(token)
+    for group_id in group_ids:
+        group = state["groups"].get(group_id)
+        if group is None:
+            continue
+        attempts = int(group.get("attempts", 0)) + 1
+        delay = min(300 * (2 ** min(attempts - 1, 10)), 21600)
+        group["attempts"] = attempts
+        group["next_attempt"] = now + max(delay, float(retry_after or 0))
+    _save(state, token)
+    return True

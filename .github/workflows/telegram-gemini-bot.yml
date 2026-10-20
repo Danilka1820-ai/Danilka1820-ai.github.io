@@ -10,6 +10,8 @@ on:
       - 'telegram-gemini-bot/bot.py'
       - 'telegram-gemini-bot/telegram_delivery.py'
       - 'telegram-gemini-bot/telegram_album_state.py'
+      - 'telegram-gemini-bot/telegram_retry_state.py'
+      - 'telegram-gemini-bot/telegram_state_crypto.py'
       - 'telegram-gemini-bot/pages_build.py'
       - 'telegram-gemini-bot/gemini_resilience.py'
       - 'telegram-gemini-bot/bot_utils.py'
@@ -89,6 +91,9 @@ jobs:
           fi
           if [ -e .github/telegram-album-state.enc ] || git ls-files --error-unmatch .github/telegram-album-state.enc >/dev/null 2>&1; then
             git add -A -- .github/telegram-album-state.enc
+          fi
+          if [ -e .github/telegram-retry-state.enc ] || git ls-files --error-unmatch .github/telegram-retry-state.enc >/dev/null 2>&1; then
+            git add -A -- .github/telegram-retry-state.enc
           fi
 
           if git diff --cached --quiet -- data assets/posts dnevnik sitemap.xml; then

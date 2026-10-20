@@ -48,8 +48,10 @@ class TelegramAlbumStateTests(unittest.TestCase):
         ready, changed = albums.record_and_get_ready([second], token, 200)
         self.assertEqual((ready, changed), ([], True))
         ready, changed = albums.record_and_get_ready([], token, 801)
-        self.assertTrue(changed)
+        self.assertFalse(changed)
         self.assertEqual([[item["update_id"] for item in group] for group in ready], [[10, 11]])
+        self.assertTrue(albums.STATE_FILE.exists())
+        self.assertTrue(albums.remove_completed(ready, token))
         self.assertFalse(albums.STATE_FILE.exists())
 
     def test_duplicate_update_does_not_extend_album_settle_window(self):
@@ -57,7 +59,7 @@ class TelegramAlbumStateTests(unittest.TestCase):
         first = album_update(10, 1, "g-1", "private-file-id-1")
         albums.record_and_get_ready([first], token, 100)
         ready, changed = albums.record_and_get_ready([first], token, 701)
-        self.assertTrue(changed)
+        self.assertFalse(changed)
         self.assertEqual([[item["update_id"] for item in group] for group in ready], [[10]])
 
     def test_tampered_album_state_is_rejected(self):
@@ -72,6 +74,24 @@ class TelegramAlbumStateTests(unittest.TestCase):
         albums.STATE_FILE.write_bytes(payload)
         with self.assertRaises(albums.AlbumStateError):
             albums.record_and_get_ready([], token, 800)
+
+    def test_ready_album_is_retained_until_successful_processing(self):
+        token = "123456789:fake-token"
+        update = album_update(10, 1, "g-1", "private-file-id-1")
+        albums.record_and_get_ready([update], token, 100)
+
+        ready, changed = albums.record_and_get_ready([], token, 701)
+        self.assertEqual(ready, [[update]])
+        self.assertFalse(changed)
+        self.assertTrue(albums.STATE_FILE.exists())
+
+        albums.defer_failed(ready, token, 701)
+        ready, _ = albums.record_and_get_ready([], token, 1000)
+        self.assertEqual(ready, [])
+        ready, _ = albums.record_and_get_ready([], token, 1001)
+        self.assertEqual(ready, [[update]])
+        self.assertTrue(albums.remove_completed(ready, token))
+        self.assertFalse(albums.STATE_FILE.exists())
 
 
 if __name__ == "__main__":

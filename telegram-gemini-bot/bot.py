@@ -127,6 +127,17 @@ def reply(message, text: str):
     return bot.reply_to(message, clip_for_telegram(text))
 
 
+def notify_delivery_status(chat_id: int, message_id: int, status: str) -> None:
+    if status == "published":
+        notice = f"Это сообщение уже опубликовано (ID: {message_id}); повторно не отправляю."
+    else:
+        notice = (
+            f"Результат публикации сообщения {message_id} неизвестен. "
+            "Проверьте канал перед повторной отправкой; автоматического повтора не будет."
+        )
+    bot.send_message(chat_id, notice)
+
+
 def _error_message_for_user(error: Exception) -> str:
     """Текст ошибки, безопасный для показа в чате.
 
@@ -571,7 +582,7 @@ def handle_edit(message):
         reply(message, f"✅ Пост {message_id} обновлён.")
     except Exception as error:  # noqa: BLE001
         processing_errors.append(error)
-        reply(message, f"❌ Не удалось изменить пост: {error}")
+        reply(message, f"❌ Не удалось изменить пост: {_error_message_for_user(error)}")
 
 
 @bot.message_handler(commands=["delete"])
@@ -591,7 +602,7 @@ def handle_delete(message):
         reply(message, f"✅ Пост {message_id} удалён.")
     except Exception as error:  # noqa: BLE001
         processing_errors.append(error)
-        reply(message, f"❌ Не удалось удалить пост: {error}")
+        reply(message, f"❌ Не удалось удалить пост: {_error_message_for_user(error)}")
 
 
 @bot.message_handler(commands=["ask"])

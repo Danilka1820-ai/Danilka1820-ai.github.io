@@ -27,6 +27,18 @@ def channel_update(update_id, message_id, *, text="", username="danilka2028k", g
     return {"update_id": update_id, "channel_post": message}
 
 
+def valid_configuration_api(token, method, payload=None, timeout=35):
+    if method == "getMe":
+        return {"id": 123, "username": "DanilkaVlogBot"}
+    if method == "getWebhookInfo":
+        return {"url": ""}
+    if method == "getChat":
+        return {"id": -100123, "username": "danilka2028k"}
+    if method == "getChatMember":
+        return {"status": "administrator", "can_post_messages": True}
+    raise AssertionError(method)
+
+
 class BotApiCycleTests(unittest.TestCase):
     def test_ack_is_after_successful_persistence_and_pages_request_is_not_a_prerequisite(self):
         workflow = Path(__file__).parents[1] / ".github" / "workflows" / "telegram-gemini-bot.yml"
@@ -121,6 +133,10 @@ class BotApiCycleTests(unittest.TestCase):
             bot=fake_bot_instance,
             delivery_checkpoint_errors=[],
             processing_errors=[],
+            telegram_delivery=types.SimpleNamespace(
+                delivery_status=lambda token, chat_id, message_id: None,
+            ),
+            notify_delivery_status=lambda chat_id, message_id, status: None,
             group_photo_messages=lambda update: None,
             process_album=lambda messages: True,
         )
@@ -170,7 +186,11 @@ class BotApiCycleTests(unittest.TestCase):
     def test_cycle_emits_pending_offset_only_after_processing(self):
         updates = [{"update_id": 10, "message": {}}]
         with (
-            patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test"}),
+            patch.dict(
+                "os.environ",
+                {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test", "ADMIN_ID": "17"},
+            ),
+            patch.object(cycle, "bot_api", side_effect=valid_configuration_api),
             patch.object(cycle, "fetch_updates", return_value=updates),
             patch.object(cycle, "select_channel_updates", return_value=[]),
             patch.object(cycle, "ingest_channel_updates", return_value=0),
@@ -183,7 +203,11 @@ class BotApiCycleTests(unittest.TestCase):
     def test_channel_media_failure_does_not_emit_pending_offset(self):
         updates = [channel_update(12, 542)]
         with (
-            patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test"}),
+            patch.dict(
+                "os.environ",
+                {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test", "ADMIN_ID": "17"},
+            ),
+            patch.object(cycle, "bot_api", side_effect=valid_configuration_api),
             patch.object(cycle, "fetch_updates", return_value=updates),
             patch.object(cycle, "select_channel_updates", return_value=updates),
             patch.object(
@@ -202,7 +226,11 @@ class BotApiCycleTests(unittest.TestCase):
     def test_processing_failure_does_not_emit_pending_offset(self):
         updates = [{"update_id": 11, "message": {}}]
         with (
-            patch.dict("os.environ", {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test"}),
+            patch.dict(
+                "os.environ",
+                {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test", "ADMIN_ID": "17"},
+            ),
+            patch.object(cycle, "bot_api", side_effect=valid_configuration_api),
             patch.object(cycle, "fetch_updates", return_value=updates),
             patch.object(cycle, "select_channel_updates", return_value=[]),
             patch.object(cycle, "ingest_channel_updates", return_value=0),
@@ -257,6 +285,52 @@ class BotApiCycleTests(unittest.TestCase):
             self.assertEqual(payload[0]["text"], "Исправленный текст #дневник")
             self.assertEqual(payload[0]["tags"], ["дневник"])
 
+    def test_edit_clearing_caption_and_media_updates_existing_post(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            posts = root / "data" / "posts.json"
+            posts.parent.mkdir(parents=True)
+            posts.write_text(
+                json.dumps(
+                    [
+                        {
+                            "id": "danilka2028k/540",
+                            "text": "Старая подпись #старое",
+                            "tags": ["старое"],
+                            "media": [
+                                {
+                                    "type": "photo",
+                                    "src": "assets/posts/old.jpg",
+                                    "telegramMessageId": 540,
+                                    "telegramFileUniqueId": "old",
+                                }
+                            ],
+                            "telegramMessageIds": [540],
+                        }
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            edited = {
+                "update_id": 20,
+                "edited_channel_post": {
+                    "message_id": 540,
+                    "date": 1780000000,
+                    "chat": {"id": -100123, "username": "danilka2028k", "type": "channel"},
+                },
+            }
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "POSTS_FILE", posts),
+                patch.object(cycle, "MEDIA_DIR", root / "assets" / "posts"),
+            ):
+                self.assertEqual(cycle.ingest_channel_updates("t", [edited], "danilka2028k"), 1)
+
+            result = json.loads(posts.read_text("utf-8"))[0]
+            self.assertEqual(result["text"], " ")
+            self.assertEqual(result["tags"], [])
+            self.assertEqual(result["media"], [])
+
     def test_voice_channel_post_is_saved_as_playable_audio(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -293,7 +367,7 @@ class BotApiCycleTests(unittest.TestCase):
             posts = root / "data" / "posts.json"
             media = root / "assets" / "posts"
 
-            def fake_media(_token, message, _post_number, start_index):
+            def fake_media(_token, message, _post_number, start_index, **kwargs):
                 message_id = message["message_id"]
                 return [
                     {
@@ -319,6 +393,7 @@ class BotApiCycleTests(unittest.TestCase):
             self.assertEqual(len(payload), 1)
             self.assertEqual(payload[0]["telegramMessageIds"], [600, 601])
             self.assertEqual(len(payload[0]["media"]), 2            )
+            self.assertNotEqual(payload[0]["media"][0]["src"], payload[0]["media"][1]["src"])
 
     def test_media_download_failure_does_not_save_a_text_only_post(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -334,6 +409,278 @@ class BotApiCycleTests(unittest.TestCase):
                 with self.assertRaisesRegex(cycle.TelegramApiError, "Не удалось сохранить фото"):
                     cycle.ingest_channel_updates("fake-token", [message], "danilka2028k")
             self.assertFalse(posts.exists())
+
+    def test_unchanged_channel_media_is_not_downloaded_twice(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            original = root / "assets" / "posts" / "danilka2028k-543-0.jpg"
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b"existing media")
+            old_entry = {
+                "type": "photo",
+                "src": "assets/posts/danilka2028k-543-0.jpg",
+                "telegramFileUniqueId": "same-file",
+            }
+            message = {
+                "message_id": 543,
+                "photo": [{"file_id": "new-id", "file_unique_id": "same-file"}],
+            }
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "_download_media_file") as download,
+            ):
+                media = cycle._media_from_message("token", message, 543, 0, old_entry)
+
+            self.assertEqual(media, [old_entry])
+            download.assert_not_called()
+
+    def test_replaced_channel_media_is_downloaded_over_old_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            original = root / "assets" / "posts" / "danilka2028k-543-0.jpg"
+            original.parent.mkdir(parents=True)
+            original.write_bytes(b"old")
+            old_entry = {
+                "type": "photo",
+                "src": "assets/posts/danilka2028k-543-0.jpg",
+                "telegramFileUniqueId": "old-file",
+            }
+            message = {
+                "message_id": 543,
+                "photo": [{"file_id": "new-id", "file_unique_id": "new-file"}],
+            }
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "_download_media_file", return_value=original) as download,
+                patch.object(cycle, "_optimize_image"),
+            ):
+                cycle._media_from_message("token", message, 543, 0, old_entry)
+
+            self.assertTrue(download.call_args.kwargs["force_download"])
+
+    def test_unchanged_video_repairs_only_missing_variant(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "assets" / "posts" / "danilka2028k-543-0.mp4"
+            source.parent.mkdir(parents=True)
+            source.write_bytes(b"video")
+            old_entry = {
+                "type": "video",
+                "src": "assets/posts/danilka2028k-543-0.mp4",
+                "srcMid": "assets/posts/missing-mid.mp4",
+                "telegramFileUniqueId": "same-video",
+            }
+            message = {
+                "message_id": 543,
+                "video": {"file_id": "new-id", "file_unique_id": "same-video"},
+            }
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "_download_media_file") as download,
+                patch.object(cycle, "_make_video_variant", return_value=None) as variant,
+            ):
+                media = cycle._media_from_message("token", message, 543, 0, old_entry)
+
+            download.assert_not_called()
+            variant.assert_called_once()
+            self.assertNotIn("srcMid", media[0])
+
+    def test_channel_group_failure_is_queued_while_other_posts_are_saved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            posts = root / "data" / "posts.json"
+            broken = channel_update(13, 543, text="Не терять")
+            broken["channel_post"]["photo"] = [{"file_id": "bad-photo"}]
+            good = channel_update(14, 544, text="Сохранить")
+            failed = []
+
+            def media(_token, message, _post_number, _index, **kwargs):
+                if message["message_id"] == 543:
+                    raise cycle.TelegramApiError("download failed")
+                return []
+
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "POSTS_FILE", posts),
+                patch.object(cycle, "MEDIA_DIR", root / "assets" / "posts"),
+                patch.object(cycle, "_media_from_message", side_effect=media),
+            ):
+                saved = cycle.ingest_channel_updates(
+                    "token",
+                    [broken, good],
+                    "danilka2028k",
+                    on_failure=lambda updates, error: failed.append((updates, error)),
+                )
+
+            self.assertEqual(saved, 1)
+            self.assertEqual([item["update_id"] for item in failed[0][0]], [13])
+            self.assertEqual(
+                [item["id"] for item in json.loads(posts.read_text("utf-8"))],
+                ["danilka2028k/544"],
+            )
+
+    def test_main_stops_before_polling_if_token_is_for_another_bot(self):
+        with (
+            patch.dict(
+                "os.environ",
+                {"TELEGRAM_BOT_TOKEN": "fake", "CHANNEL_ID": "@test", "ADMIN_ID": "17"},
+            ),
+            patch.object(cycle, "bot_api", return_value={"username": "WrongBot"}),
+            patch.object(cycle, "fetch_updates") as fetch,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "@WrongBot"):
+                cycle.main()
+        fetch.assert_not_called()
+
+    def test_admin_failure_is_encrypted_and_does_not_block_later_messages(self):
+        import telegram_retry_state
+
+        original_path = telegram_retry_state.STATE_FILE
+        with tempfile.TemporaryDirectory() as tmp:
+            telegram_retry_state.STATE_FILE = Path(tmp) / "retry-state.enc"
+            dispatched = []
+
+            class FakeUpdate:
+                @staticmethod
+                def de_json(raw):
+                    return json.loads(raw)
+
+            def dispatch(updates):
+                update = updates[0]
+                dispatched.append(update["update_id"])
+                if update["message"]["text"] == "fails":
+                    fake_bot_module.processing_errors.append(RuntimeError("Gemini unavailable"))
+
+            fake_bot_module = types.SimpleNamespace(
+                bot=types.SimpleNamespace(process_new_updates=dispatch),
+                delivery_checkpoint_errors=[],
+                processing_errors=[],
+                telegram_delivery=types.SimpleNamespace(
+                    delivery_status=lambda token, chat_id, message_id: None,
+                ),
+                notify_delivery_status=lambda chat_id, message_id, status: None,
+                group_photo_messages=lambda update: None,
+                process_album=lambda messages: True,
+            )
+            album_state = types.SimpleNamespace(
+                record_and_get_ready=lambda updates, token, now: ([], False),
+            )
+            updates = [
+                {
+                    "update_id": 21,
+                    "message": {
+                        "message_id": 210,
+                        "from": {"id": 17},
+                        "chat": {"id": 17, "type": "private"},
+                        "text": "fails",
+                    },
+                },
+                {
+                    "update_id": 22,
+                    "message": {
+                        "message_id": 220,
+                        "from": {"id": 17},
+                        "chat": {"id": 17, "type": "private"},
+                        "text": "works",
+                    },
+                },
+            ]
+            try:
+                with (
+                    patch.dict(
+                        "os.environ",
+                        {"ADMIN_ID": "17", "TELEGRAM_BOT_TOKEN": "fake-token"},
+                    ),
+                    patch.dict(
+                        sys.modules,
+                        {
+                            "telebot": types.SimpleNamespace(
+                                types=types.SimpleNamespace(Update=FakeUpdate)
+                            ),
+                            "bot": fake_bot_module,
+                            "telegram_album_state": album_state,
+                            "bot_utils": types.SimpleNamespace(
+                                require_admin_id=lambda value: int(value),
+                            ),
+                        },
+                    ),
+                ):
+                    processed = cycle.process_admin_updates(updates, now=100)
+                self.assertEqual(processed, 2)
+                self.assertEqual(dispatched, [21, 22])
+                self.assertEqual(
+                    telegram_retry_state.TelegramRetryState("fake-token").due("admin", 400),
+                    [updates[0]],
+                )
+                ciphertext = telegram_retry_state.STATE_FILE.read_bytes()
+                self.assertNotIn(b"Gemini unavailable", ciphertext)
+                self.assertNotIn(b"fails", ciphertext)
+            finally:
+                telegram_retry_state.STATE_FILE = original_path
+
+    def test_already_attempted_owner_post_skips_gemini_and_notifies_owner(self):
+        import telegram_retry_state
+
+        original_path = telegram_retry_state.STATE_FILE
+        with tempfile.TemporaryDirectory() as tmp:
+            telegram_retry_state.STATE_FILE = Path(tmp) / "retry-state.enc"
+            dispatched = []
+            notifications = []
+
+            class FakeUpdate:
+                @staticmethod
+                def de_json(raw):
+                    return json.loads(raw)
+
+            fake_bot_module = types.SimpleNamespace(
+                bot=types.SimpleNamespace(process_new_updates=dispatched.extend),
+                delivery_checkpoint_errors=[],
+                processing_errors=[],
+                telegram_delivery=types.SimpleNamespace(
+                    delivery_status=lambda token, chat_id, message_id: "attempted",
+                ),
+                notify_delivery_status=lambda *args: notifications.append(args),
+                group_photo_messages=lambda update: None,
+                process_album=lambda messages: True,
+            )
+            album_state = types.SimpleNamespace(
+                record_and_get_ready=lambda updates, token, now: ([], False),
+            )
+            update = {
+                "update_id": 31,
+                "message": {
+                    "message_id": 310,
+                    "from": {"id": 17},
+                    "chat": {"id": 17, "type": "private"},
+                    "text": "Материал, публикация которого неопределённа",
+                },
+            }
+            try:
+                with (
+                    patch.dict(
+                        "os.environ",
+                        {"ADMIN_ID": "17", "TELEGRAM_BOT_TOKEN": "fake-token"},
+                    ),
+                    patch.dict(
+                        sys.modules,
+                        {
+                            "telebot": types.SimpleNamespace(
+                                types=types.SimpleNamespace(Update=FakeUpdate)
+                            ),
+                            "bot": fake_bot_module,
+                            "telegram_album_state": album_state,
+                            "bot_utils": types.SimpleNamespace(
+                                require_admin_id=lambda value: int(value),
+                            ),
+                        },
+                    ),
+                ):
+                    processed = cycle.process_admin_updates([update], now=100)
+                self.assertEqual(processed, 1)
+                self.assertEqual(dispatched, [])
+                self.assertEqual(notifications, [(17, 310, "attempted")])
+            finally:
+                telegram_retry_state.STATE_FILE = original_path
 
 
 if __name__ == "__main__":

@@ -116,6 +116,16 @@ def begin_delivery(token: str, chat_id: int, message_id: int) -> tuple[str, bool
     return "attempted", True
 
 
+def delivery_status(token: str, chat_id: int, message_id: int) -> str | None:
+    key = _fingerprint(token, chat_id, message_id)
+    status = _load_state()["deliveries"].get(key)
+    if status is None:
+        return None
+    if status not in {"attempted", "published", "failed"}:
+        raise DeliveryCheckpointError("В журнале защиты от повторов найден неизвестный статус")
+    return status
+
+
 def finish_delivery(token: str, chat_id: int, message_id: int, status: str) -> None:
     if status not in {"published", "failed"}:
         raise ValueError("Недопустимый статус публикации")

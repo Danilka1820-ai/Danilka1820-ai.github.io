@@ -4,7 +4,7 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const POSTS_PATH = path.join(ROOT, 'data', 'posts.json');
 const OUT_ROOT = path.join(ROOT, 'dnevnik');
-const SITE = 'https://www.sarykov.ru';
+const SITE = 'https://sarykov.ru';
 
 function esc(value = '') {
   return String(value)

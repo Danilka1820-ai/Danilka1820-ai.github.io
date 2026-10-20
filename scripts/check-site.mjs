@@ -86,6 +86,7 @@ const код = безКомментариев(html);
 /* ── 2. Ни одного обращения к чужому серверу ──
    Там, где интернет режут, страница из-за такой ссылки встаёт колом. */
 const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
+const SITE_ORIGIN = 'https://sarykov.ru';
 
 шаг('нет ссылок на чужие серверы', () => {
   const чужие = new Set();
@@ -451,11 +452,39 @@ const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
   const newest = posts.map((p) => new Date(p.datetime)).filter((d) => !Number.isNaN(d.getTime())).sort((a,b) => b-a)[0];
   const sitemap = readFileSync(ROOT + 'sitemap.xml', 'utf8');
   const lastmod = newest.toISOString().slice(0, 10);
-  if (!sitemap.includes('<loc>https://www.sarykov.ru/</loc>') || !sitemap.includes(`<lastmod>${lastmod}</lastmod>`)) {
-    throw new Error(`sitemap.xml должен содержать www.sarykov.ru и lastmod ${lastmod}`);
+  if (!sitemap.includes(`<loc>${SITE_ORIGIN}/</loc>`) || !sitemap.includes(`<lastmod>${lastmod}</lastmod>`)) {
+    throw new Error(`sitemap.xml должен содержать ${SITE_ORIGIN} и lastmod ${lastmod}`);
   }
   const robots = readFileSync(ROOT + 'robots.txt', 'utf8');
-  if (!robots.includes('Sitemap: https://www.sarykov.ru/sitemap.xml')) throw new Error('в robots.txt неверный Sitemap');
+  if (!robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`)) throw new Error('в robots.txt неверный Sitemap');
+  if (sitemap.includes('https://www.sarykov.ru')) throw new Error('sitemap.xml содержит неканонический www-домен');
+});
+
+шаг('CNAME и SEO используют целевой домен', () => {
+  const cname = readFileSync(ROOT + 'CNAME', 'utf8').trim();
+  if (cname !== 'sarykov.ru') throw new Error(`CNAME должен быть sarykov.ru, получено: ${cname}`);
+  if (!html.includes(`<link rel="canonical" href="${SITE_ORIGIN}/">`)) {
+    throw new Error('canonical главной страницы не совпадает с целевым доменом');
+  }
+  if (!html.includes(`<meta property="og:url" content="${SITE_ORIGIN}/">`)) {
+    throw new Error('OpenGraph URL главной страницы не совпадает с целевым доменом');
+  }
+  const generator = readFileSync(ROOT + 'scripts/generate-post-pages.mjs', 'utf8');
+  if (!generator.includes(`const SITE = '${SITE_ORIGIN}'`)) {
+    throw new Error('генератор страниц записей использует другой домен');
+  }
+  for (const entry of readdirSync(ROOT + 'dnevnik', { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const page = readFileSync(ROOT + 'dnevnik/' + entry.name + '/index.html', 'utf8');
+    if (!page.includes(`<link rel="canonical" href="${SITE_ORIGIN}/dnevnik/`) ||
+        !page.includes(`<meta property="og:url" content="${SITE_ORIGIN}/dnevnik/`)) {
+      throw new Error(`canonical страницы дневника ${entry.name} не совпадает с целевым доменом`);
+    }
+    if (/<link rel="canonical" href="https:\/\/www\.sarykov\.ru\//.test(page) ||
+        /<meta property="og:url" content="https:\/\/www\.sarykov\.ru\//.test(page)) {
+      throw new Error(`SEO-метаданные страницы дневника ${entry.name} используют www-домен`);
+    }
+  }
 });
 
 /* ── Итог ── */

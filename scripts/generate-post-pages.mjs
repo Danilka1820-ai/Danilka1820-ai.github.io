@@ -107,22 +107,36 @@ function render(post, slug) {
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${esc(preview)}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#E8EAED">
+<meta name="theme-color" content="#0A0E13">
+<link rel="stylesheet" href="/assets/css/living-diary.css">
 <script type="application/ld+json">${jsonLd}</script>
-<style>
-:root{color-scheme:light}html{background:#e8eaed;color:#11151b;font-family:Georgia,serif}body{margin:0}main{width:min(760px,calc(100% - 32px));margin:0 auto;padding:48px 0 72px}nav,footer,time{font:14px/1.5 ui-monospace,monospace}nav{margin-bottom:40px}a{color:#955b32}h1{font-size:clamp(32px,7vw,64px);line-height:1.02;margin:0 0 16px;font-weight:400}time{color:#5f6975}article{font-size:clamp(18px,2.5vw,22px);line-height:1.6}p{margin:1em 0}.media{display:grid;gap:12px;margin:28px 0}.media img,.media video,.media audio{display:block;width:100%;height:auto;border-radius:18px;background:#11151b}.media audio{height:44px;background:transparent}footer{margin-top:48px;padding-top:20px;border-top:1px solid #cbcfd6}@media(max-width:520px){main{padding-top:28px}}
-</style>
 </head>
-<body><main>
-<nav><a href="/#/dnevnik/${encodeURIComponent(slug)}">← Открыть запись в дневнике</a></nav>
-<h1>${esc(title)}</h1>
-${post?.datetime ? `<time datetime="${esc(post.datetime)}">${esc(post.date || post.datetime)}</time>` : ''}
-<article>
-<div class="media">${mediaHtml(post)}</div>
-${paragraphs}
-</article>
-<footer>${telegram ? `<a href="${esc(telegram)}" rel="noopener noreferrer">Оригинал в Telegram</a> · ` : ''}<a href="/">www.sarykov.ru</a></footer>
-</main></body></html>
+<body>
+<canvas id="weatherFx" aria-hidden="true"></canvas>
+<main class="post-page wrap">
+  <nav class="post-page__nav"><a href="/#/dnevnik/${encodeURIComponent(slug)}">← Открыть запись в дневнике</a></nav>
+  <header class="post-page__head">
+    <p class="label">Дневник · ${esc(post?.date || 'Запись')}</p>
+    <h1>${esc(title)}</h1>
+    ${post?.datetime ? `<time datetime="${esc(post.datetime)}">${esc(post.date || post.datetime)}</time>` : ''}
+  </header>
+  <article class="entry__body post-page__body">
+    <div class="media">${mediaHtml(post)}</div>
+    ${paragraphs}
+  </article>
+</main>
+<footer class="foot">
+  <div class="wrap foot__row">
+    <a class="label u" href="/">www.sarykov.ru</a>
+    ${telegram ? `<a class="label u" href="${esc(telegram)}" rel="noopener noreferrer">Оригинал в Telegram</a>` : ''}
+    <div class="site-controls" aria-label="Настройки оформления">
+      <button type="button" id="effectsToggle" aria-pressed="true">Эффекты: вкл.</button>
+      <button type="button" id="transparencyToggle" aria-pressed="false">Уменьшить прозрачность</button>
+    </div>
+  </div>
+</footer>
+<script src="/assets/js/atmosphere.js" defer></script>
+</body></html>
 `;
 }
 

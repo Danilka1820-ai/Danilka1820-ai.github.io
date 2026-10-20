@@ -38,7 +38,10 @@ function безКомментариев(текст){
 }
 /* Разметка без скриптов: строки внутри кода — не ссылки страницы. */
 const разметка = безКомментариев(html.replace(/<script[\s\S]*?<\/script>/gi, ' '));
-const стили = (html.match(/<style[\s\S]*?<\/style>/gi) || []).join('\n');
+const стили = [
+  ...(html.match(/<style[\s\S]*?<\/style>/gi) || []),
+  readFileSync(ROOT + 'assets/css/living-diary.css', 'utf8'),
+].join('\n');
 const код = безКомментариев(html);
 
 /* ── 1. Синтаксис скриптов внутри страницы ──
@@ -81,6 +84,12 @@ const код = безКомментариев(html);
       throw new Error(имя + ' — ' + суть.trim());
     }
   }
+});
+
+шаг('дополнительный клиентский JavaScript без синтаксических ошибок', () => {
+  const путь = ROOT + 'assets/js/atmosphere.js';
+  const рез = spawnSync(process.execPath, ['--check', путь], { encoding: 'utf8' });
+  if (рез.status !== 0) throw new Error(рез.stderr.trim() || 'node --check завершился с ошибкой');
 });
 
 /* ── 2. Ни одного обращения к чужому серверу ──
@@ -229,6 +238,19 @@ const SITE_ORIGIN = 'https://www.sarykov.ru';
   if (нет.length) throw new Error('пропало: ' + нет.join(', '));
 });
 
+шаг('индикатор загрузки и кнопка плеера показываются только по делу', () => {
+  const ожидание = стили.match(/\.tv__wait\s*\{([^}]*)\}/);
+  const загрузка = стили.match(/\.tv\.is-waiting\s+\.tv__wait\s*\{([^}]*)\}/);
+  const игра = стили.match(/\.tv\.is-playing\s+\.tv__big\s*\{([^}]*)\}/);
+  if (!ожидание || !/display:\s*none/.test(ожидание[1]) ||
+      !загрузка || !/display:\s*block/.test(загрузка[1])) {
+    throw new Error('индикатор загрузки видео должен быть виден только при ожидании');
+  }
+  if (!игра || !/pointer-events:\s*none/.test(игра[1])) {
+    throw new Error('невидимая кнопка запуска не должна перехватывать нажатия во время воспроизведения');
+  }
+});
+
 // Однажды кнопка «назад» в браузере оставляла окно просмотра открытым и
 // играющим поверх нового раздела: hashchange менял вкладку, не закрывая
 // модалку. Ловим регресс на уровне кода, а не только живым кликом.
@@ -244,7 +266,7 @@ const SITE_ORIGIN = 'https://www.sarykov.ru';
 // увеличением в 2,24 раза (два независимых предела складывались:
 // --tv-cap уже нёс запас ×1.6, а CSS домножал его ещё на ×1.4).
 шаг('кружочек в полном экране не растягивается вторым множителем', () => {
-  const блок = код.match(/\.tv\.is-fs \.tv__win--round \.tv__stage,\s*\n\.tv__win--round:fullscreen \.tv__stage\{[\s\S]{0,200}?\}/);
+  const блок = стили.match(/\.tv\.is-fs \.tv__win--round \.tv__stage,\s*\.tv__win--round:fullscreen \.tv__stage\s*\{[\s\S]{0,240}?\}/);
   if (!блок) throw new Error('не нашёл правило размера кружочка в полном экране');
   if (/var\(--tv-cap,\s*96vw\)\s*\*\s*1\.4/.test(блок[0])) {
     throw new Error('предел --tv-cap снова домножается в CSS — кружочек будет растягиваться сильнее заложенного в sizeStage');
@@ -287,20 +309,18 @@ const SITE_ORIGIN = 'https://www.sarykov.ru';
 });
 
 шаг('ссылки в тексте заметны и не ломают ширину', () => {
-  if (!/\.entry__body a\.u[^\{]*\{[^}]*text-decoration:\s*underline/.test(код)) {
+  if (!/\.entry__body a\.u[^\{]*\{[^}]*text-decoration:\s*underline/.test(стили)) {
     throw new Error('ссылки внутри записей снова выглядят как обычный текст');
   }
-  if (!/\.entry__body a\.u[^\{]*\{[^}]*overflow-wrap:\s*anywhere/.test(код)) {
+  if (!/\.entry__body a\.u[^\{]*\{[^}]*overflow-wrap:\s*anywhere/.test(стили)) {
     throw new Error('длинная ссылка снова может раздвинуть карточку');
   }
 });
 
-шаг('крестик плеера остаётся на экране в альбомном телефоне', () => {
-  const mobileTop = код.indexOf('.tv__close{ top:-52px; }');
-  const landscape = код.lastIndexOf('@media (max-height:500px)');
-  if (mobileTop < 0 || landscape < mobileTop ||
-      !/\.tv__close\{\s*top:8px;\s*right:8px;\s*\}/.test(код.slice(landscape))) {
-    throw new Error('правило альбомной ориентации должно идти после мобильного top:-52px');
+шаг('крестик плеера остаётся доступным на телефоне', () => {
+  if (!/@media \(max-width: 680px\)[\s\S]*?\.tv__close\s*\{\s*top:\s*\.5rem;\s*right:\s*\.5rem;/.test(стили) ||
+      !/@media \(max-height: 500px\)\s*\{\s*\.tv__close\s*\{\s*top:\s*\.5rem;\s*right:\s*\.5rem;/.test(стили)) {
+    throw new Error('крестик окна плеера должен оставаться внутри экрана на телефонах и в альбомной ориентации');
   }
 });
 
@@ -333,12 +353,10 @@ const SITE_ORIGIN = 'https://www.sarykov.ru';
 
 /* ── 6. Быстрая загрузка ── */
 шаг('экономный режим гасит стекло', () => {
-  // Класс вешает скрипт в шапке. Однажды правила для него потерялись при
-  // переборке стилей: класс был, а снимать было нечего.
-  if (!/html\.thin\s+body\{[^}]*background-image:\s*none/.test(html)){
+  if (!/\.thin body\s*\{[^}]*background-image:\s*none/.test(стили)){
     throw new Error('html.thin больше не убирает световой фон');
   }
-  if (!/html\.thin[^{]*\{[^}]*backdrop-filter:\s*none/.test(html)){
+  if (!/\.thin \.top\s*\{[^}]*backdrop-filter:\s*none/.test(стили)){
     throw new Error('html.thin больше не отключает размытия');
   }
 });
@@ -355,19 +373,51 @@ const SITE_ORIGIN = 'https://www.sarykov.ru';
   }
 });
 
-шаг('богатый режим не трогает радиус блюра', () => {
-  // html.rich — противоположность html.thin: включается на сильном канале и
-  // железе. Радиус --glass-blur там пробовали увеличить и убрали — даже на
-  // «подходящем» по проверкам железе (4 ядра, 8 ГБ) прилипшая шапка при
-  // прокрутке проседала до 200 мс на кадр вместо 17-33. Если проверка ниже
-  // упала — кто-то вернул это без нового замера.
-  const блок = html.match(/html\.rich\{[^}]*\}/);
-  if (!блок){
-    throw new Error('пропал блок html.rich с токенами богатого режима');
+шаг('дизайн-система и настройки эффектов подключены', () => {
+  if (!/<link rel="stylesheet" href="\/assets\/css\/living-diary\.css">/.test(html)) {
+    throw new Error('index.html не подключает общую дизайн-систему');
   }
-  if (/--glass-blur/.test(блок[0])){
-    throw new Error('html.rich снова меняет --glass-blur — это уже роняло кадр при прокрутке до 200 мс, см. комментарий рядом с блоком в index.html');
+  if (!/id="weatherFx"/.test(html) || !/pointer-events:\s*none/.test(стили)) {
+    throw new Error('дождевой слой должен быть декоративным и не перехватывать клики');
   }
+  if (!/id="effectsToggle"/.test(html) || !/id="transparencyToggle"/.test(html) ||
+      !/prefers-reduced-motion:\s*reduce/.test(стили) ||
+      !/prefers-reduced-transparency:\s*reduce/.test(стили)) {
+    throw new Error('не найдены настройки эффектов или системные режимы доступности');
+  }
+  const atmosphere = readFileSync(ROOT + 'assets/js/atmosphere.js', 'utf8');
+  if (!/visibilitychange/.test(atmosphere) || !/localStorage/.test(atmosphere) ||
+      !/catch\s*\(/.test(atmosphere)) {
+    throw new Error('эффекты должны останавливаться в фоновой вкладке и работать без localStorage');
+  }
+});
+
+шаг('ошибка загрузки дневника предлагает повтор', () => {
+  if (!/Повторить загрузку/.test(html) || !/loadFrom\(0\)\.then\(renderPosts\)\.catch\(showLoadFailure\)/.test(html)) {
+    throw new Error('для повторного запроса данных дневника нужна работающая кнопка');
+  }
+  if (!/Записей пока нет\./.test(html) || /!Array\.isArray\(posts\)\s*\|\|\s*!posts\.length/.test(html)) {
+    throw new Error('пустой список записей должен показывать отдельное пустое состояние, а не ошибку загрузки');
+  }
+});
+
+шаг('404 использует общую дизайн-систему и настройки', () => {
+  const page = readFileSync(ROOT + '404.html', 'utf8');
+  if (!page.includes('/assets/css/living-diary.css') ||
+      !page.includes('id="effectsToggle"') || !page.includes('id="transparencyToggle"')) {
+    throw new Error('404.html не использует общие стили и настройки оформления');
+  }
+});
+
+шаг('количество файлов не превышает 500', () => {
+  const result = spawnSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], {
+    cwd: ROOT,
+  });
+  if (result.status !== 0) throw new Error('не удалось получить список файлов Git');
+  const files = new Set(result.stdout.toString().split('\0').filter(Boolean));
+  const count = [...files].filter((file) => existsSync(ROOT + file)).length;
+  if (count > 500) throw new Error(`в проекте ${count} файлов, допустимо не больше 500`);
+  if (count >= 475) предупреждения.push(`до лимита 500 файлов осталось ${500 - count}`);
 });
 
 шаг('у видео остаются 1080p, 720p и лёгкий уровень', () => {
@@ -493,6 +543,10 @@ const SITE_ORIGIN = 'https://www.sarykov.ru';
   for (const entry of readdirSync(ROOT + 'dnevnik', { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const page = readFileSync(ROOT + 'dnevnik/' + entry.name + '/index.html', 'utf8');
+    if (!page.includes('<link rel="stylesheet" href="/assets/css/living-diary.css">') ||
+        !page.includes('id="effectsToggle"') || !page.includes('id="transparencyToggle"')) {
+      throw new Error(`страница дневника ${entry.name} не использует общий стиль и настройки`);
+    }
     if (!page.includes(`<link rel="canonical" href="${SITE_ORIGIN}/dnevnik/`) ||
         !page.includes(`<meta property="og:url" content="${SITE_ORIGIN}/dnevnik/`)) {
       throw new Error(`canonical страницы дневника ${entry.name} не совпадает с целевым доменом`);

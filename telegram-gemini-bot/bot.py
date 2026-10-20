@@ -2,17 +2,18 @@
 Telegram-бот на pyTelegramBotAPI + Google Gemini.
 
 Возможности:
-  - Текст -> бот просит Gemini сделать из него красивый пост.
+  - Текст -> Gemini делает пост, который бот автоматически публикует в канал.
   - Фото/видео -> бот скачивает файл, отдаёт его Gemini,
     получает описание сюжета/текста и превращает в пост.
   - Альбом (несколько фото одним сообщением, media_group_id) -> собирается
     в ОДИН пост по всем фото сразу, а не в N отдельных (см. process_album).
-    Работает при запуске через poll_once.py (см. dispatch_updates там же);
-    при локальном bot.infinity_polling() альбом обрабатывается по старому,
-    фото за фото — это известное отличие ручного режима от прода.
+    Группировка обновлений выполняется основным bot_api_cycle.py;
+    при локальном bot.infinity_polling() фото обрабатываются отдельно.
   - Кружочки (video_note) и голосовые (voice) -> бот скачивает аудио/видео,
     Gemini расшифровывает речь и формирует готовый пост.
   - /post <текст>            — публикует пост в канал, возвращает ID сообщения.
+  - /ask <вопрос>            — отвечает через Gemini без публикации.
+  - /ask <текст>             — задаёт вопрос Gemini без публикации в канал.
   - /edit <ID> <новый текст> — редактирует пост в канале по ID.
   - /delete <ID>             — удаляет пост из канала по ID.
 
@@ -33,6 +34,7 @@ from google import genai
 from dotenv import load_dotenv
 
 import gemini_resilience
+import telegram_delivery
 from bot_utils import (
     TELEGRAM_MESSAGE_LIMIT,
     clip_for_telegram,
@@ -73,16 +75,10 @@ ADMIN_ID = require_admin_id(ADMIN_ID)
 #
 # threaded=False — не косметика. По умолчанию telebot обрабатывает апдейты
 # в фоновом пуле из 2 ДЕМОН-потоков: process_new_updates() возвращается
-# сразу, не дожидаясь ответа хендлера. В проде (poll_once.py, см. README)
-# процесс выходит через ~POLL_SECONDS секунд — и если в этот момент
-# фоновый поток ещё ждёт Gemini (видео может занять до
-# GEMINI_FILE_TIMEOUT_SECONDS), Python убивает демон-поток молча: без
-# ошибки, без ответа пользователю, при уже подтверждённом offset апдейта
-# (Telegram его больше не пришлёт). Сообщение просто пропадает. При
-# threaded=False хендлер выполняется в том же потоке, что и цикл polling,
-# poll() не перейдёт к следующему апдейту и не завершится, пока текущий
-# не обработан целиком — ровно то поведение, которое нужно единственному
-# администратору без параллельных запросов.
+# сразу, не дожидаясь ответа хендлера. Основной bot_api_cycle.py должен
+# подтвердить Telegram offset только после завершения обработчиков. При
+# threaded=False обработка остаётся в текущем потоке, поэтому цикл не
+# подтвердит пачку раньше, чем закончатся ответы Gemini.
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN, parse_mode=None, threaded=False)
 
 gemini_client = genai.Client(
@@ -100,6 +96,8 @@ POST_STYLE_HINT = (
     "строкой, добавь 3-5 хэштегов на русском языке, подходящих по смыслу "
     "к содержанию (например: #природа #москва #вечер)."
 )
+
+delivery_checkpoint_errors: list[telegram_delivery.DeliveryCheckpointError] = []
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +133,14 @@ def _error_message_for_user(error: Exception) -> str:
     """
     if isinstance(error, (gemini_resilience.GeminiUnavailableError, gemini_resilience.GeminiConfigurationError)):
         return gemini_resilience.friendly_error_message(error)
-    return str(error)
+    return _redact_secrets(str(error))
+
+
+def _redact_secrets(text: str) -> str:
+    for secret in (TELEGRAM_BOT_TOKEN, GEMINI_API_KEY):
+        if secret:
+            text = text.replace(secret, "[СКРЫТО]")
+    return text
 
 
 def edit_reply(processing_message, text: str) -> None:
@@ -144,6 +149,85 @@ def edit_reply(processing_message, text: str) -> None:
         chat_id=processing_message.chat.id,
         message_id=processing_message.message_id,
     )
+
+
+def publish_to_channel(message, text: str, processing_message=None) -> bool:
+    """Publish generated text once, after durably recording its source message."""
+    try:
+        text = validate_source_text(text)
+        if len(text) > TELEGRAM_MESSAGE_LIMIT:
+            raise ValueError(
+                f"Результат Gemini длиннее лимита Telegram ({TELEGRAM_MESSAGE_LIMIT} символов); "
+                "пост не опубликован."
+            )
+        status, should_send = telegram_delivery.begin_delivery(
+            TELEGRAM_BOT_TOKEN,
+            message.chat.id,
+            message.message_id,
+        )
+    except telegram_delivery.DeliveryCheckpointError as error:
+        delivery_checkpoint_errors.append(error)
+        print(_redact_secrets(str(error)))
+        reply(message, f"❌ Не удалось безопасно подготовить публикацию: {_error_message_for_user(error)}")
+        return False
+    except ValueError as error:
+        reply(message, f"❌ {error}")
+        return False
+
+    if not should_send:
+        if status == "published":
+            notice = "Это сообщение уже было опубликовано; повторно не отправляю."
+        else:
+            notice = (
+                "Предыдущий запуск мог успеть опубликовать пост, но не сохранил результат. "
+                "Проверьте канал; повторно отправить этот материал автоматически нельзя."
+            )
+        if processing_message:
+            edit_reply(processing_message, notice)
+        else:
+            reply(message, notice)
+        return status == "published"
+
+    try:
+        sent = bot.send_message(CHANNEL_ID, text)
+    except Exception as error:  # noqa: BLE001 - внешний API может завершиться неоднозначно
+        error_code = getattr(error, "error_code", None)
+        response = getattr(error, "response", None)
+        if error_code is None:
+            error_code = getattr(response, "status_code", None)
+        if isinstance(error_code, int) and 400 <= error_code < 500:
+            try:
+                telegram_delivery.finish_delivery(
+                    TELEGRAM_BOT_TOKEN, message.chat.id, message.message_id, "failed"
+                )
+            except telegram_delivery.DeliveryCheckpointError as state_error:
+                print(_redact_secrets(str(state_error)))
+        detail = _error_message_for_user(error)
+        print(f"Не удалось подтвердить публикацию Telegram: {_redact_secrets(str(error))}")
+        notice = f"❌ Telegram не подтвердил публикацию: {detail}"
+        if error_code is None or error_code >= 500:
+            notice += " Результат отправки неопределён; повторно этот материал не отправляю."
+        if processing_message:
+            edit_reply(processing_message, notice)
+        else:
+            reply(message, notice)
+        return False
+
+    try:
+        telegram_delivery.finish_delivery(
+            TELEGRAM_BOT_TOKEN, message.chat.id, message.message_id, "published"
+        )
+    except telegram_delivery.DeliveryCheckpointError as error:
+        # The durable "attempted" checkpoint still prevents a duplicate if this
+        # process dies before the workflow commits its final state.
+        print(_redact_secrets(str(error)))
+
+    notice = f"✅ Опубликовано в канале. ID сообщения: {sent.message_id}"
+    if processing_message:
+        edit_reply(processing_message, notice)
+    else:
+        reply(message, notice)
+    return True
 
 
 def download_telegram_file(file_id: str, suffix: str) -> str:
@@ -292,9 +376,11 @@ def process_album(messages: list) -> None:
         if caption:
             task += f"\nАвтор подписал альбом так: «{caption}». Учти это в посте."
         post_text = ask_gemini_about_album(local_paths, task)
-        edit_reply(processing_msg, f"✅ Готовый пост по альбому ({len(local_paths)} фото):\n\n{post_text}")
+        publish_to_channel(first, post_text, processing_msg)
     except Exception as error:  # noqa: BLE001 - хотим сообщить пользователю о любой ошибке
-        print(f"Не удалось обработать альбом: {error}")
+        if isinstance(error, telegram_delivery.DeliveryCheckpointError):
+            delivery_checkpoint_errors.append(error)
+        print(f"Не удалось обработать альбом: {_redact_secrets(str(error))}")
         edit_reply(processing_msg, f"❌ Не удалось обработать альбом: {_error_message_for_user(error)}")
     finally:
         for path in local_paths:
@@ -323,9 +409,11 @@ def process_media_message(
     try:
         local_path = download_telegram_file(file_id, suffix)
         post_text = ask_gemini_about_media(local_path, task_description)
-        edit_reply(processing_msg, f"✅ Готовый пост:\n\n{post_text}")
+        publish_to_channel(message, post_text, processing_msg)
     except Exception as error:  # noqa: BLE001 - хотим сообщить пользователю о любой ошибке
-        print(f"Не удалось обработать файл: {error}")
+        if isinstance(error, telegram_delivery.DeliveryCheckpointError):
+            delivery_checkpoint_errors.append(error)
+        print(f"Не удалось обработать файл: {_redact_secrets(str(error))}")
         edit_reply(processing_msg, f"❌ Не удалось обработать файл: {_error_message_for_user(error)}")
     finally:
         if local_path and os.path.exists(local_path):
@@ -346,6 +434,7 @@ def handle_start(message):
         "сообщения в готовые посты через Gemini.\n\n"
         "Команды для управления каналом:\n"
         "/post <текст> — опубликовать пост в канал\n"
+        "/ask <вопрос> — получить ответ Gemini без публикации\n"
         "/edit <ID> <новый текст> — изменить пост по ID\n"
         "/delete <ID> — удалить пост по ID\n"
         "/status — диагностика Gemini (модели, предохранитель, последняя ошибка)",
@@ -376,10 +465,11 @@ def handle_post(message):
         return
 
     try:
-        sent = bot.send_message(CHANNEL_ID, text)
-        reply(message, f"✅ Опубликовано в канале. ID сообщения: {sent.message_id}")
+        publish_to_channel(message, text)
     except Exception as error:  # noqa: BLE001
-        reply(message, f"❌ Не удалось опубликовать: {error}")
+        if isinstance(error, telegram_delivery.DeliveryCheckpointError):
+            delivery_checkpoint_errors.append(error)
+        reply(message, f"❌ Не удалось опубликовать: {_error_message_for_user(error)}")
 
 
 @bot.message_handler(commands=["edit"])
@@ -425,16 +515,53 @@ def handle_delete(message):
         reply(message, f"❌ Не удалось удалить пост: {error}")
 
 
+@bot.message_handler(commands=["ask"])
+def handle_ask(message):
+    if not require_admin(message):
+        return
+    source_text = message.text.partition(" ")[2].strip()
+    try:
+        source_text = validate_source_text(source_text)
+    except ValueError as error:
+        reply(message, f"Использование: /ask <текст вопроса>\n\n❌ {error}")
+        return
+
+    processing_msg = reply(message, "⏳ Спрашиваю у Gemini без публикации...")
+    try:
+        answer = ask_gemini_question(source_text)
+        edit_reply(processing_msg, f"💬 Ответ Gemini (не опубликован):\n\n{answer}")
+    except Exception as error:  # noqa: BLE001
+        print(f"Ошибка запроса к Gemini: {_redact_secrets(str(error))}")
+        edit_reply(
+            processing_msg,
+            f"❌ Ошибка запроса к Gemini: {_error_message_for_user(error)}",
+        )
+
+
+def ask_gemini_question(question: str) -> str:
+    """Answer a private question without applying the channel-post prompt."""
+    question = validate_source_text(question)
+    response = _generate_content(
+        "Ответь по-русски на вопрос владельца. Не превращай ответ в пост "
+        "для канала и не добавляй хэштеги.\n\n"
+        f"Вопрос:\n{question}"
+    )
+    return validate_source_text(getattr(response, "text", ""))
+
+
 # ---------------------------------------------------------------------------
 # 5. Обработка текста, фото, видео, кружочков и голосовых
 # ---------------------------------------------------------------------------
 
 @bot.message_handler(content_types=["text"])
 def handle_text(message):
-    # Команды (/post, /edit, /delete, /start, /help) обрабатываются выше
-    # и до этого хендлера не доходят.
+    # Registered commands are handled before this text handler.
 
     if not require_admin(message):
+        return
+
+    if (message.text or "").lstrip().startswith("/"):
+        reply(message, "Неизвестная команда. Отправьте материал обычным сообщением или используйте /ask.")
         return
 
     # Если переслали сообщение из канала/чата — просто сообщаем его точный
@@ -462,9 +589,11 @@ def handle_text(message):
     processing_msg = reply(message, "⏳ Спрашиваю у Gemini...")
     try:
         post_text = ask_gemini_text(source_text)
-        edit_reply(processing_msg, f"✅ Готовый пост:\n\n{post_text}")
+        publish_to_channel(message, post_text, processing_msg)
     except Exception as error:  # noqa: BLE001
-        print(f"Ошибка запроса к Gemini: {error}")
+        if isinstance(error, telegram_delivery.DeliveryCheckpointError):
+            delivery_checkpoint_errors.append(error)
+        print(f"Ошибка запроса к Gemini: {_redact_secrets(str(error))}")
         edit_reply(processing_msg, f"❌ Ошибка запроса к Gemini: {_error_message_for_user(error)}")
 
 

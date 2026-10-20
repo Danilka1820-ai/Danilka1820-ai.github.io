@@ -3,7 +3,8 @@
 This replaces the old self-restarting long-polling chain. A scheduled job reads
 one pending batch from Telegram, mirrors channel posts into the static site,
 processes administrator messages through the existing bot handlers, then
-acknowledges the batch. The public t.me scraper is only a reconciliation fallback.
+acknowledges the batch only after its repository changes have been persisted.
+The public t.me scraper is only a reconciliation fallback.
 """
 from __future__ import annotations
 
@@ -12,6 +13,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -49,6 +51,10 @@ class TelegramApiError(RuntimeError):
     pass
 
 
+def _safe_error_message(error: Exception, token: str) -> str:
+    return str(error).replace(token, "[СКРЫТО]") if token else str(error)
+
+
 def bot_api(token: str, method: str, payload: dict | None = None, *, timeout: int = 35):
     try:
         response = requests.post(
@@ -59,7 +65,8 @@ def bot_api(token: str, method: str, payload: dict | None = None, *, timeout: in
         response.raise_for_status()
         body = response.json()
     except (requests.RequestException, ValueError) as error:
-        raise TelegramApiError(f"Telegram API {method} failed: {error}") from error
+        message = _safe_error_message(error, token)
+        raise TelegramApiError(f"Telegram API {method} failed: {message}") from None
     if not body.get("ok"):
         raise TelegramApiError(
             f"Telegram API {method} returned error: {body.get('description') or body}"
@@ -307,7 +314,8 @@ def _download_media_file(token: str, file_obj: dict, post_number: int, index: st
         response = requests.get(f"{BOT_API}/file/bot{token}/{file_path}", timeout=90)
         response.raise_for_status()
     except requests.RequestException as error:
-        raise TelegramApiError(f"Telegram file download failed: {error}") from error
+        message = _safe_error_message(error, token)
+        raise TelegramApiError(f"Telegram file download failed: {message}") from None
     if len(response.content) > MAX_BOT_DOWNLOAD_BYTES:
         raise TelegramApiError("download exceeded official 20 MB Bot API limit")
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
@@ -461,6 +469,22 @@ def _group_messages(raw_updates: list[dict]) -> list[tuple[str | None, list[dict
     return result
 
 
+def select_admin_updates(raw_updates: list[dict], admin_id: int) -> list[dict]:
+    selected = []
+    for raw in raw_updates:
+        if channel_message(raw) is not None:
+            continue
+        message = raw.get("message") or raw.get("edited_message") or {}
+        sender = message.get("from") or {}
+        try:
+            sender_id = int(sender.get("id"))
+        except (TypeError, ValueError):
+            continue
+        if sender_id == admin_id:
+            selected.append(raw)
+    return selected
+
+
 def ingest_channel_updates(token: str, raw_updates: list[dict], channel_username_fallback: str) -> int:
     if not raw_updates:
         return 0
@@ -550,7 +574,10 @@ def ingest_channel_updates(token: str, raw_updates: list[dict], channel_username
 
 
 def process_admin_updates(raw_updates: list[dict]) -> int:
-    admin_raw = [raw for raw in raw_updates if channel_message(raw) is None]
+    from bot_utils import require_admin_id
+
+    admin_id = require_admin_id(os.getenv("ADMIN_ID"))
+    admin_raw = select_admin_updates(raw_updates, admin_id)
     if not admin_raw:
         return 0
 
@@ -558,7 +585,8 @@ def process_admin_updates(raw_updates: list[dict]) -> int:
     # requiring Telegram/Gemini secrets, while the production job still reuses
     # the exact same handlers as bot.py.
     import telebot  # type: ignore
-    from bot import bot, group_photo_messages, process_album  # type: ignore
+    import bot  # type: ignore
+    from bot import group_photo_messages, process_album  # type: ignore
 
     updates = [telebot.types.Update.de_json(json.dumps(raw)) for raw in admin_raw]
     albums: dict[str, list] = {}
@@ -574,7 +602,22 @@ def process_admin_updates(raw_updates: list[dict]) -> int:
     for messages in albums.values():
         messages.sort(key=lambda item: item.message_id)
         process_album(messages)
+    checkpoint_errors = list(bot.delivery_checkpoint_errors)
+    bot.delivery_checkpoint_errors.clear()
+    if checkpoint_errors:
+        raise RuntimeError(
+            "Не удалось сохранить защиту от повторной публикации; "
+            "обновления Telegram оставлены неподтверждёнными."
+        ) from checkpoint_errors[0]
     return len(updates)
+
+
+def _write_cycle_outputs(max_update_id: int, channel_count: int) -> None:
+    output_file = os.getenv("GITHUB_OUTPUT", "").strip()
+    if output_file:
+        with open(output_file, "a", encoding="utf-8") as output:
+            output.write(f"pending_offset={max_update_id + 1}\n")
+            output.write(f"channel_posts={channel_count}\n")
 
 
 def main() -> None:
@@ -595,16 +638,24 @@ def main() -> None:
     channel_updates = select_channel_updates(updates, configured_channel)
     channel_count = ingest_channel_updates(token, channel_updates, channel_username)
     admin_count = process_admin_updates(updates)
-
-    # Acknowledge only after all local processing succeeded. Site persistence to
-    # git happens in the next workflow step; the independent HTML reconciler can
-    # recover a channel post if a later git push fails.
-    acknowledge_updates(token, max_update_id)
+    _write_cycle_outputs(max_update_id, channel_count)
     print(
         f"Bot API cycle complete: updates={len(updates)}, "
-        f"channel_posts={channel_count}, admin_updates={admin_count}, ack={max_update_id}."
+        f"channel_posts={channel_count}, admin_updates={admin_count}, "
+        f"pending_ack={max_update_id + 1}."
     )
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) == 3 and sys.argv[1] == "--ack-offset":
+        if not sys.argv[2].isdigit() or int(sys.argv[2]) < 1:
+            raise RuntimeError("offset должен быть положительным целым числом")
+        token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        if not token:
+            raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
+        acknowledge_updates(token, int(sys.argv[2]) - 1)
+        print("Bot API updates acknowledged after repository persistence.")
+    elif len(sys.argv) == 1:
+        main()
+    else:
+        raise RuntimeError("Использование: bot_api_cycle.py [--ack-offset OFFSET]")

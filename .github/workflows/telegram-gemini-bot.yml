@@ -8,6 +8,7 @@ on:
     paths:
       - 'telegram-gemini-bot/bot_api_cycle.py'
       - 'telegram-gemini-bot/bot.py'
+      - 'telegram-gemini-bot/telegram_delivery.py'
       - 'telegram-gemini-bot/gemini_resilience.py'
       - 'telegram-gemini-bot/bot_utils.py'
       - 'telegram-gemini-bot/requirements.txt'
@@ -46,7 +47,13 @@ jobs:
       - name: Установить зависимости бота
         run: python -m pip install --disable-pip-version-check -r telegram-gemini-bot/requirements.txt
 
+      - name: Настроить автора checkpoint-коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Забрать одну подтверждаемую пачку Bot API
+        id: cycle
         working-directory: telegram-gemini-bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -73,13 +80,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data assets/posts dnevnik sitemap.xml
+          if [ -f .github/telegram-delivery-state.json ]; then
+            git add -- .github/telegram-delivery-state.json
+          fi
+
+          if git diff --cached --quiet -- data assets/posts dnevnik sitemap.xml; then
+            site_changed=false
+          else
+            site_changed=true
+          fi
 
           if git diff --cached --quiet; then
             echo "Лента не изменилась."
             echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "site_changed=${site_changed}" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -101,9 +116,18 @@ jobs:
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
+          echo "site_changed=${site_changed}" >> "$GITHUB_OUTPUT"
 
       - name: Запросить публикацию GitHub Pages
-        if: steps.commit.outputs.changed == 'true'
+        if: steps.commit.outputs.site_changed == 'true' || steps.cycle.outputs.channel_posts != '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"
+
+      - name: Подтвердить обработанную пачку Telegram
+        if: steps.cycle.outputs.pending_offset != ''
+        working-directory: telegram-gemini-bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          PENDING_OFFSET: ${{ steps.cycle.outputs.pending_offset }}
+        run: python bot_api_cycle.py --ack-offset "$PENDING_OFFSET"

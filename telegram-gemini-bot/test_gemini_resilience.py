@@ -1,6 +1,6 @@
 """Тесты устойчивости к сбоям Gemini — без сети и без реального google-genai.
 
-Как и test_poll_once.py, подменяет пакет google.genai фейковыми модулями
+Как и тесты bot_api_cycle.py, подменяет пакет google.genai фейковыми модулями
 перед загрузкой gemini_resilience.py: в CI (.github/workflows/proverka.yml)
 зависимости из requirements.txt не ставятся, только синтаксис проверяется
 и гоняются эти unit-тесты — поэтому модуль должен быть тестируем и без
@@ -28,8 +28,7 @@ class FakeAPIError(Exception):
 
 def load_module():
     """Собирает фейковый google.genai (errors.APIError, types.HttpOptions/
-    HttpRetryOptions) и загружает gemini_resilience.py поверх него — так же,
-    как test_poll_once.py подменяет telebot перед загрузкой poll_once.py."""
+    HttpRetryOptions) и загружает gemini_resilience.py поверх него."""
     google_pkg = types.ModuleType("google")
     genai_pkg = types.ModuleType("google.genai")
     errors_mod = types.ModuleType("google.genai.errors")

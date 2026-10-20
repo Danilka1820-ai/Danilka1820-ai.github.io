@@ -8,6 +8,9 @@ on:
     paths:
       - 'telegram-gemini-bot/bot_api_cycle.py'
       - 'telegram-gemini-bot/bot.py'
+      - 'telegram-gemini-bot/telegram_delivery.py'
+      - 'telegram-gemini-bot/telegram_album_state.py'
+      - 'telegram-gemini-bot/pages_build.py'
       - 'telegram-gemini-bot/gemini_resilience.py'
       - 'telegram-gemini-bot/bot_utils.py'
       - 'telegram-gemini-bot/requirements.txt'
@@ -23,6 +26,7 @@ concurrency:
 
 jobs:
   cycle:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -46,7 +50,13 @@ jobs:
       - name: Установить зависимости бота
         run: python -m pip install --disable-pip-version-check -r telegram-gemini-bot/requirements.txt
 
+      - name: Настроить автора checkpoint-коммитов
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: Забрать одну подтверждаемую пачку Bot API
+        id: cycle
         working-directory: telegram-gemini-bot
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -68,24 +78,82 @@ jobs:
         run: node scripts/check-site.mjs
 
       - name: Опубликовать изменения ленты
-        id: commit
+        id: persist
         shell: bash
         run: |
           set -euo pipefail
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data assets/posts dnevnik sitemap.xml
-
-          if git diff --cached --quiet; then
-            echo "Лента не изменилась."
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
+          if [ -f .github/telegram-delivery-state.json ]; then
+            git add -- .github/telegram-delivery-state.json
+          fi
+          if [ -e .github/telegram-album-state.enc ] || git ls-files --error-unmatch .github/telegram-album-state.enc >/dev/null 2>&1; then
+            git add -A -- .github/telegram-album-state.enc
           fi
 
-          git commit -m "Sync diary from Telegram Bot API"
-          pushed=false
+          if git diff --cached --quiet -- data assets/posts dnevnik sitemap.xml; then
+            site_changed=false
+          else
+            site_changed=true
+          fi
 
+          if [ "$site_changed" = "true" ]; then
+            python telegram-gemini-bot/telegram_delivery.py --mark-pages-pending
+            git add -- .github/telegram-delivery-state.json
+          fi
+
+          if git diff --cached --quiet; then
+            echo "Изменений для фиксации нет; репозиторий уже содержит обработанное состояние."
+          else
+            git commit -m "Sync diary from Telegram Bot API"
+            pushed=false
+
+            for delay in 0 2 4 8 16; do
+              sleep "$delay"
+              git rebase --abort 2>/dev/null || true
+              if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"; then
+                pushed=true
+                break
+              fi
+            done
+
+            if [ "$pushed" != "true" ]; then
+              echo "Не удалось отправить обновление ленты после повторов." >&2
+              exit 1
+            fi
+          fi
+
+          echo "saved=true" >> "$GITHUB_OUTPUT"
+          echo "site_changed=${site_changed}" >> "$GITHUB_OUTPUT"
+          echo "pages_pending=$(python telegram-gemini-bot/telegram_delivery.py --pages-pending)" >> "$GITHUB_OUTPUT"
+
+      - name: Подтвердить обработанную пачку Telegram
+        if: success() && steps.persist.outputs.saved == 'true' && steps.cycle.outputs.pending_offset != ''
+        working-directory: telegram-gemini-bot
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          PENDING_OFFSET: ${{ steps.cycle.outputs.pending_offset }}
+        run: python bot_api_cycle.py --ack-offset "$PENDING_OFFSET"
+
+      - name: Запросить публикацию GitHub Pages
+        id: pages
+        if: success() && steps.persist.outputs.saved == 'true' && steps.persist.outputs.pages_pending == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python telegram-gemini-bot/pages_build.py "$GITHUB_REPOSITORY"
+
+      - name: Снять флаг ожидающей сборки Pages
+        if: success() && steps.pages.outputs.requested == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python telegram-gemini-bot/telegram_delivery.py --clear-pages-pending
+          git add -- .github/telegram-delivery-state.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Mark GitHub Pages build request"
+          pushed=false
           for delay in 0 2 4 8 16; do
             sleep "$delay"
             git rebase --abort 2>/dev/null || true
@@ -94,16 +162,7 @@ jobs:
               break
             fi
           done
-
           if [ "$pushed" != "true" ]; then
-            echo "Не удалось отправить обновление ленты после повторов." >&2
+            echo "Не удалось сохранить подтверждение запроса Pages; повторим запрос в следующем цикле." >&2
             exit 1
           fi
-
-          echo "changed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Запросить публикацию GitHub Pages
-        if: steps.commit.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds"

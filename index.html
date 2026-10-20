@@ -13,9 +13,9 @@
                            ПОЯВЛЕНИЕ, БОЛЬШИЕ ЭКРАНЫ, МОБИЛЬНЫЕ
                            (блок ВОПРОСЫ — это класс .qa, живёт теперь внутри
                            #tab-about, отдельной панели у него больше нет)
-       ЧАСТЬ 2. РАЗМЕТКА — <body>: шапка и четыре панели #tab-home, #tab-diary,
+       ЧАСТЬ 2. РАЗМЕТКА — <body>: шапка и пять панелей #tab-home, #tab-diary,
                            #tab-about (внутри — и «Как устроен дневник»,
-                           бывшая страница «Вопросы»), #tab-contacts
+                           бывшая страница «Вопросы»), #tab-projects, #tab-contacts
        ЧАСТЬ 3. СКРИПТ   — в самом низу файла, перед </body>
 
      Ищите по этим названиям, они написаны заглавными в комментариях.
@@ -31,24 +31,24 @@
      защиту на ней. Саму страницу это из поиска не убирает. -->
 <meta name="robots" content="noimageindex">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Данил Сарыков — Вокруг меня</title>
+<title>Данил Сарыков — IT-портфолио, проекты и личный дневник</title>
 <meta name="author" content="Данил Сарыков">
-<meta name="description" content="Дневник Данила Сарыкова. Москва и Подмосковье, танцы, волонтёрство, заметки о жизни вокруг.">
-<meta name="theme-color" content="#E8EAED">
+<meta name="description" content="IT-портфолио Данила Сарыкова: проекты, личный дневник, фотографии и видеоархив.">
+<meta name="theme-color" content="#0B1017">
 <link rel="canonical" href="https://www.sarykov.ru/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:site_name" content="Вокруг меня">
-<meta property="og:title" content="Данил Сарыков — Вокруг меня">
-<meta property="og:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
+<meta property="og:title" content="Данил Сарыков — IT-портфолио, проекты и личный дневник">
+<meta property="og:description" content="Проекты, личный дневник, фотографии и видеоархив Данила Сарыкова.">
 <meta property="og:url" content="https://www.sarykov.ru/">
 <meta property="og:image" content="https://www.sarykov.ru/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Данил Сарыков — Вокруг меня">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Данил Сарыков — Вокруг меня">
-<meta name="twitter:description" content="Обычная жизнь без масок и ролей: Москва, Подмосковье, танцы, волонтёрство, заметки.">
+<meta name="twitter:title" content="Данил Сарыков — IT-портфолио, проекты и личный дневник">
+<meta name="twitter:description" content="Проекты, личный дневник, фотографии и видеоархив Данила Сарыкова.">
 <meta name="twitter:image" content="https://www.sarykov.ru/og-image.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2311151B'/><circle cx='32' cy='32' r='12' fill='%23B0791C'/></svg>">
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png">
@@ -350,11 +350,12 @@
    ТОКЕНЫ
    ───────────────────────────────────────────── */
 :root{
-  /* холодный свет зимней Москвы + одна тёплая лампа */
-  --paper:      #E8EAED;
-  --paper-lift: #F3F4F6;
-  --ink:        #11151B;
-  --ink-2:      #545C6B;
+  color-scheme:dark;
+  /* Тёмная основа, спокойный холодный текст и тёплый акцент. */
+  --paper:      #0B1017;
+  --paper-lift: #121A23;
+  --ink:        #F1F5F8;
+  --ink-2:      #C4CFD9;
   /* Было #8A929E: 2,6:1 к бумаге — та же блёклость, что однажды уже мешала
      читать подпись в подвале (см. комментарий у .foot .label ниже), только
      там это заметили и поправили точечно, а сам тон остался прежним везде,
@@ -362,13 +363,13 @@
      видео, вводных метках разделов. Тон стал темнее: 4,6:1 к бумаге —
      всё ещё заметно тише --ink-2, но уже действительно читается, а не
      только угадывается. */
-  --ink-3:      #5F6975;
+  --ink-3:      #9AA9B8;
   /* Обратный текст — на своём же тёмном стекле поверх кадра (полный экран,
      ошибка плеера): там фон инвертирован, и обычный --ink на нём не виден. */
   --ink-inverse: #F4F6F8;
-  --rule:       #CBCFD6;
-  --lamp:       #BB733E;
-  --lamp-ink:   #955B32;
+  --rule:       #34414D;
+  --lamp:       #E5A76B;
+  --lamp-ink:   #F0B77F;
 
   --serif: "Spectral", Georgia, serif;
   --mono:  "IBM Plex Mono", ui-monospace, monospace;
@@ -393,35 +394,35 @@
      они держатся на прозрачности, кромке, блике и тени, без backdrop-filter:
      на странице их три десятка, и каждое размытие стоило бы кадров при
      прокрутке. */
-  --pane:        linear-gradient(157deg, rgba(255,255,255,.40), rgba(255,255,255,.14));
-  --pane-edge:   rgba(255,255,255,.76);
+  --pane:        linear-gradient(157deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+  --pane-edge:   rgba(196,213,229,.16);
   /* Толща, а не крашеный контур: верхняя фаска и левый край светятся сильнее
      — оттуда как будто падает свет, — нижняя внутренняя грань чуть темнее.
      Асимметрия и есть разница между «плоская обводка» и «настоящая грань». */
-  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.9), inset 1px 0 0 rgba(255,255,255,.5),
-                 inset 0 -16px 26px -22px rgba(17,21,27,.16);
-  --pane-lift:   0 26px 54px -30px rgba(17,21,27,.48), 0 3px 10px -6px rgba(17,21,27,.16);
+  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.10), inset 1px 0 0 rgba(255,255,255,.05),
+                 inset 0 -16px 26px -22px rgba(0,0,0,.5);
+  --pane-lift:   0 26px 54px -30px rgba(0,0,0,.72), 0 3px 10px -6px rgba(0,0,0,.4);
   --pane-round:  20px;
   /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
      текст и лента остаются плоскими, иначе читать тяжело. */
-  --glass-tint:   linear-gradient(160deg, rgba(255,255,255,.56), rgba(255,255,255,.20));
+  --glass-tint:   linear-gradient(160deg, rgba(30,42,55,.92), rgba(15,23,32,.86));
   /* Плотный вариант — для поверхностей с текстом. Размытие не спасает: под
      меню может оказаться почти чёрная картинка, и даже несколько процентов
      просвета превращаются в призрак под надписями. Стекло здесь держится на
      кромке, блике и тени, а не на прозрачности. */
-  --glass-panel:  linear-gradient(160deg, rgba(251,252,253,.97), rgba(238,241,245,.94));
+  --glass-panel:  linear-gradient(160deg, rgba(27,38,50,.98), rgba(17,26,36,.97));
   --glass-blur:   blur(20px) saturate(2);
-  --glass-stroke: rgba(255,255,255,.78);
+  --glass-stroke: rgba(196,213,229,.24);
   /* Тот же приём асимметрии, что у --pane-glow, только слабее: плавающее
      стекло уже держит объём за счёт настоящего блюра фона под собой. */
-  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.92), inset 1px 0 0 rgba(255,255,255,.35),
-                  inset 0 -1px 0 rgba(17,21,27,.06);
-  --glass-drop:   0 10px 30px -14px rgba(17,21,27,.38);
+  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.14), inset 1px 0 0 rgba(255,255,255,.06),
+                  inset 0 -1px 0 rgba(0,0,0,.4);
+  --glass-drop:   0 10px 30px -14px rgba(0,0,0,.75);
   /* Приподнятое стекло — то, что ложится поверх уже стеклянной страницы:
      свёрнутое меню на телефоне, полноэкранные подсказки. Плавающему стеклу
      тени должно быть заметно больше, иначе оно не читается как более
      верхний слой, а сливается с тем, что под ним. */
-  --glass-drop-elevated: 0 30px 60px -24px rgba(17,21,27,.5), 0 4px 14px -8px rgba(17,21,27,.22);
+  --glass-drop-elevated: 0 30px 60px -24px rgba(0,0,0,.8), 0 4px 14px -8px rgba(0,0,0,.45);
   /* Единая скорость для лёгкой «живой» реакции стекла: кромка, тень и фон
      трогаются одной кривой везде — кнопки, капсулы, значки соцсетей. */
   --glass-transition: background .22s ease, border-color .22s ease,
@@ -1113,7 +1114,7 @@ a{ color:inherit; text-decoration:none; }
 }
 
 /* ─────────────────────────────────────────────
-   МЕДИА В ЗАПИСЯХ — фото, видео, кружочки
+   МЕДИА В ЗАПИСЯХ — фото, аудио, видео, кружочки
    ───────────────────────────────────────────── */
 .media{ margin:0 0 var(--s3); display:grid; gap:var(--s1); }
 .media--pair{ grid-template-columns:1fr 1fr; }
@@ -1123,6 +1124,7 @@ a{ color:inherit; text-decoration:none; }
   background:var(--paper-lift);
   filter:grayscale(.1);
 }
+.entry__audio{ display:block; width:min(100%,560px); margin-block:var(--s2); }
 /* ─── Кадр в ленте ───
    Не плеер, а кнопка: постер и знак пуска. Всё управление — в окне. */
 .pl{
@@ -1934,13 +1936,98 @@ html.rich{
   .media--pair{ grid-template-columns:1fr; }
   .pl--round{ width:min(260px,86%); margin-inline:auto; }
 }
+
+:root{ --page:1200px; }
+body{
+  background-image:
+    radial-gradient(58rem 40rem at 8% -10%, rgba(160,105,45,.13), transparent 60%),
+    radial-gradient(52rem 38rem at 96% 2%, rgba(72,112,174,.16), transparent 62%),
+    radial-gradient(46rem 42rem at 80% 78%, rgba(107,82,156,.12), transparent 64%),
+    radial-gradient(44rem 36rem at 16% 92%, rgba(48,123,138,.12), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,.025), transparent 40%);
+}
+.glass-real{
+  background:linear-gradient(157deg, rgba(31,43,56,.88), rgba(14,22,31,.72));
+  border-color:var(--glass-stroke);
+  box-shadow:var(--pane-lift), var(--pane-glow);
+}
+.hero__title--portfolio{
+  max-width:11ch;
+  font-size:clamp(2.65rem, 7.5vw, 6.4rem);
+  line-height:.98;
+  overflow-wrap:anywhere;
+}
+.hero__title--portfolio em{
+  margin-top:.2em;
+  max-width:18ch;
+  font-size:.37em;
+  font-style:normal;
+  font-weight:450;
+  line-height:1.3;
+  letter-spacing:.01em;
+}
+.project-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--s3);
+  margin-top:var(--s4);
+}
+.project-card{
+  padding:var(--s3);
+  border-radius:var(--pane-round);
+  border:1px solid var(--pane-edge);
+  background:var(--pane);
+  box-shadow:var(--pane-lift),var(--pane-glow);
+}
+.project-card h2,.project-card h3{ margin:0 0 var(--s2); line-height:1.25; }
+.project-card p{ margin:0 0 var(--s3); color:var(--ink-2); }
+.project-card .btn{ margin-top:var(--s1); }
+.project-tv{ padding-block:var(--s6); }
+.project-tv__head{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s3); }
+.project-tv__head h2{ margin:0; }
+.project-tv__intro{ max-width:var(--measure); color:var(--ink-2); }
+.project-video-shelf{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--s3);
+  margin-top:var(--s4);
+}
+.project-video{
+  min-width:0;
+  padding:var(--s2);
+  border:1px solid var(--pane-edge);
+  border-radius:var(--pane-round);
+  background:var(--pane);
+}
+.project-video .pl{ width:100%; max-width:none; margin:0; }
+.project-video__caption{
+  display:flex;
+  justify-content:space-between;
+  gap:var(--s2);
+  margin-top:var(--s2);
+  color:var(--ink-2);
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.project-video-shelf .feed__empty{ grid-column:1/-1; }
+@media (max-width:900px){
+  .project-grid,.project-video-shelf{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .hero__fig{ order:1; max-width:180px; }
+}
+@media (max-width:560px){
+  .project-grid,.project-video-shelf{ grid-template-columns:1fr; }
+  .project-tv__head{ align-items:flex-start; flex-direction:column; gap:var(--s1); }
+}
 </style>
 </head>
 
 <body>
 <!-- ═══════════════════════════════════════════════════════════════════════
      ЧАСТЬ 2 ИЗ 3 — РАЗМЕТКА
-     Шапка, затем четыре панели: #tab-home, #tab-diary, #tab-about, #tab-contacts.
+     Шапка, затем пять панелей: #tab-home, #tab-diary, #tab-about,
+     #tab-projects и #tab-contacts.
      Каждая подписана комментарием вида ═══ ГЛАВНАЯ ═══.
      ═══════════════════════════════════════════════════════════════════════ -->
 <a class="skip" href="#main">К основному содержанию</a>
@@ -1953,6 +2040,7 @@ html.rich{
     <nav class="top__nav" id="navMenu" aria-label="Разделы сайта">
       <a class="tab" href="#/dnevnik"  data-tab="diary">Дневник</a>
       <a class="tab" href="#/o-sebe"   data-tab="about">Обо мне</a>
+      <a class="tab" href="#/proekty"  data-tab="projects">Проекты / ТВ</a>
       <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
       <span class="nav__pill nav__pill--m" id="navPillM" aria-hidden="true"></span>
     </nav>
@@ -1978,14 +2066,17 @@ html.rich{
 
     <section class="hero">
       <div>
-        <p class="label hero__place lead-1">Москва · Подмосковье · с 2024 года</p>
-        <h1 class="hero__title lead-2">Вокруг <em>меня</em></h1>
+        <p class="label hero__place lead-1">Личный сайт · проекты · дневник</p>
+        <h1 class="hero__title hero__title--portfolio lead-2">
+          Данил Сарыков <em>IT-портфолио, проекты и личный дневник</em>
+        </h1>
         <p class="hero__lede lead-3">
-          Дневник обычной жизни. Танцы, волонтёрство, люди и улицы — то, что происходит
-          вокруг, записанное по горячим следам. Без масок и ролей.
+          Здесь собраны мои цифровые проекты, личные записи, фотографии и видео.
+          Дневник обновляется из Telegram, а материалы можно читать и смотреть прямо на сайте.
         </p>
         <div class="hero__acts lead-4">
-          <a class="btn" href="#/dnevnik">Читать записи</a>
+          <a class="btn" href="#/proekty">Проекты / ТВ</a>
+          <a class="btn btn--ghost" href="#/dnevnik">Все записи</a>
           <a class="btn btn--ghost" href="https://t.me/danilka2028k" rel="noopener" target="_blank">Канал в Telegram</a>
         </div>
         <!-- Заполняет и показывает скрипт, когда посчитает по настоящим
@@ -2042,35 +2133,32 @@ html.rich{
     </section>
   </div>
 
-  <!-- ══════════ О ДНЕВНИКЕ ══════════ -->
+  <!-- ══════════ ОБО МНЕ ══════════ -->
   <div class="panel" id="tab-about" hidden>
     <section class="about">
       <p class="label">Обо мне</p>
       <div class="about__body">
-        <h1>Пишу про то, что <em>происходит вокруг</em></h1>
+        <h1>Создаю и собираю <em>в одном месте</em></h1>
         <p>
-          Меня зовут <strong>Данил Сарыков</strong>. Живу между Москвой и Подмосковьем,
-          танцую, езжу на волонтёрские смены, много хожу пешком и много смотрю по сторонам.
+          Меня зовут <strong>Данил Сарыков</strong>. Этот сайт — мой личный проект:
+          портфолио, дневник, архив фотографий и видео собраны в одном месте.
         </p>
         <p>
-          Этот дневник — не блог с полезными советами и не витрина. Скорее записная книжка,
-          которую видно со стороны: что случилось за день, кого встретил, о чём подумал
-          по дороге домой. Без масок и ролей — всё по-настоящему.
+          Я постепенно развиваю его: записи из Telegram автоматически попадают в архив,
+          а видео можно открыть в собственном плеере. Для чтения сайта не нужен Telegram.
         </p>
         <p>
-          Записи сначала выходят в Telegram, а сюда попадают сами — обычно
-          в течение часа после ближайшего обновления сайта.
+          Вне экрана — Москва и Подмосковье, танцы, волонтёрские смены и долгие прогулки.
         </p>
       </div>
     </section>
 
     <section class="about">
-      <p class="label">Что здесь бывает</p>
+      <p class="label">Как устроен сайт</p>
       <ul class="facts about__body">
-        <li><b>Москва и Подмосковье</b><span>Улицы, электрички, утро и то, что вокруг</span></li>
-        <li><b>Танцы</b><span>Репетиции, клубы, встречи, живые эмоции</span></li>
-        <li><b>Волонтёрство</b><span>Смены, социальные проекты, общее дело</span></li>
-        <li><b>Люди</b><span>Случайные попутчики и разговоры без повода</span></li>
+        <li><b>Проекты</b><span>Коротко о сделанном и инструментах сайта</span></li>
+        <li><b>Дневник</b><span>Тексты и медиа из Telegram с фильтрами по темам</span></li>
+        <li><b>Видео</b><span>Локальные файлы и собственный адаптивный плеер</span></li>
       </ul>
     </section>
 
@@ -2113,6 +2201,50 @@ html.rich{
     </section>
   </div>
 
+  <!-- ══════════ ПРОЕКТЫ И ТВ ══════════ -->
+  <div class="panel" id="tab-projects" hidden>
+    <section class="project-tv">
+      <div class="project-tv__head">
+        <h1>Проекты / ТВ</h1>
+        <span class="label">Работы и видеоархив</span>
+      </div>
+      <p class="project-tv__intro">
+        Здесь — проекты, которые можно проверить прямо на сайте, и видео из дневника.
+        Ролики не загружаются, пока вы не откроете их.
+      </p>
+      <div class="project-grid">
+        <article class="project-card">
+          <p class="label">01 · Веб-проект</p>
+          <h2>Личный сайт и дневник</h2>
+          <p>Статический сайт с архивом записей, тегами, отдельными страницами постов и режимом без сети.</p>
+          <a class="btn btn--ghost" href="#/dnevnik">Открыть дневник →</a>
+        </article>
+        <article class="project-card">
+          <p class="label">02 · Автоматизация</p>
+          <h2>Telegram → сайт</h2>
+          <p>Короткие циклы Bot API обновляют сайт; резервная сверка помогает восстановить пропущенные записи.</p>
+          <a class="btn btn--ghost" href="https://github.com/Danilka1820-ai/Danilka1820-ai.github.io" target="_blank" rel="noopener noreferrer">Код проекта →</a>
+        </article>
+        <article class="project-card">
+          <p class="label">03 · Видео</p>
+          <h2>Собственный плеер</h2>
+          <p>Перемотка, выбор качества, повтор и полный экран; загрузка видео начинается только по нажатию.</p>
+          <button class="btn btn--ghost" type="button" data-scroll-video>Перейти к видео ↓</button>
+        </article>
+      </div>
+    </section>
+    <section class="project-tv" id="video-archive">
+      <div class="project-tv__head">
+        <h2>Видео из дневника</h2>
+        <span class="label">Откройте ролик для просмотра</span>
+      </div>
+      <p class="project-tv__intro">Плеер использует видео и облегчённые версии, сохранённые на сайте.</p>
+      <div class="project-video-shelf" id="projectVideoShelf" aria-live="polite">
+        <p class="feed__state">Загружаю видеоархив…</p>
+      </div>
+    </section>
+  </div>
+
   <!-- ══════════ КОНТАКТЫ ══════════ -->
   <div class="panel" id="tab-contacts" hidden>
     <section class="contact">
@@ -2145,7 +2277,7 @@ html.rich{
 <footer class="foot">
   <div class="wrap foot__row">
     <span class="label">© <span id="year">2026</span> Данил Сарыков</span>
-    <a class="label u" href="https://www.sarykov.ru/">sarykov.ru</a>
+    <a class="label u" href="https://www.sarykov.ru/">www.sarykov.ru</a>
     <a class="label u" href="https://t.me/danilka2028k" target="_blank" rel="noopener">@danilka2028k</a>
     <span class="label">Вокруг меня</span>
   </div>
@@ -2362,11 +2494,19 @@ html.rich{
 
   /* ── разделы: адрес вида #/dnevnik, чтобы на раздел можно было дать ссылку ── */
   var TABS = [
-    { key:'home',     slug:'glavnaya', title:'Данил Сарыков — Вокруг меня' },
+    { key:'home',     slug:'glavnaya', title:'Данил Сарыков — IT-портфолио, проекты и личный дневник' },
     { key:'diary',    slug:'dnevnik',  title:'Дневник — Данил Сарыков' },
     { key:'about',    slug:'o-sebe',   title:'Обо мне — Данил Сарыков' },
+    { key:'projects', slug:'proekty',  title:'Проекты / ТВ — Данил Сарыков' },
     { key:'contacts', slug:'kontakty', title:'Контакты — Данил Сарыков' }
   ];
+  var videoJump = document.querySelector('[data-scroll-video]');
+  if (videoJump){
+    videoJump.addEventListener('click', function(){
+      var archive = document.getElementById('video-archive');
+      if (archive) archive.scrollIntoView({ behavior:reduce ? 'auto' : 'smooth' });
+    });
+  }
   // Отдельная страница «Вопросы» слилась с «Обо мне» (подраздел «Как устроен
   // дневник») — старые адреса #/voprosy и #/faq не должны превращаться в
   // мёртвые ссылки, поэтому оба ведут туда же, что и before, только без
@@ -2593,9 +2733,9 @@ html.rich{
   });
 
   /* ── записи дневника ──
-     GitHub Action каждые 15 минут читает публичную превью-страницу Telegram-канала,
-     складывает тексты в data/posts.json, а фото и видео — в assets/posts. Поэтому
-     всё отдаёт сам сайт: Telegram у читателя может быть закрыт. */
+     Основной цикл GitHub Actions зеркалирует канал через Telegram Bot API;
+     публичная сверка страницы канала остаётся резервным путём. Тексты и медиа
+     лежат в репозитории, поэтому читателю не нужен доступ к Telegram. */
   var POSTS_SOURCES = ['/data/posts.json'];
   var railEl = document.getElementById('rail');
   var latestEl = document.getElementById('latestRail');
@@ -3390,6 +3530,44 @@ html.rich{
     return root;
   }
 
+  function renderProjectVideos(posts){
+    var shelf = document.getElementById('projectVideoShelf');
+    if (!shelf) return;
+    var clips = [];
+    posts.forEach(function(raw){
+      var post = normalize(raw);
+      post.media.forEach(function(item){
+        if ((item.type === 'video' || item.type === 'round') && clips.length < 6){
+          clips.push({ item:item, date:post.date });
+        }
+      });
+    });
+    shelf.innerHTML = '';
+    if (!clips.length){
+      shelf.appendChild(Object.assign(document.createElement('p'), {
+        className:'feed__empty',
+        textContent:'В архиве пока нет видео.'
+      }));
+      return;
+    }
+    var playerList = [];
+    clips.forEach(function(clip, index){
+      var card = document.createElement('article');
+      card.className = 'project-video';
+      card.appendChild(buildPoster(clip.item, playerList, clip.date));
+      var caption = document.createElement('div');
+      caption.className = 'project-video__caption';
+      var kind = document.createElement('span');
+      kind.textContent = clip.item.type === 'round' ? 'Кружочек' : 'Видео';
+      var date = document.createElement('time');
+      date.textContent = clip.date || '';
+      caption.appendChild(kind);
+      caption.appendChild(date);
+      card.appendChild(caption);
+      shelf.appendChild(card);
+    });
+  }
+
   /* Уровни качества, от самого крупного к лёгкому. Сборщик хранит основную
      версию до 1080p, среднюю 720p и лёгкую 360p. Файлы не растягиваются вверх,
      поэтому список честно показывает только качества, доступные у оригинала.
@@ -3839,6 +4017,15 @@ html.rich{
       img.setAttribute('aria-label', 'Увеличить фото');
       return img;
     }
+    if (item.type === 'audio'){
+      var audio = document.createElement('audio');
+      audio.className = 'entry__audio';
+      audio.controls = true;
+      audio.preload = 'none';
+      audio.src = item.src;
+      audio.setAttribute('aria-label', 'Голосовое сообщение из дневника');
+      return audio;
+    }
     return buildPoster(item, list, date);
   }
 
@@ -4287,6 +4474,7 @@ html.rich{
         var tags = renderInto(railEl, posts, 0, true);
         renderFilters(tags);
         if (latestEl) renderInto(latestEl, posts, 3);
+        renderProjectVideos(posts);
         paintHeroMeta(posts);
         // Открыли сайт сразу по ссылке на запись — докручиваем, как только
         // лента впервые отрисовалась (до этого момента карточки ещё нет).

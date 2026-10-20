@@ -437,6 +437,33 @@ class BotWiringTests(unittest.TestCase):
             self.assertIsNone(module.bot.sent_media[0][3])
             send_text.assert_called_once_with(module.CHANNEL_ID, "x" * 1200)
 
+    def test_successful_channel_send_calls_site_publication_handler(self):
+        module = load_bot_module({})
+        with tempfile.TemporaryDirectory() as tmp, self.prepare_delivery(module, tmp):
+            media = Path(tmp) / "photo.jpg"
+            media.write_bytes(b"photo")
+            message = FakeMessage(user_id=module.ADMIN_ID, message_id=8441)
+            published = []
+            module.published_post_handler = (
+                lambda text, sent, paths, kind: published.append((text, sent, paths, kind))
+            )
+
+            self.assertTrue(
+                module.publish_to_channel(
+                    message,
+                    "Опубликовано",
+                    media_paths=[str(media)],
+                    media_type="photo",
+                )
+            )
+
+            self.assertEqual(len(published), 1)
+            text, sent_messages, paths, kind = published[0]
+            self.assertEqual(text, "Опубликовано")
+            self.assertEqual([item.message_id for item in sent_messages], [801])
+            self.assertEqual(paths, [str(media)])
+            self.assertEqual(kind, "photo")
+
     def test_partial_media_delivery_is_not_marked_retryable(self):
         module = load_bot_module({})
         with tempfile.TemporaryDirectory() as tmp, self.prepare_delivery(module, tmp):

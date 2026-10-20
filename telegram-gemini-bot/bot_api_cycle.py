@@ -2,12 +2,13 @@
 
 This replaces the old self-restarting long-polling chain. A scheduled job reads
 one pending batch from Telegram, mirrors channel posts into the static site,
-processes administrator messages through the existing bot handlers, then
-acknowledges the batch only after its repository changes have been persisted.
+processes administrator messages through the existing bot handlers, records
+successful bot publications directly, then acknowledges only after persistence.
 The public t.me scraper is only a reconciliation fallback.
 """
 from __future__ import annotations
 
+import filecmp
 import json
 import os
 import re
@@ -572,7 +573,210 @@ def _load_posts() -> list[dict]:
 
 def _save_posts(posts: list[dict]) -> None:
     POSTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    POSTS_FILE.write_text(json.dumps(posts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary = POSTS_FILE.with_name(f"{POSTS_FILE.name}.tmp")
+    try:
+        temporary.write_text(
+            json.dumps(posts, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(POSTS_FILE)
+    except OSError:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
+def _sent_media(message, media_type: str) -> tuple[str, str | None] | None:
+    if media_type == "album":
+        kind, media = "photo", getattr(message, "photo", None)
+    elif media_type == "photo":
+        kind, media = "photo", getattr(message, "photo", None)
+    elif media_type == "video":
+        kind, media = "video", getattr(message, "video", None)
+    elif media_type == "video_note":
+        kind, media = "round", getattr(message, "video_note", None)
+    elif media_type == "voice":
+        kind, media = "audio", getattr(message, "voice", None)
+    else:
+        return None
+    if isinstance(media, list):
+        media = media[-1] if media else None
+    if not media:
+        return None
+    return kind, getattr(media, "file_unique_id", None)
+
+
+def record_bot_publication(
+    text: str,
+    sent_messages: list,
+    media_paths: list[str],
+    media_type: str | None,
+) -> None:
+    if not sent_messages:
+        raise RuntimeError("Telegram returned no messages to save on the site")
+    first = sent_messages[0]
+    message_ids = [int(message.message_id) for message in sent_messages]
+    canonical_number = message_ids[0]
+    username = str(getattr(getattr(first, "chat", None), "username", "") or "danilka2028k")
+    group_id = getattr(first, "media_group_id", None)
+    posts = _load_posts()
+    synthetic_messages = [
+        {"message_id": message_id}
+        for message_id in message_ids
+    ]
+    existing = _find_existing(posts, synthetic_messages, str(group_id) if group_id else None)
+    if existing:
+        canonical_number = _post_number(existing)
+
+    old_media = list(existing.get("media") or []) if existing else []
+    old_by_id = {
+        int(item["telegramMessageId"]): item
+        for item in old_media
+        if str(item.get("telegramMessageId") or "").isdigit()
+    }
+    media_messages = [
+        (message, media)
+        for message in sent_messages
+        if media_type and (media := _sent_media(message, media_type))
+    ]
+    if len(media_messages) != len(media_paths):
+        raise RuntimeError("Telegram media result does not match uploaded attachments")
+
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    created_files: list[Path] = []
+    new_media: list[dict] = []
+    try:
+        for index, ((message, (kind, unique_id)), source_name) in enumerate(
+            zip(media_messages, media_paths, strict=True)
+        ):
+            message_id = int(message.message_id)
+            previous = old_by_id.get(message_id)
+            if previous and (ROOT / str(previous.get("src") or "")).is_file():
+                new_media.append(previous)
+                continue
+
+            source = Path(source_name)
+            suffix = source.suffix.lower()
+            if not source.is_file() or suffix not in {
+                ".jpg", ".jpeg", ".png", ".webp", ".mp4", ".ogg", ".m4a", ".mp3",
+            }:
+                raise RuntimeError("Published media file is missing or unsupported")
+            target = MEDIA_DIR / f"danilka2028k-{canonical_number}-{index}{suffix}"
+            created_target = not target.exists()
+            if target.exists():
+                if not filecmp.cmp(source, target, shallow=False):
+                    raise RuntimeError("Published media path already contains different data")
+            else:
+                temporary = target.with_name(f"{target.name}.copy")
+                try:
+                    shutil.copyfile(source, temporary)
+                    temporary.replace(target)
+                except OSError:
+                    temporary.unlink(missing_ok=True)
+                    raise
+                created_files.append(target)
+
+            if created_target and kind == "photo":
+                _optimize_image(target)
+            elif created_target and kind in {"video", "round"}:
+                _optimize_video(target, kind)
+            entry: dict = {
+                "type": kind,
+                "src": _relative(target),
+                "telegramMessageId": message_id,
+            }
+            if unique_id:
+                entry["telegramFileUniqueId"] = unique_id
+            if kind in {"video", "round"}:
+                entry["size"] = target.stat().st_size
+                dimensions = _video_dimensions(target)
+                if dimensions:
+                    entry["w"], entry["h"] = dimensions
+                mid_target = target.with_name(f"{target.stem}-mid.mp4")
+                low_target = target.with_name(f"{target.stem}-low.mp4")
+                mid_existed, low_existed = mid_target.exists(), low_target.exists()
+                mid = _make_video_variant(
+                    target,
+                    720 if kind == "round" else 1280,
+                    28,
+                    "mid",
+                )
+                if mid and not mid_existed:
+                    created_files.append(mid)
+                low = _make_video_variant(
+                    target,
+                    360 if kind == "round" else 640,
+                    34 if kind == "round" else 32,
+                    "low",
+                )
+                if low and not low_existed:
+                    created_files.append(low)
+                for variant, src_key, size_key, width_key, height_key in (
+                    (mid, "srcMid", "sizeMid", "wMid", "hMid"),
+                    (low, "srcLow", "sizeLow", "wLow", "hLow"),
+                ):
+                    if variant:
+                        entry[src_key] = _relative(variant)
+                        entry[size_key] = variant.stat().st_size
+                        dimensions = _video_dimensions(variant)
+                        if dimensions:
+                            entry[width_key], entry[height_key] = dimensions
+            elif kind == "audio":
+                entry["size"] = target.stat().st_size
+            new_media.append(entry)
+
+        date, iso = _format_datetime(getattr(first, "date", None))
+        text = str(text).strip()
+        old_ids = (
+            {
+                int(message_id)
+                for message_id in existing.get("telegramMessageIds", [])
+                if str(message_id).isdigit()
+            }
+            if existing
+            else set()
+        )
+        if existing:
+            if any("telegramMessageId" in item for item in old_media):
+                retained_media = [
+                    item
+                    for item in old_media
+                    if int(item.get("telegramMessageId") or -1) not in set(message_ids)
+                ]
+            else:
+                retained_media = []
+            existing.update(
+                {
+                    "date": existing.get("date") or date,
+                    "datetime": existing.get("datetime") or iso,
+                    "text": text or " ",
+                    "link": existing.get("link") or f"https://t.me/{username}/{canonical_number}",
+                    "tags": _extract_tags(text),
+                    "media": retained_media + new_media,
+                    "telegramMessageIds": sorted(old_ids | set(message_ids)),
+                }
+            )
+            if group_id:
+                existing["telegramMediaGroupId"] = str(group_id)
+        else:
+            post = {
+                "id": f"{username}/{canonical_number}",
+                "date": date,
+                "datetime": iso,
+                "text": text or " ",
+                "link": f"https://t.me/{username}/{canonical_number}",
+                "tags": _extract_tags(text),
+                "media": new_media,
+                "telegramMessageIds": sorted(set(message_ids)),
+            }
+            if group_id:
+                post["telegramMediaGroupId"] = str(group_id)
+            posts.append(post)
+        posts.sort(key=_post_number, reverse=True)
+        _save_posts(posts[:MAX_POSTS])
+    except Exception:
+        for path in created_files:
+            path.unlink(missing_ok=True)
+        raise
 
 
 def _find_existing(posts: list[dict], messages: list[dict], group_id: str | None) -> dict | None:
@@ -817,6 +1021,7 @@ def process_admin_updates(
     admin_raw = [admin_by_id[key] for key in sorted(admin_by_id)]
     bot.delivery_checkpoint_errors.clear()
     bot.processing_errors.clear()
+    bot.published_post_handler = record_bot_publication
     album_updates = []
     single_updates = []
     for raw in admin_raw:

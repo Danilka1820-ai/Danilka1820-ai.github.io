@@ -331,6 +331,75 @@ class BotApiCycleTests(unittest.TestCase):
             self.assertEqual(result["tags"], [])
             self.assertEqual(result["media"], [])
 
+    def test_bot_publication_is_written_directly_to_site_and_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            posts = root / "data" / "posts.json"
+            sent = types.SimpleNamespace(
+                message_id=700,
+                date=1780000000,
+                chat=types.SimpleNamespace(username="danilka2028k"),
+                media_group_id=None,
+            )
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "POSTS_FILE", posts),
+                patch.object(cycle, "MEDIA_DIR", root / "assets" / "posts"),
+            ):
+                cycle.record_bot_publication("Пост от Gemini #тег", [sent], [], None)
+                cycle.ingest_channel_updates(
+                    "token",
+                    [channel_update(55, 700, text="Пост от Gemini #тег")],
+                    "danilka2028k",
+                )
+
+            result = json.loads(posts.read_text("utf-8"))
+            self.assertEqual(len(result), 1)
+            self.assertEqual(result[0]["id"], "danilka2028k/700")
+            self.assertEqual(result[0]["telegramMessageIds"], [700])
+            self.assertEqual(result[0]["tags"], ["тег"])
+
+    def test_bot_album_publication_copies_all_media_and_message_ids(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_dir = root / "temp"
+            source_dir.mkdir()
+            first_file = source_dir / "first.jpg"
+            second_file = source_dir / "second.jpg"
+            first_file.write_bytes(b"first-photo")
+            second_file.write_bytes(b"second-photo")
+
+            def sent_message(message_id, unique_id):
+                return types.SimpleNamespace(
+                    message_id=message_id,
+                    date=1780000000,
+                    chat=types.SimpleNamespace(username="danilka2028k"),
+                    media_group_id="published-album",
+                    photo=[types.SimpleNamespace(file_unique_id=unique_id)],
+                )
+
+            with (
+                patch.object(cycle, "ROOT", root),
+                patch.object(cycle, "POSTS_FILE", root / "data" / "posts.json"),
+                patch.object(cycle, "MEDIA_DIR", root / "assets" / "posts"),
+                patch.object(cycle, "_optimize_image"),
+            ):
+                cycle.record_bot_publication(
+                    "Альбом",
+                    [sent_message(701, "photo-1"), sent_message(702, "photo-2")],
+                    [str(first_file), str(second_file)],
+                    "album",
+                )
+
+            posts = json.loads((root / "data" / "posts.json").read_text("utf-8"))
+            self.assertEqual(posts[0]["telegramMessageIds"], [701, 702])
+            self.assertEqual(posts[0]["telegramMediaGroupId"], "published-album")
+            self.assertEqual(
+                [item["telegramFileUniqueId"] for item in posts[0]["media"]],
+                ["photo-1", "photo-2"],
+            )
+            self.assertTrue(all((root / item["src"]).is_file() for item in posts[0]["media"]))
+
     def test_voice_channel_post_is_saved_as_playable_audio(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

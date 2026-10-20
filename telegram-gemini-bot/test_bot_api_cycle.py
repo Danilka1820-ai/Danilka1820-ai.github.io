@@ -1,7 +1,9 @@
 import importlib.util
 import json
+import sys
 import tempfile
 import traceback
+import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -98,6 +100,63 @@ class BotApiCycleTests(unittest.TestCase):
             {"update_id": 4, "message": {"text": "missing sender"}},
         ]
         self.assertEqual(cycle.select_admin_updates(updates, 7), [updates[0]])
+
+    def test_admin_updates_are_dispatched_through_telebot_instance(self):
+        dispatched = []
+
+        class FakeUpdate:
+            @staticmethod
+            def de_json(raw):
+                return json.loads(raw)
+
+        fake_telebot = types.SimpleNamespace(
+            types=types.SimpleNamespace(
+                Update=FakeUpdate,
+            )
+        )
+        fake_bot_instance = types.SimpleNamespace(
+            process_new_updates=dispatched.extend,
+        )
+        fake_bot_module = types.SimpleNamespace(
+            bot=fake_bot_instance,
+            delivery_checkpoint_errors=[],
+            processing_errors=[],
+            group_photo_messages=lambda update: None,
+            process_album=lambda messages: True,
+        )
+        album_state = types.SimpleNamespace(
+            record_and_get_ready=lambda updates, token, now: ([], False),
+        )
+        update = {
+            "update_id": 7,
+            "message": {
+                "message_id": 70,
+                "from": {"id": 17},
+                "chat": {"id": 17, "type": "private"},
+                "text": "материал",
+            },
+        }
+        with (
+            patch.dict(
+                "os.environ",
+                {"ADMIN_ID": "17", "TELEGRAM_BOT_TOKEN": "fake-token"},
+            ),
+            patch.dict(
+                sys.modules,
+                {
+                    "telebot": fake_telebot,
+                    "bot": fake_bot_module,
+                    "telegram_album_state": album_state,
+                    "bot_utils": types.SimpleNamespace(
+                        require_admin_id=lambda value: int(value),
+                    ),
+                },
+            ),
+        ):
+            processed = cycle.process_admin_updates([update])
+
+        self.assertEqual(processed, 1)
+        self.assertEqual(dispatched, [update])
 
     def test_ack_uses_next_offset(self):
         with patch.object(cycle, "bot_api", return_value=[]) as api:

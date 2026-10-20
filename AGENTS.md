@@ -30,6 +30,8 @@ Telegram-канала `@danilka2028k` в репозиторий, поэтому 
 Оба workflow используют concurrency-группу `telegram-site-publish`, чтобы не
 публиковать дневник одновременно. После изменения данных workflow явно запрашивает
 GitHub Pages build.
+Production jobs ограничены `main`; push в feature-ветку не должен опрашивать
+production Telegram-бота.
 
 Bot API offset подтверждается после commit обработанных данных и принятого
 GitHub Pages build request. Перед

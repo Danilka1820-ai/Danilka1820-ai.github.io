@@ -618,7 +618,7 @@ def process_admin_updates(raw_updates: list[dict]) -> int:
 
     singles = [telebot.types.Update.de_json(json.dumps(raw)) for raw in single_updates]
     if singles:
-        bot.process_new_updates(singles)
+        bot.bot.process_new_updates(singles)
     for raw_album in ready_albums:
         updates = [telebot.types.Update.de_json(json.dumps(raw)) for raw in raw_album]
         messages = [group_photo_messages(update) for update in updates]

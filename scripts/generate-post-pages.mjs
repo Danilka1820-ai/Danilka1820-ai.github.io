@@ -4,7 +4,7 @@ import path from 'node:path';
 const ROOT = process.cwd();
 const POSTS_PATH = path.join(ROOT, 'data', 'posts.json');
 const OUT_ROOT = path.join(ROOT, 'dnevnik');
-const SITE = 'https://sarykov.ru';
+const SITE = 'https://www.sarykov.ru';
 
 function esc(value = '') {
   return String(value)
@@ -57,6 +57,9 @@ function mediaHtml(post) {
     if (item.type === 'photo') {
       return `<img loading="lazy" decoding="async" src="${esc(src)}" alt="">`;
     }
+    if (item.type === 'audio') {
+      return `<audio controls preload="none" src="${esc(src)}" aria-label="Голосовое сообщение"></audio>`;
+    }
     const poster = localUrl(item?.poster);
     return `<video controls preload="metadata"${poster ? ` poster="${esc(poster)}"` : ''} src="${esc(src)}"></video>`;
   }).filter(Boolean).join('\n');
@@ -107,7 +110,7 @@ function render(post, slug) {
 <meta name="theme-color" content="#E8EAED">
 <script type="application/ld+json">${jsonLd}</script>
 <style>
-:root{color-scheme:light}html{background:#e8eaed;color:#11151b;font-family:Georgia,serif}body{margin:0}main{width:min(760px,calc(100% - 32px));margin:0 auto;padding:48px 0 72px}nav,footer,time{font:14px/1.5 ui-monospace,monospace}nav{margin-bottom:40px}a{color:#955b32}h1{font-size:clamp(32px,7vw,64px);line-height:1.02;margin:0 0 16px;font-weight:400}time{color:#5f6975}article{font-size:clamp(18px,2.5vw,22px);line-height:1.6}p{margin:1em 0}.media{display:grid;gap:12px;margin:28px 0}.media img,.media video{display:block;width:100%;height:auto;border-radius:18px;background:#11151b}footer{margin-top:48px;padding-top:20px;border-top:1px solid #cbcfd6}@media(max-width:520px){main{padding-top:28px}}
+:root{color-scheme:light}html{background:#e8eaed;color:#11151b;font-family:Georgia,serif}body{margin:0}main{width:min(760px,calc(100% - 32px));margin:0 auto;padding:48px 0 72px}nav,footer,time{font:14px/1.5 ui-monospace,monospace}nav{margin-bottom:40px}a{color:#955b32}h1{font-size:clamp(32px,7vw,64px);line-height:1.02;margin:0 0 16px;font-weight:400}time{color:#5f6975}article{font-size:clamp(18px,2.5vw,22px);line-height:1.6}p{margin:1em 0}.media{display:grid;gap:12px;margin:28px 0}.media img,.media video,.media audio{display:block;width:100%;height:auto;border-radius:18px;background:#11151b}.media audio{height:44px;background:transparent}footer{margin-top:48px;padding-top:20px;border-top:1px solid #cbcfd6}@media(max-width:520px){main{padding-top:28px}}
 </style>
 </head>
 <body><main>
@@ -118,7 +121,7 @@ ${post?.datetime ? `<time datetime="${esc(post.datetime)}">${esc(post.date || po
 <div class="media">${mediaHtml(post)}</div>
 ${paragraphs}
 </article>
-<footer>${telegram ? `<a href="${esc(telegram)}" rel="noopener noreferrer">Оригинал в Telegram</a> · ` : ''}<a href="/">sarykov.ru</a></footer>
+<footer>${telegram ? `<a href="${esc(telegram)}" rel="noopener noreferrer">Оригинал в Telegram</a> · ` : ''}<a href="/">www.sarykov.ru</a></footer>
 </main></body></html>
 `;
 }

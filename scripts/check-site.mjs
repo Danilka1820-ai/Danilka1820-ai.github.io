@@ -86,7 +86,7 @@ const код = безКомментариев(html);
 /* ── 2. Ни одного обращения к чужому серверу ──
    Там, где интернет режут, страница из-за такой ссылки встаёт колом. */
 const СВОИ = ['sarykov.ru', 'www.sarykov.ru', 'danilka1820-ai.github.io'];
-const SITE_ORIGIN = 'https://sarykov.ru';
+const SITE_ORIGIN = 'https://www.sarykov.ru';
 
 шаг('нет ссылок на чужие серверы', () => {
   const чужие = new Set();
@@ -182,10 +182,17 @@ const SITE_ORIGIN = 'https://sarykov.ru';
 /* ── 4. Разделы и окно просмотра на месте ──
    Однажды при переделке плеера окно просмотра снесли целиком и заметили
    это только на живом сайте. */
-шаг('четыре раздела на месте', () => {
-  const нет = ['home','diary','about','contacts']
+шаг('пять разделов на месте', () => {
+  const нет = ['home','diary','about','projects','contacts']
     .filter((k) => !html.includes('id="tab-' + k + '"'));
   if (нет.length) throw new Error('пропали панели: ' + нет.join(', '));
+  if (!html.includes('href="#/proekty"')) throw new Error('нет ссылки на раздел проектов');
+  if (!html.includes('IT-портфолио, проекты и личный дневник')) {
+    throw new Error('первый экран не описывает портфолио, проекты и дневник');
+  }
+  if (!html.includes('id="projectVideoShelf"') || !html.includes('renderProjectVideos(posts)')) {
+    throw new Error('раздел проектов не подключён к видеоархиву');
+  }
 });
 
 шаг('навигация доступна скринридерам', () => {
@@ -418,7 +425,7 @@ const SITE_ORIGIN = 'https://sarykov.ru';
     if (!(post.text || '').trim() && !(post.media || []).length) ошибки.push(`пустая запись ${post.id}`);
 
     for (const media of post.media || []) {
-      if (!['photo', 'video', 'round'].includes(media.type)) ошибки.push(`неверный тип медиа у ${post.id}`);
+      if (!['photo', 'video', 'round', 'audio'].includes(media.type)) ошибки.push(`неверный тип медиа у ${post.id}`);
       for (const [key, sizeKey] of [['src','size'], ['srcMid','sizeMid'], ['srcLow','sizeLow'], ['poster','']]) {
         const src = media[key];
         if (!src) continue;
@@ -435,6 +442,16 @@ const SITE_ORIGIN = 'https://sarykov.ru';
     }
   }
   if (ошибки.length) throw new Error(ошибки.slice(0, 10).join('\n      '));
+});
+
+шаг('голосовые доступны в ленте и на страницах записей', () => {
+  const генератор = readFileSync(ROOT + 'scripts/generate-post-pages.mjs', 'utf8');
+  if (!/item\.type === 'audio'/.test(html) || !/audio\.preload = 'none'/.test(html)) {
+    throw new Error('голосовые должны воспроизводиться по запросу в ленте');
+  }
+  if (!/item\.type === 'audio'/.test(генератор) || !/<audio controls preload="none"/.test(генератор)) {
+    throw new Error('голосовые должны воспроизводиться по запросу на страницах записей');
+  }
 });
 
 шаг('синхронизация не может случайно стереть дневник', () => {
@@ -457,12 +474,12 @@ const SITE_ORIGIN = 'https://sarykov.ru';
   }
   const robots = readFileSync(ROOT + 'robots.txt', 'utf8');
   if (!robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`)) throw new Error('в robots.txt неверный Sitemap');
-  if (sitemap.includes('https://www.sarykov.ru')) throw new Error('sitemap.xml содержит неканонический www-домен');
+  if (sitemap.includes('https://sarykov.ru')) throw new Error('sitemap.xml содержит неканонический apex-домен');
 });
 
 шаг('CNAME и SEO используют целевой домен', () => {
   const cname = readFileSync(ROOT + 'CNAME', 'utf8').trim();
-  if (cname !== 'sarykov.ru') throw new Error(`CNAME должен быть sarykov.ru, получено: ${cname}`);
+  if (cname !== 'www.sarykov.ru') throw new Error(`CNAME должен быть www.sarykov.ru, получено: ${cname}`);
   if (!html.includes(`<link rel="canonical" href="${SITE_ORIGIN}/">`)) {
     throw new Error('canonical главной страницы не совпадает с целевым доменом');
   }
@@ -480,9 +497,9 @@ const SITE_ORIGIN = 'https://sarykov.ru';
         !page.includes(`<meta property="og:url" content="${SITE_ORIGIN}/dnevnik/`)) {
       throw new Error(`canonical страницы дневника ${entry.name} не совпадает с целевым доменом`);
     }
-    if (/<link rel="canonical" href="https:\/\/www\.sarykov\.ru\//.test(page) ||
-        /<meta property="og:url" content="https:\/\/www\.sarykov\.ru\//.test(page)) {
-      throw new Error(`SEO-метаданные страницы дневника ${entry.name} используют www-домен`);
+    if (/<link rel="canonical" href="https:\/\/sarykov\.ru\//.test(page) ||
+        /<meta property="og:url" content="https:\/\/sarykov\.ru\//.test(page)) {
+      throw new Error(`SEO-метаданные страницы дневника ${entry.name} используют apex-домен`);
     }
   }
 });

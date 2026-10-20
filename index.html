@@ -2,23 +2,18 @@
 <html lang="ru">
 <head>
 <!-- ═══════════════════════════════════════════════════════════════════════
-     САЙТ sarykov.ru — ВЕСЬ В ЭТОМ ФАЙЛЕ
+     САЙТ sarykov.ru
 
-     Правите внешний вид или поведение — правите только index.html.
-     Отдельного файла со скриптом больше нет.
+     HTML и логика страницы находятся здесь, дизайн-система — в
+     assets/css/living-diary.css.
 
-       ЧАСТЬ 1. СТИЛИ    — <style> ниже. Блоки: ТОКЕНЫ, ШАПКА, ВКЛАДКИ, ГЕРОЙ,
-                           ТЕЗИС, ЛЕНТА, Кадр в ленте, Окно просмотра,
-                           Полный экран, О ДНЕВНИКЕ, ВОПРОСЫ, КОНТАКТЫ,
-                           ПОЯВЛЕНИЕ, БОЛЬШИЕ ЭКРАНЫ, МОБИЛЬНЫЕ
-                           (блок ВОПРОСЫ — это класс .qa, живёт теперь внутри
-                           #tab-about, отдельной панели у него больше нет)
+       ЧАСТЬ 1. ДИЗАЙН   — assets/css/living-diary.css и локальные шрифты
        ЧАСТЬ 2. РАЗМЕТКА — <body>: шапка и пять панелей #tab-home, #tab-diary,
                            #tab-about (внутри — и «Как устроен дневник»,
                            бывшая страница «Вопросы»), #tab-projects, #tab-contacts
-       ЧАСТЬ 3. СКРИПТ   — в самом низу файла, перед </body>
+       ЧАСТЬ 3. СКРИПТ   — внизу файла, перед </body>
 
-     Ищите по этим названиям, они написаны заглавными в комментариях.
+     Ищите по id панелей и комментариям в разметке.
      Что менять нельзя — написано в README.md, раздел «Что нельзя ломать».
      Коротко: шрифты и плеер только свои, из этого репозитория; никаких
      ссылок на чужие серверы (fonts.googleapis.com, cdn.plyr.io и подобные).
@@ -34,7 +29,7 @@
 <title>Данил Сарыков — IT-портфолио, проекты и личный дневник</title>
 <meta name="author" content="Данил Сарыков">
 <meta name="description" content="IT-портфолио Данила Сарыкова: проекты, личный дневник, фотографии и видеоархив.">
-<meta name="theme-color" content="#0B1017">
+<meta name="theme-color" content="#0A0E13">
 <link rel="canonical" href="https://www.sarykov.ru/">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
@@ -78,43 +73,6 @@
     if (c.saveData === true || /(^|\-)2g$/.test(c.effectiveType || '') || slow){
       thin = true;
       html.className += ' thin';
-    }
-  }catch(e){}
-
-  /* Тип устройства — не по строке User-Agent (она врёт, и под каждый новый
-     телевизор пришлось бы дописывать список), а по тому, чем им управляют:
-     палец против мыши, есть ли наведение вообще. Экран без наведения и
-     широкий, как в блоке БОЛЬШИЕ ЭКРАНЫ И ТЕЛЕВИЗОРЫ — обычно пульт, то
-     есть телевизор или приставка. */
-  var device = 'desktop';
-  try{
-    var coarse = matchMedia('(pointer:coarse)').matches;
-    var noHover = matchMedia('(hover:none)').matches;
-    var tabletUp = matchMedia('(min-width:768px)').matches;
-    var tvSize = matchMedia('(min-width:1600px)').matches;
-    if (noHover && coarse && tvSize) device = 'tv';
-    else if (coarse) device = tabletUp ? 'tablet' : 'phone';
-    html.setAttribute('data-device', device);
-  }catch(e){}
-
-  /* Богатый режим — зеркало экономного, только не «на всякий случай гасим»,
-     а «включаем, лишь когда точно уверены»: сеть должна сама сообщить о
-     максимальной категории (без Network Information API — а его нет в
-     Safari — сайт остаётся в обычном виде, никогда не гадаем в плюс), а
-     железо — не отчитаться о слабости, если вообще умеет об этом сообщать.
-     Экран без мыши и без огромной диагонали (телефон, планшет) не включаем
-     даже на отличном канале: перегрев видеокарты на подряд идущих блюрах —
-     это стоимость самого блюра, а не байтов, и телефон её платит тяжелее
-     компьютера или телевизора — это уже мерено при отказе от блюра на
-     поверхностях (см. README, «Два разных стекла»). */
-  try{
-    var fastNet = c.saveData !== true && c.effectiveType === '4g' &&
-                  (typeof c.downlink !== 'number' || c.downlink >= 5);
-    var ableMem = typeof navigator.deviceMemory !== 'number' || navigator.deviceMemory >= 4;
-    var ableCpu = typeof navigator.hardwareConcurrency !== 'number' || navigator.hardwareConcurrency >= 4;
-    var ableDevice = device === 'desktop' || device === 'tv';
-    if (!thin && fastNet && ableMem && ableCpu && ableDevice){
-      html.className += ' rich';
     }
   }catch(e){}
 
@@ -341,1689 +299,13 @@
 }
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════════════
-     ЧАСТЬ 1 ИЗ 3 — СТИЛИ
-     Начинайте с блока ТОКЕНЫ: там цвета, шрифты и отступы всего сайта.
-     ═══════════════════════════════════════════════════════════════════════ -->
-<style>
-/* ─────────────────────────────────────────────
-   ТОКЕНЫ
-   ───────────────────────────────────────────── */
-:root{
-  color-scheme:dark;
-  /* Тёмная основа, спокойный холодный текст и тёплый акцент. */
-  --paper:      #0B1017;
-  --paper-lift: #121A23;
-  --ink:        #F1F5F8;
-  --ink-2:      #C4CFD9;
-  /* Было #8A929E: 2,6:1 к бумаге — та же блёклость, что однажды уже мешала
-     читать подпись в подвале (см. комментарий у .foot .label ниже), только
-     там это заметили и поправили точечно, а сам тон остался прежним везде,
-     где на него ссылаются напрямую — в датах записей, подписях под фото и
-     видео, вводных метках разделов. Тон стал темнее: 4,6:1 к бумаге —
-     всё ещё заметно тише --ink-2, но уже действительно читается, а не
-     только угадывается. */
-  --ink-3:      #9AA9B8;
-  /* Обратный текст — на своём же тёмном стекле поверх кадра (полный экран,
-     ошибка плеера): там фон инвертирован, и обычный --ink на нём не виден. */
-  --ink-inverse: #F4F6F8;
-  --rule:       #34414D;
-  --lamp:       #E5A76B;
-  --lamp-ink:   #F0B77F;
+<!-- Стили, шрифты и интерактивные состояния собраны в общей системе. -->
+<link rel="stylesheet" href="/assets/css/living-diary.css">
 
-  --serif: "Spectral", Georgia, serif;
-  --mono:  "IBM Plex Mono", ui-monospace, monospace;
-
-  /* вертикальный ритм — строго кратно 8 */
-  --s1: 8px;  --s2: 16px; --s3: 24px; --s4: 32px;
-  --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px;
-
-  --measure: 34rem;      /* ширина колонки чтения */
-  --rail: 96px;          /* левый рельс с датами */
-  --page: 1160px;
-
-  /* ── СТЕКЛО ──
-     Два разных стекла, и разница между ними важнее, чем кажется.
-
-     Плавающее (--glass-*) стоит там, где под поверхностью реально едет
-     содержимое: шапка, кнопки, окно просмотра. Только ему нужно настоящее
-     размытие фона, и только оно его стоит.
-
-     Поверхности (--pane-*) лежат на ровном световом фоне страницы. Размывать
-     под ними нечего — плавный градиент после блюра выглядит так же. Поэтому
-     они держатся на прозрачности, кромке, блике и тени, без backdrop-filter:
-     на странице их три десятка, и каждое размытие стоило бы кадров при
-     прокрутке. */
-  --pane:        linear-gradient(157deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
-  --pane-edge:   rgba(196,213,229,.16);
-  /* Толща, а не крашеный контур: верхняя фаска и левый край светятся сильнее
-     — оттуда как будто падает свет, — нижняя внутренняя грань чуть темнее.
-     Асимметрия и есть разница между «плоская обводка» и «настоящая грань». */
-  --pane-glow:   inset 0 1px 0 rgba(255,255,255,.10), inset 1px 0 0 rgba(255,255,255,.05),
-                 inset 0 -16px 26px -22px rgba(0,0,0,.5);
-  --pane-lift:   0 26px 54px -30px rgba(0,0,0,.72), 0 3px 10px -6px rgba(0,0,0,.4);
-  --pane-round:  20px;
-  /* Жидкое стекло. Живёт только на плавающем слое — шапка, кнопки, плеер;
-     текст и лента остаются плоскими, иначе читать тяжело. */
-  --glass-tint:   linear-gradient(160deg, rgba(30,42,55,.92), rgba(15,23,32,.86));
-  /* Плотный вариант — для поверхностей с текстом. Размытие не спасает: под
-     меню может оказаться почти чёрная картинка, и даже несколько процентов
-     просвета превращаются в призрак под надписями. Стекло здесь держится на
-     кромке, блике и тени, а не на прозрачности. */
-  --glass-panel:  linear-gradient(160deg, rgba(27,38,50,.98), rgba(17,26,36,.97));
-  --glass-blur:   blur(20px) saturate(2);
-  --glass-stroke: rgba(196,213,229,.24);
-  /* Тот же приём асимметрии, что у --pane-glow, только слабее: плавающее
-     стекло уже держит объём за счёт настоящего блюра фона под собой. */
-  --glass-glow:   inset 0 1px 0 rgba(255,255,255,.14), inset 1px 0 0 rgba(255,255,255,.06),
-                  inset 0 -1px 0 rgba(0,0,0,.4);
-  --glass-drop:   0 10px 30px -14px rgba(0,0,0,.75);
-  /* Приподнятое стекло — то, что ложится поверх уже стеклянной страницы:
-     свёрнутое меню на телефоне, полноэкранные подсказки. Плавающему стеклу
-     тени должно быть заметно больше, иначе оно не читается как более
-     верхний слой, а сливается с тем, что под ним. */
-  --glass-drop-elevated: 0 30px 60px -24px rgba(0,0,0,.8), 0 4px 14px -8px rgba(0,0,0,.45);
-  /* Единая скорость для лёгкой «живой» реакции стекла: кромка, тень и фон
-     трогаются одной кривой везде — кнопки, капсулы, значки соцсетей. */
-  --glass-transition: background .22s ease, border-color .22s ease,
-                       box-shadow .22s ease, transform .22s cubic-bezier(.22,1,.36,1);
-}
-
-*,*::before,*::after{ box-sizing:border-box; }
-
-html{ -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
-@media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto; } }
-
-body{
-  margin:0;
-  background:var(--paper);
-  color:var(--ink);
-  /* Едва заметный свет, чтобы стеклу было что преломлять: на ровной заливке
-     эффект не читается вовсе. */
-  /* Четыре мягких пятна света вместо ровной заливки. Без них стекло не
-     читается: преломлять нечего, и поверхности выглядят просто белёсыми.
-     Чистый CSS, ни одного байта картинок. */
-  background-image:
-    radial-gradient(58rem 40rem at  8% -10%, rgba(198,140,42,.30), transparent 60%),
-    radial-gradient(52rem 38rem at 96%  2%, rgba(86,124,186,.34), transparent 62%),
-    radial-gradient(46rem 42rem at 80% 78%, rgba(158,132,208,.28), transparent 64%),
-    radial-gradient(44rem 36rem at 16% 92%, rgba(96,164,178,.26), transparent 62%),
-    linear-gradient(180deg, rgba(255,255,255,.26), rgba(255,255,255,0) 40%);
-  background-attachment:fixed;
-  font-family:var(--serif);
-  font-weight:400;
-  font-size:19px;
-  line-height:1.72;
-  font-feature-settings:"liga" 1,"kern" 1;
-  -webkit-font-smoothing:antialiased;
-  overflow-x:hidden;
-  display:flex; flex-direction:column; min-height:100vh;
-  /* 100vh на телефоне — это старая раскладочная высота, в которую браузер
-     закладывает место под адресную строку, даже когда она скрыта. Подвал
-     держится на margin-top:auto и упирается в этот запас, а не в реальный
-     низ экрана — отсюда лишняя пустота под контентом при первой отрисовке.
-     dvh пересчитывается под фактическую видимую область; браузеры без
-     поддержки просто не применяют вторую строку и остаются на vh. */
-  min-height:100dvh;
-}
-#main{ flex:1 0 auto; }
-
-img{ max-width:100%; display:block; }
-a{ color:inherit; text-decoration:none; }
-[hidden]{ display:none !important; }
-
-
-/* Заметная рамка: сайт листают и с клавиатуры, и пультом на телевизоре,
-   где курсора нет вовсе. scroll-margin не даёт шапке накрыть выбранное. */
-:focus-visible{
-  outline:3px solid var(--lamp-ink);
-  outline-offset:3px;
-  border-radius:4px;
-  scroll-margin-top:90px;
-  scroll-margin-bottom:24px;
-}
-
-/* В <meta> стоит viewport-fit=cover — страница намеренно уходит под скруглённые
-   углы экрана, иначе по краям остались бы белые поля. Значит боковые отступы
-   обязаны учитывать вырез: без env() в ландшафте чёлка съедает первые буквы
-   строки, а на телефонах со скруглением подрезаются края карточек. Пишем через
-   max(), чтобы на экранах без выреза (а это все компьютеры) отступ остался
-   прежним: env() там равен нулю. */
-.wrap{
-  max-width:var(--page);
-  margin-inline:auto;
-  padding-left:max(24px, env(safe-area-inset-left, 0px));
-  padding-right:max(24px, env(safe-area-inset-right, 0px));
-}
-
-.skip{
-  position:absolute; left:-9999px;
-  background:var(--ink); color:var(--paper);
-  padding:12px 20px; z-index:99;
-}
-.skip:focus{ left:16px; top:16px; }
-
-.label{
-  font-family:var(--mono);
-  font-size:11px;
-  letter-spacing:.16em;
-  text-transform:uppercase;
-  color:var(--ink-3);
-  font-weight:500;
-}
-
-/* ─────────────────────────────────────────────
-   ШАПКА — имя, разделы и часы в одной строке
-   ───────────────────────────────────────────── */
-.top{
-  position:sticky; top:0; z-index:30;
-  background:color-mix(in srgb, var(--paper) 55%, transparent);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border-bottom:1px solid transparent;
-  box-shadow:none;
-  transition:border-color .3s ease, box-shadow .3s ease, background .3s ease;
-}
-/* Пока страница вверху, шапка почти незаметна; со скроллом под ней появляется
-   содержимое — и она проявляется как стекло. */
-.top.is-stuck{
-  border-bottom-color:var(--glass-stroke);
-  background:var(--glass-tint);
-  box-shadow:0 10px 30px -18px rgba(17,21,27,.4), var(--glass-glow);
-}
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
-  .top{ background:var(--paper); }
-  .top.is-stuck{ background:var(--paper); border-bottom-color:var(--rule); }
-}
-@media (prefers-reduced-transparency: reduce){
-  .top,.top.is-stuck{
-    background:var(--paper);
-    -webkit-backdrop-filter:none; backdrop-filter:none;
-  }
-}
-
-.top__in{
-  position:relative;
-  max-width:var(--page); margin-inline:auto;
-  padding-block:0;
-  padding-left:max(24px, env(safe-area-inset-left, 0px));
-  padding-right:max(24px, env(safe-area-inset-right, 0px));
-  display:flex; align-items:stretch; gap:var(--s3);
-  flex-wrap:nowrap;
-}
-.top__name{
-  position:relative; z-index:1;
-  font-family:var(--mono); font-size:12px; font-weight:500;
-  /* Моноширинный пробел широкий — поджимаем его, иначе между «Данил» и
-     «Сарыков» зияет дыра. Совсем убирать нельзя: слова слипнутся. */
-  letter-spacing:0; word-spacing:-.22em; text-transform:uppercase;
-  flex:0 0 auto; display:flex; align-items:center;
-  padding-block:16px;
-  color:var(--ink-2);
-  transition:color .2s;
-}
-/* Имя — это и есть кнопка «Главная», поэтому ведёт себя как раздел. */
-.top__name:hover{ color:var(--ink); }
-.top__name[aria-current="page"]{ color:var(--ink); }
-.top__nav{
-  position:relative;
-  display:flex; align-items:stretch; gap:var(--s3);
-  flex:0 1 auto; min-width:0;
-  overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
-}
-.top__nav::-webkit-scrollbar{ display:none; }
-
-/* Стеклянная капсула переезжает к выбранному разделу. Живёт в самой шапке,
-   а не внутри полосы разделов: иначе она не смогла бы доехать до имени. */
-.nav__pill{
-  /* top/translateY считает JS: на телефоне разделы уходят на свою строку
-     под именем, и центр этой строки — не центр всей шапки. */
-  position:absolute; left:0; top:0; height:34px; width:0;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.92);
-  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:0 8px 20px -10px rgba(17,21,27,.4), inset 0 1px 0 rgba(255,255,255,1);
-  opacity:0; pointer-events:none; z-index:0;
-  /* Трогается быстро, садится мягко — так ход читается как скольжение, а не
-     как рывок. Ширина и сдвиг идут одной кривой, иначе края капсулы
-     приезжают вразнобой и она «дышит». */
-  transition:transform .42s cubic-bezier(.22,1,.36,1),
-             width .42s cubic-bezier(.22,1,.36,1),
-             opacity .3s ease;
-  will-change:transform, width;
-}
-.top__in.has-pill .nav__pill{ opacity:1; }
-.nav__pill.no-anim{ transition:none; }
-/* Пока капсулы нет — подчёркивание; с ней оно лишнее. */
-.top__in.has-pill .tab::after{ display:none; }
-@media (prefers-reduced-motion: reduce){ .nav__pill{ transition:opacity .3s ease; } }
-
-/* Та же капсула — для свёрнутого меню на телефоне. Там разделы лежат
-   столбиком в отдельной панели под кнопкой «⋯», а не строкой в шапке,
-   поэтому координаты считаются от самой панели, и капсула ездит по
-   вертикали, а не по горизонтали. Лежит последним ребёнком внутри
-   .top__nav — земля под пунктами (z-index ниже их), но не сбивает
-   nth-child-задержки их появления: те считают только настоящие .tab
-   по счёту с начала, а не всех детей панели подряд. */
-.nav__pill--m{
-  position:absolute; left:0; top:0; height:0; width:0;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.92);
-  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:0 8px 20px -10px rgba(17,21,27,.4), inset 0 1px 0 rgba(255,255,255,1);
-  opacity:0; pointer-events:none; z-index:0;
-  transition:transform .3s cubic-bezier(.22,1,.36,1),
-             width .3s cubic-bezier(.22,1,.36,1),
-             height .3s cubic-bezier(.22,1,.36,1),
-             opacity .2s ease;
-  will-change:transform, width, height;
-}
-.top__nav.has-pill-m .nav__pill--m{ opacity:1; }
-.nav__pill--m.no-anim{ transition:none; }
-/* Капсула есть — плоская заливка на текущем разделе лишняя, дублирует её. */
-.top__nav.has-pill-m .tab[aria-current="page"]{ background:none; }
-@media (prefers-reduced-motion: reduce){ .nav__pill--m{ transition:opacity .2s ease; } }
-
-.tab{
-  position:relative; flex:0 0 auto;
-  display:flex; align-items:center;
-  font-family:var(--mono); font-size:12px; letter-spacing:.08em;
-  color:var(--ink-2); white-space:nowrap;
-  padding-block:16px;
-  transition:color .2s;
-}
-.tab::after{
-  content:""; position:absolute; left:0; right:0; bottom:12px;
-  height:1px; background:var(--lamp);
-  transform:scaleX(0); transform-origin:left;
-  transition:transform .28s cubic-bezier(.2,.7,.3,1);
-}
-.tab:hover{ color:var(--ink); }
-.tab[aria-current="page"]{ color:var(--ink); }
-.tab[aria-current="page"]::after{ transform:scaleX(1); }
-
-/* На широком экране «Контакты» — обычный раздел: их отмечает та же
-   переезжающая капсула, что и остальные. Отдельная рамка только в меню
-   на телефоне, где капсулы нет. */
-.tab--cta::after{ display:none; }
-
-.top__now{
-  margin-left:auto; flex:0 0 auto;
-  display:flex; align-items:center; gap:8px;
-  font-family:var(--mono); font-size:11px; letter-spacing:.1em;
-  color:var(--ink-3); white-space:nowrap;
-}
-.now-row{ display:flex; align-items:center; gap:8px; }
-.top__now .dot{
-  width:6px; height:6px; border-radius:50%; background:var(--lamp);
-  animation:pulse 2.4s ease-in-out infinite;
-}
-@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
-
-@media (max-width:1080px){ .top__now .now-date, .top__now .sep-date{ display:none; } }
-
-/* Кнопка разделов — та же отливка, что у портрета: кромка-лупа, толщина,
-   цветная грань и блик, идущий за пальцем. Кромку берём тоньше: кнопка
-   сорок точек в поперечнике, широкая грань съела бы её целиком.
-   Кнопка показывается только до 900 точек, то есть всегда под палец, —
-   поэтому 44 задано прямо здесь, а не отдельным правилом для узких экранов. */
-.top__more{
-  display:none; flex:0 0 auto; align-self:center;
-  width:44px; height:44px; border-radius:50%; cursor:pointer;
-  align-items:center; justify-content:center;
-  font-family:var(--mono); font-size:15px; line-height:1;
-  color:var(--ink-2);
-  --rim:4px;
-  transition:color .2s, transform .2s cubic-bezier(.22,1,.36,1),
-             border-radius .22s cubic-bezier(.22,1,.36,1);
-}
-.top__more:active{ transform:scale(.94); }
-/* Открытое меню отмечаем не заливкой — она погасила бы стекло, — а тем, что
-   грань разгорается и точки темнеют. Нижние углы кружка распрямляются —
-   кнопка визуально перетекает в панель под собой, а не просто рядом с ней. */
-.top__more[aria-expanded="true"]{
-  color:var(--ink);
-  border-bottom-left-radius:14px;
-  border-bottom-right-radius:14px;
-  box-shadow:
-    0 24px 50px -28px rgba(17,21,27,.55),
-    0 2px 10px -6px rgba(17,21,27,.2),
-    inset 0 1px 0 rgba(255,255,255,1),
-    inset 0 -1px 0 rgba(17,21,27,.14),
-    inset 0 0 0 1px rgba(176,121,28,.35);
-}
-
-/* На телефоне разделы прячутся под «⋯» рядом с часами — в строку с именем,
-   часами и четырьмя полными подписями они не помещались и наезжали друг
-   на друга. Кнопка и меню стоят у правого края, там же, где часы, — и
-   раскрываются от него вправо (до края экрана), а не от имени влево. */
-@media (max-width:900px){
-  .top__more{ display:flex; }
-
-  /* Точка роста — верхний правый угол, тот самый, где сидит кнопка: панель
-     не просто появляется рядом, а будто разворачивается из неё самой. */
-  .top__nav{
-    position:absolute; top:calc(100% + 10px); right:16px; min-width:220px;
-    flex-direction:column; align-items:stretch; gap:2px;
-    padding:8px; margin:0; border-radius:20px;
-    overflow:visible;
-    border:1px solid var(--glass-stroke);
-    background:var(--glass-panel);
-    -webkit-backdrop-filter:var(--glass-blur);
-    backdrop-filter:var(--glass-blur);
-    /* Приподнятое стекло: панель ложится поверх уже стеклянной шапки, тень
-       заметно глубже обычной, иначе меню сливалось бы с тем, что под ним. */
-    box-shadow:var(--glass-drop-elevated), var(--glass-glow);
-    transform-origin:top right;
-    opacity:0; transform:translateY(-6px) scale(.88);
-    pointer-events:none; z-index:3;
-    transition:opacity .26s ease, transform .32s cubic-bezier(.22,1,.36,1);
-  }
-  .top__nav.is-open{ opacity:1; transform:none; pointer-events:auto; }
-  /* Пункты подъезжают следом за панелью, чуть вдогонку друг за другом —
-     раскрытие читается как одно живое движение, а не щелчок видимости. */
-  .top__nav .tab{
-    opacity:0; transform:translateY(-4px);
-    transition:opacity .18s ease, transform .22s cubic-bezier(.22,1,.36,1),
-               color .2s, background .2s;
-  }
-  .top__nav.is-open .tab{ opacity:1; transform:none; }
-  .top__nav.is-open .tab:nth-child(1){ transition-delay:.03s; }
-  .top__nav.is-open .tab:nth-child(2){ transition-delay:.06s; }
-  .top__nav.is-open .tab:nth-child(3){ transition-delay:.09s; }
-  .top__nav.is-open .tab:nth-child(4){ transition-delay:.12s; }
-
-  .tab{
-    position:relative; z-index:1;
-    padding:11px 14px; border-radius:12px;
-    font-size:12.5px; letter-spacing:.1em;
-  }
-  .tab::after{ display:none; }
-  /* Подсветку выбранного тут держит просто заливка — капсула на телефоне
-     до меню не достаёт, оно не в строке шапки, а в отдельной панели. */
-  .tab[aria-current="page"]{ background:rgba(17,21,27,.07); color:var(--ink); }
-  .tab--cta{
-    align-self:stretch; margin-top:4px; text-align:left;
-    background:rgba(17,21,27,.06); border-color:rgba(255,255,255,.55);
-    box-shadow:none;
-  }
-  .tab--cta[aria-current="page"]{ background:var(--ink); color:var(--paper); }
-
-  /* Кнопка и часы едут к правому краю одной группой — кнопка первой (слева
-     от «Москва»), часы следом за ней, а не порознь по разным углам. */
-  .top__more{ margin-left:auto; }
-
-  /* Город, время и дата встают бутербродом — так втрое меньше по ширине,
-     чем в строку. Разделители между ними были нужны только в строке —
-     в столбик они лишние. */
-  .top__in{ gap:10px; }
-  .top__now{
-    display:flex; flex-direction:column; align-items:center;
-    gap:3px;
-    font-size:10px;
-    color:var(--ink-2); min-width:0;
-  }
-  .now-row{ gap:6px; }
-  .top__now .sep{ display:none; }
-  .top__now .now-date{ display:inline; }
-}
-@media (max-width:560px){
-  .top__name{ font-size:11px; letter-spacing:0; word-spacing:-.2em; }
-  .top__now{ font-size:9.5px; letter-spacing:.04em; gap:3px; }
-  .now-row{ gap:5px; }
-}
-/* На совсем узких дата уже не влезает — остаются город и время. */
-@media (max-width:379px){
-  .top__now .now-date,.top__now .sep-date{ display:none; }
-}
-@media (max-width:900px) and (prefers-reduced-motion: reduce){
-  .top__nav, .top__nav .tab, .top__more{ transition:none; transform:none; }
-  .top__nav.is-open .tab:nth-child(1),
-  .top__nav.is-open .tab:nth-child(2),
-  .top__nav.is-open .tab:nth-child(3),
-  .top__nav.is-open .tab:nth-child(4){ transition-delay:0s; }
-}
-/* ─────────────────────────────────────────────
-   РАЗДЕЛЫ
-   ───────────────────────────────────────────── */
-.panel{ animation:panelIn .5s cubic-bezier(.2,.7,.3,1); }
-@keyframes panelIn{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
-@media (prefers-reduced-motion: reduce){ .panel{ animation:none; } }
-
-/* ─────────────────────────────────────────────
-   ГЕРОЙ
-   ───────────────────────────────────────────── */
-.hero{
-  padding-block:var(--s6) var(--s7);
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,.72fr);
-  gap:var(--s6);
-  align-items:end;
-}
-.hero__place{ margin:0 0 var(--s3); }
-.hero__title{
-  margin:0;
-  font-weight:200;
-  font-size:clamp(3.6rem, 11vw, 8.2rem);
-  line-height:.92;
-  letter-spacing:-.03em;
-}
-.hero__title em{ font-style:italic; font-weight:300; display:block; padding-left:.12em; }
-.hero__lede{
-  margin:var(--s4) 0 0; max-width:30rem;
-  font-size:1.06rem; color:var(--ink-2); line-height:1.66;
-}
-.hero__acts{ margin-top:var(--s5); display:flex; flex-wrap:wrap; gap:var(--s2); }
-/* Тихое подтверждение, что дневник живой — не панель статистики, поэтому
-   ниже кнопок и тем же тихим тоном, что метка города над заголовком. */
-.hero__meta{ margin-top:var(--s3); }
-
-.btn{
-  /* Кнопки — это ссылки <a>, а у строчного элемента вертикальные отступы не
-     раздвигают строку и не действует min-height: «Все записи» так и оставалась
-     43 точки вместо 44, сколько ей ни задавай. Строчно-блочный контейнер даёт
-     кнопке настоящую высоту и заодно ровно центрует надпись со стрелкой. */
-  display:inline-flex; align-items:center; justify-content:center;
-  font-family:var(--mono); font-size:12px; letter-spacing:.1em;
-  text-transform:uppercase;
-  padding:13px 22px;
-  border-radius:999px;
-  border:1px solid var(--glass-stroke);
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-  color:var(--ink); cursor:pointer;
-  transition:var(--glass-transition), color .22s ease;
-}
-/* Нажатие не заливает кнопку чёрным — подчёркивается само слово, а стекло
-   остаётся стеклом. */
-.btn:hover,.btn:focus-visible{
-  color:var(--ink);
-  text-decoration:underline;
-  text-underline-offset:5px;
-  text-decoration-thickness:1px;
-  text-decoration-color:var(--lamp);
-  border-color:rgba(255,255,255,.95);
-  transform:translateY(-1px);
-  box-shadow:0 14px 30px -16px rgba(17,21,27,.4), var(--glass-glow);
-}
-/* Палец прижал стекло к поверхности: чуть садится, тень становится мельче
-   и плотнее — вместо того, чтобы просто гасить подъём наведения. */
-.btn:active{
-  transform:scale(.98);
-  box-shadow:0 6px 16px -10px rgba(17,21,27,.4), var(--glass-glow);
-}
-.btn--ghost{ background:rgba(255,255,255,.3); color:var(--ink-2); border-color:rgba(255,255,255,.55); }
-.btn--ghost:hover,.btn--ghost:focus-visible{ color:var(--ink); }
-
-/* В профиле пока не фотография, а знак — поэтому небольшой квадрат
-   в нейтральном тоне, а не портрет во всю колонку. */
-/* ─── Настоящее стекло ───
-   Плита с прозрачностью и тенью — это ещё не стекло. Живым его делают четыре
-   вещи, и здесь есть все:
-
-   1. Преломление по кромке. Настоящая грань собирает и искажает то, что за
-      ней. В CSS искажения нет, но лупу по краю можно подделать: узкая полоса
-      вдоль рамки размывает и подсвечивает фон сильнее, чем середина.
-   2. Блик, который живёт. Неподвижный отсвет читается как наклейка. Этот
-      ходит за курсором: скрипт кладёт в --mx/--my место указателя, а блик
-      разворачивается к нему, как к источнику света.
-   3. Цветная кайма. На грани настоящего стекла свет расходится в спектр —
-      еле заметная тёплая линия сверху и холодная снизу.
-   4. Толщина. Свет ложится на верхнюю фаску, тень собирается в нижней. Без
-      этого поверхность выглядит нарисованной, а не отлитой. */
-.glass-real{
-  position:relative;
-  isolation:isolate;
-  border-radius:calc(var(--pane-round) + 4px);
-  background:linear-gradient(157deg, rgba(255,255,255,.36), rgba(255,255,255,.12));
-  -webkit-backdrop-filter:blur(14px) saturate(1.7);
-  backdrop-filter:blur(14px) saturate(1.7);
-  border:1px solid rgba(255,255,255,.5);
-  box-shadow:
-    0 24px 50px -28px rgba(17,21,27,.55),
-    0 2px 10px -6px rgba(17,21,27,.2),
-    inset 0 1px 0 rgba(255,255,255,.95),          /* свет на верхней фаске */
-    inset 0 -1px 0 rgba(17,21,27,.10),            /* тень в нижней */
-    inset 0 0 0 1px rgba(255,255,255,.22);        /* толщина стенки */
-}
-/* Кромка-лупа: размывает и подсвечивает фон сильнее, чем середина. */
-.glass-real::before{
-  content:""; position:absolute; inset:0; z-index:-1;
-  border-radius:inherit;
-  -webkit-backdrop-filter:blur(26px) saturate(2) brightness(1.06);
-  backdrop-filter:blur(26px) saturate(2) brightness(1.06);
-  -webkit-mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
-  -webkit-mask-composite:xor; mask-composite:exclude;
-  mask:linear-gradient(#000,#000) content-box, linear-gradient(#000,#000);
-  padding:var(--rim, 9px);                       /* ширина кромки */
-  pointer-events:none;
-}
-/* Блик, идущий за курсором, и цветная кайма на грани. */
-.glass-real::after{
-  content:""; position:absolute; inset:0; border-radius:inherit;
-  pointer-events:none;
-  background:
-    radial-gradient(22rem 16rem at var(--mx,30%) var(--my,0%),
-                    rgba(255,255,255,.55), rgba(255,255,255,0) 62%),
-    linear-gradient(180deg, rgba(255,214,170,.16), rgba(255,214,170,0) 22%),
-    linear-gradient(0deg,   rgba(150,190,255,.16), rgba(150,190,255,0) 22%);
-  transition:background-position .2s;
-}
-
-.hero__fig{
-  margin:0 0 0 auto; position:relative; max-width:300px; width:100%;
-  padding:10px;
-}
-.hero__fig img{
-  width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;
-  background:var(--paper-lift);
-}
-.hero__fig figcaption{
-  margin-top:var(--s2);
-  font-family:var(--mono); font-size:11px; letter-spacing:.1em;
-  color:var(--ink-3); text-transform:uppercase;
-}
-
-/* ─────────────────────────────────────────────
-   ТЕЗИС
-   ───────────────────────────────────────────── */
-.thesis{
-  padding:var(--s6) var(--s5); margin-block:var(--s6);
-  border-radius:var(--pane-round);
-  background:var(--pane);
-  border:1px solid var(--pane-edge);
-  box-shadow:var(--pane-lift), var(--pane-glow);
-}
-.thesis blockquote{
-  margin:0; max-width:26ch;
-  font-size:clamp(1.7rem,4.4vw,2.9rem);
-  font-weight:300; line-height:1.24; letter-spacing:-.015em;
-}
-.thesis em{ font-style:italic; color:var(--lamp-ink); }
-.thesis figcaption{ margin-top:var(--s3); }
-
-/* ─────────────────────────────────────────────
-   ЛЕНТА — рельс с датами
-   ───────────────────────────────────────────── */
-.feed{ padding-block:var(--s6) var(--s8); }
-.feed--home{ border-top:1px solid var(--rule); padding-block:var(--s7); }
-
-.feed__head{
-  display:flex; flex-wrap:wrap; align-items:baseline;
-  gap:var(--s3); margin-bottom:var(--s5);
-}
-.feed__head :is(h1,h2){
-  margin:0; font-weight:300; font-size:1.5rem; letter-spacing:-.01em;
-  text-wrap:balance;
-}
-.feed__note{
-  flex-basis:100%; max-width:var(--measure);
-  margin:0; font-size:.92rem; color:var(--ink-2);
-}
-
-.filters{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s1); margin:var(--s4) 0 var(--s2); }
-.filters button{
-  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--ink-2);
-  /* Та же поверхность, что у карточек записей — фильтры лежат в общем потоке
-     страницы, а не плавают над лентой, поэтому и стекло у них «поверхностное»
-     (--pane-*), без своего размытия, вместо ещё одного случайного набора rgba. */
-  background:var(--pane); border:1px solid var(--pane-edge);
-  border-radius:999px;
-  box-shadow:0 4px 14px -10px rgba(17,21,27,.5), var(--pane-glow);
-  padding:11px 16px; min-height:42px; cursor:pointer;
-  transition:color .2s, border-color .2s, background .2s, box-shadow .2s, transform .2s;
-}
-.filters button:active{ transform:scale(.97); }
-.filters button[hidden]{ display:none; }
-.filters__more{ color:var(--lamp-ink) !important; }
-.filters__status{
-  min-height:1.5em; margin:0 0 var(--s6);
-  font-family:var(--mono); font-size:11px; letter-spacing:.08em;
-  color:var(--ink-3);
-}
-/* Как и остальные кнопки: стекло не заливается чёрным, подчёркивается слово.
-   Выбранная рубрика держится не цветом фона, а плотным стеклом и линией —
-   иначе её не отличить от просто наведённой. */
-.filters button:hover,.filters button:focus-visible{
-  color:var(--ink); background:rgba(255,255,255,.72);
-  text-decoration:underline; text-underline-offset:5px;
-  text-decoration-thickness:1px; text-decoration-color:var(--lamp);
-}
-.filters button[aria-pressed="true"]{
-  color:var(--ink);
-  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
-  border-color:rgba(255,255,255,.92);
-  box-shadow:0 8px 20px -10px rgba(17,21,27,.4), inset 0 1px 0 rgba(255,255,255,1);
-  text-decoration:underline; text-underline-offset:5px;
-  text-decoration-thickness:2px; text-decoration-color:var(--lamp);
-}
-
-.rail{ position:relative; display:grid; gap:var(--s3); }
-
-/* Запись — стеклянная плита. Рельс с датой остался внутри неё: он и был
-   опознавательным знаком этого дневника, терять его незачем. */
-.entry{
-  position:relative;
-  display:grid;
-  grid-template-columns:var(--rail) minmax(0,1fr);
-  gap:var(--s5);
-  padding:var(--s4) var(--s4) var(--s4) var(--s3);
-  border-radius:var(--pane-round);
-  background:var(--pane);
-  border:1px solid var(--pane-edge);
-  box-shadow:var(--pane-lift), var(--pane-glow);
-  transition:transform .3s cubic-bezier(.22,1,.36,1), box-shadow .3s, background .3s;
-}
-@media (hover: hover) and (pointer: fine){
-  .entry:hover{
-    transform:translateY(-2px);
-    box-shadow:0 26px 54px -30px rgba(17,21,27,.55), 0 3px 10px -6px rgba(17,21,27,.2), var(--pane-glow);
-  }
-}
-
-/* Точки на рельсе больше нет: она отмечала запись на сплошной ленте, а
-   теперь границу держит сама плита, и точка лишь налезала на дату. */
-
-.entry__meta{ text-align:right; min-width:0; }
-.entry__date{
-  font-family:var(--mono); font-size:14px; font-weight:500;
-  font-variant-numeric:tabular-nums; letter-spacing:.02em; display:block;
-}
-.entry__day{
-  font-family:var(--mono); font-size:11px; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--ink-3); display:block; margin-top:2px;
-}
-/* Тег в карточке ведёт в ту же рубрику, что и наверху ленты — поэтому
-   кнопка, а не просто подпись; сброс стилей кнопки, оформление то же. */
-.entry__tag{
-  display:inline-block; margin-top:var(--s2); max-width:100%;
-  font:inherit; font-family:var(--mono); font-size:10px; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--lamp-ink);
-  background:none; border:0; padding:2px 0; margin-left:auto; cursor:pointer;
-  border-bottom:1px solid transparent;
-  transition:color .2s, border-color .2s;
-}
-.entry__tag:hover,.entry__tag:focus-visible{
-  color:var(--ink); border-bottom-color:var(--lamp);
-}
-
-.entry__body{ max-width:var(--measure); min-width:0; }
-.entry__title{
-  margin:0 0 var(--s2);
-  font-weight:400; font-size:1.42rem; line-height:1.28; letter-spacing:-.012em;
-  text-wrap:balance;
-}
-.entry__body p{ margin:0 0 var(--s2); }
-.entry__body p:last-of-type{ margin-bottom:0; }
-
-/* Обёртка нужна, только когда действий два («Поделиться» + «Оригинал в
-   Telegram») — тогда между ними обычный горизонтальный отступ вместо
-   каждый раз своего верхнего. */
-.entry__actions{ display:flex; flex-wrap:wrap; align-items:center; gap:var(--s3); margin-top:var(--s3); }
-.entry__more{
-  display:inline-flex; align-items:center; gap:6px;
-  font-family:var(--mono); font-size:11px; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--ink-2);
-  border-bottom:1px solid var(--rule); padding-bottom:2px;
-  position:relative;
-  /* Кнопка «Поделиться» — тот же вид, что у ссылки на оригинал, но это
-     <button>, не <a>: сбрасываем то, что браузер иначе дорисовал бы сам. */
-  border-width:0 0 1px; background:none; font:inherit; letter-spacing:inherit;
-  text-transform:inherit; cursor:pointer; padding-left:0; padding-right:0;
-  transition:color .2s, border-color .2s;
-}
-.entry__more::after{ content:""; position:absolute; inset:-14px -10px; border-radius:8px; }
-.entry__more:hover{ color:var(--lamp-ink); border-bottom-color:var(--lamp); }
-
-/* Докрутили по прямой ссылке — на секунду обозначаем, до какой именно
-   карточки, мягкой кромкой лампы поверх обычной стеклянной, без прыжков
-   размера и без реального движения (только цвет тени/кромки, реагирует на
-   reduced-motion как обычный transition). */
-.entry--linked{
-  border-color:rgba(187,115,62,.55);
-  box-shadow:var(--pane-lift), var(--pane-glow), 0 0 0 3px rgba(187,115,62,.16);
-}
-
-/* Ссылки внутри текста записи раньше выглядели как обычные слова: общий
-   сброс a{} убирает и цвет, и подчёркивание. Возвращаем им вид ссылки и
-   разрешаем длинному адресу переноситься, чтобы он не раздвигал карточку. */
-.entry__body a.u,.qa__a a.u,.feed__state a.u{
-  color:var(--lamp-ink);
-  text-decoration:underline;
-  text-decoration-color:color-mix(in srgb, currentColor 58%, transparent);
-  text-decoration-thickness:1px;
-  text-underline-offset:3px;
-  overflow-wrap:anywhere;
-}
-.entry__body a.u:hover,.qa__a a.u:hover,.feed__state a.u:hover{
-  text-decoration-thickness:2px;
-  text-decoration-color:currentColor;
-}
-
-.feed__foot{ margin-top:var(--s6); padding-left:calc(var(--rail) + var(--s5)); }
-.feed__empty,.feed__state{
-  padding-left:calc(var(--rail) + var(--s5));
-  color:var(--ink-2); font-size:.95rem;
-}
-
-/* ─────────────────────────────────────────────
-   МЕДИА В ЗАПИСЯХ — фото, аудио, видео, кружочки
-   ───────────────────────────────────────────── */
-.media{ margin:0 0 var(--s3); display:grid; gap:var(--s1); }
-.media--pair{ grid-template-columns:1fr 1fr; }
-
-.entry__photo{
-  width:100%; aspect-ratio:3/2; object-fit:cover;
-  background:var(--paper-lift);
-  filter:grayscale(.1);
-}
-.entry__audio{ display:block; width:min(100%,560px); margin-block:var(--s2); }
-/* ─── Кадр в ленте ───
-   Не плеер, а кнопка: постер и знак пуска. Всё управление — в окне. */
-.pl{
-  display:block; width:100%; padding:0; margin:0 0 var(--s3);
-  border:0; background:none; cursor:pointer; text-align:left;
-  font:inherit; color:inherit;
-}
-.pl__stage{
-  position:relative; display:block; overflow:hidden;
-  aspect-ratio:3/2; background:var(--paper-lift);
-  border:1px solid var(--rule); border-radius:4px;
-}
-.pl__poster{ width:100%; height:100%; object-fit:cover; filter:grayscale(.1); }
-.pl--round{ width:min(300px,80%); }
-.pl--round .pl__stage{ aspect-ratio:1/1; border-radius:50%; }
-
-.pl__big{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.18); transition:background .25s;
-}
-.pl:hover .pl__big{ background:rgba(17,21,27,.3); }
-.pl__glyph{
-  width:56px; height:56px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px; padding-left:4px; color:var(--ink);
-  background:linear-gradient(160deg, rgba(255,255,255,.9), rgba(255,255,255,.62));
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border:1px solid rgba(255,255,255,.8);
-  box-shadow:0 10px 26px -10px rgba(17,21,27,.7), inset 0 1px 0 rgba(255,255,255,.95);
-  transition:transform .25s;
-}
-.pl:hover .pl__glyph{ transform:scale(1.06); }
-.pl__cap{
-  display:block; margin-top:8px;
-  font-family:var(--mono); font-size:10px; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--ink-3);
-}
-.pl--round .pl__cap{ text-align:center; }
-
-/* ─── Окно просмотра ───
-   Светлое стекло поверх страницы: страница остаётся видна размытой, окно
-   читается за счёт кромки и тени, а не за счёт глухой заливки.
-   Плеер свой, без сторонних библиотек: ни одного лишнего килобайта и полная
-   свобода в оформлении. */
-.tv{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
-.tv__backdrop{
-  position:absolute; inset:0;
-  background:rgba(232,234,237,.62);
-  -webkit-backdrop-filter:blur(26px) saturate(1.6);
-  backdrop-filter:blur(26px) saturate(1.6);
-}
-.tv__win{
-  position:relative; z-index:1;
-  display:flex; flex-direction:column; align-items:center; gap:14px;
-  max-width:min(1000px,92vw); width:100%;
-  padding:0 clamp(8px,4vw,56px);
-}
-.tv__stage{
-  position:relative; max-width:100%; max-height:68vh;
-  display:flex; align-items:center; justify-content:center;
-  border-radius:8px; overflow:hidden;
-  border:1px solid var(--glass-stroke);
-  box-shadow:0 40px 90px -40px rgba(17,21,27,.7), var(--glass-glow);
-  background:rgba(17,21,27,.9);
-  /* Пропорции знаем из данных и ставим до чтения файла: иначе видео до
-     метаданных занимает 300×150, и окно на глазах прыгает. */
-  aspect-ratio:var(--tv-ratio, 16/9);
-  width:min(100%, calc(68vh * var(--tv-ratio, 1.777)));
-}
-.tv__video{ width:100%; height:100%; display:block; cursor:pointer; object-fit:contain; }
-.tv__win--round .tv__stage{
-  /* Предел --tv-cap ставит скрипт по настоящему размеру файла. */
-  width:min(68vh, 74vw, var(--tv-cap, 74vw)); aspect-ratio:1/1; border-radius:50%;
-}
-.tv__win--round .tv__video{ object-fit:cover; }
-
-.tv__big{
-  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-  background:rgba(17,21,27,.16); border:0; cursor:pointer; padding:0;
-  transition:opacity .25s;
-}
-.tv__big span{
-  width:70px; height:70px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-size:22px; padding-left:5px; color:var(--ink);
-  background:linear-gradient(160deg, rgba(255,255,255,.94), rgba(255,255,255,.7));
-  border:1px solid rgba(255,255,255,.85);
-  box-shadow:0 14px 34px -12px rgba(17,21,27,.75);
-}
-.tv.is-playing .tv__big{ opacity:0; pointer-events:none; }
-.tv.is-ended .tv__big{
-  opacity:1; pointer-events:auto;
-  background:rgba(17,21,27,.34);
-}
-.tv.is-ended .tv__big span{ padding-left:0; }
-
-/* Колечко ожидания. Раньше о задержке говорила мигающая кнопка пуска — но во
-   время игры она спрятана, и зритель смотрел в замерший кадр без объяснений. */
-.tv__wait{
-  position:absolute; left:50%; top:50%; width:44px; height:44px; margin:-22px 0 0 -22px;
-  border-radius:50%; border:2px solid rgba(255,255,255,.35); border-top-color:#fff;
-  opacity:0; pointer-events:none; transition:opacity .2s;
-}
-.tv.is-waiting .tv__wait{ opacity:1; animation:tvSpin .9s linear infinite; }
-@keyframes tvSpin{ to{ transform:rotate(360deg); } }
-@media (prefers-reduced-motion: reduce){
-  .tv.is-waiting .tv__wait{ animation:none; }
-}
-
-/* Ролик не открылся — говорим об этом и даём открыть файл напрямую. */
-.tv__fail{
-  position:absolute; inset:0; display:none;
-  flex-direction:column; align-items:center; justify-content:center; gap:12px;
-  padding:24px; text-align:center;
-  background:rgba(17,21,27,.92); color:var(--ink-inverse);
-  font-family:var(--mono); font-size:12px; letter-spacing:.06em; line-height:1.7;
-}
-.tv.is-failed .tv__fail{ display:flex; }
-.tv.is-failed .tv__big, .tv.is-failed .tv__wait{ display:none; }
-.tv__fail a{ color:var(--lamp); border-bottom:1px solid currentColor; }
-.tv__again{
-  font-family:var(--mono); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--ink-inverse); cursor:pointer; padding:9px 18px; border-radius:999px;
-  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.35);
-}
-.tv__again:hover{ background:rgba(255,255,255,.2); }
-
-/* Строка о том, что происходит со связью. На VPN и в метро ролик встаёт
-   молча, и человек не понимает, ждать ему или уходить. */
-.tv__note{
-  position:absolute; left:50%; top:14px; transform:translateX(-50%);
-  max-width:88%; padding:7px 14px; border-radius:999px; text-align:center;
-  font-family:var(--mono); font-size:11px; letter-spacing:.06em;
-  background:rgba(17,21,27,.78); color:var(--ink-inverse);
-  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-}
-
-.tv__close,.tv__nav{
-  position:absolute; z-index:2;
-  width:46px; height:46px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:var(--mono); font-size:18px; line-height:1;
-  color:var(--ink); cursor:pointer;
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-stroke);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-  transition:background .2s, opacity .2s;
-}
-.tv__close:hover,.tv__nav:hover{ background:rgba(255,255,255,.85); }
-.tv__close{ top:-60px; right:clamp(8px,4vw,56px); }
-.tv__nav{ top:50%; margin-top:-23px; font-size:26px; }
-.tv__prev{ left:-4px; }
-.tv__next{ right:-4px; }
-.tv__nav[disabled]{ opacity:.3; cursor:default; }
-
-.tv__cap{
-  font-family:var(--mono); font-size:11px; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--ink-2); text-align:center;
-  transition:opacity .25s ease;
-}
-
-.tv__bar{
-  display:flex; align-items:center; gap:8px;
-  width:100%; max-width:720px; min-width:0;
-  padding:8px 12px; border-radius:22px;
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-stroke);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-  transition:opacity .25s ease;
-}
-.pl__btn{
-  flex:0 0 auto; width:36px; height:36px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  border:0; background:transparent; cursor:pointer;
-  font-family:var(--mono); font-size:14px; line-height:1; color:var(--ink);
-  transition:background .2s;
-}
-.pl__btn:hover{ background:rgba(17,21,27,.08); }
-.pl__btn[disabled]{ opacity:.35; cursor:default; }
-.pl__track{
-  position:relative; flex:1 1 40px; min-width:0; height:24px;
-  cursor:pointer; touch-action:none;
-}
-.pl__track::before{
-  content:""; position:absolute; left:0; right:0; top:50%; height:3px;
-  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.18);
-}
-.pl__buffer{
-  position:absolute; left:0; top:50%; height:3px; width:0;
-  margin-top:-1.5px; border-radius:3px; background:rgba(17,21,27,.3);
-}
-.pl__fill{
-  position:absolute; left:0; top:50%; height:3px; width:0;
-  margin-top:-1.5px; border-radius:3px; background:var(--lamp);
-}
-.pl__knob{
-  position:absolute; top:50%; left:0; width:11px; height:11px;
-  margin:-5.5px 0 0 -5.5px; border-radius:50%;
-  background:var(--paper); border:1px solid var(--lamp);
-  box-shadow:0 2px 6px rgba(17,21,27,.35);
-  transition:transform .15s;
-}
-.pl__track:hover .pl__knob, .pl__track.is-dragging .pl__knob{ transform:scale(1.4); }
-/* Под курсором полоса становится толще — в неё проще попасть и приятнее
-   тащить. На ощупь это то же самое, что палец делает на телефоне. */
-.pl__track:hover::before, .pl__track.is-dragging::before,
-.pl__track:hover .pl__fill, .pl__track.is-dragging .pl__fill,
-.pl__track:hover .pl__buffer, .pl__track.is-dragging .pl__buffer{
-  height:5px; margin-top:-2.5px;
-}
-.pl__track:focus-visible{ outline:2px solid var(--lamp); outline-offset:3px; border-radius:4px; }
-/* Подсказка со временем: видно, куда попадёшь, ещё до отпускания. */
-.pl__hint{
-  position:absolute; bottom:calc(100% + 6px); left:0; transform:translateX(-50%);
-  padding:3px 7px; border-radius:6px; white-space:nowrap;
-  font-family:var(--mono); font-size:10px; letter-spacing:.04em;
-  font-variant-numeric:tabular-nums;
-  background:rgba(17,21,27,.92); color:var(--ink-inverse);
-  opacity:0; pointer-events:none; transition:opacity .15s;
-}
-.pl__track:hover .pl__hint, .pl__track.is-dragging .pl__hint{ opacity:1; }
-.pl__time{
-  flex:0 0 auto;
-  font-family:var(--mono); font-size:11px; letter-spacing:.04em;
-  font-variant-numeric:tabular-nums; color:var(--ink-2); white-space:nowrap;
-}
-.tv__vol{ flex:0 0 76px; accent-color:var(--lamp); background:transparent; }
-.tv__rate span, .tv__hd span{ font-size:11px; }
-.tv__quality{ position:relative; flex:0 0 auto; }
-.tv__quality .tv__hd{ width:auto; min-width:48px; padding:0 10px; border-radius:999px; }
-.tv__qualityMenu{
-  position:absolute; right:0; bottom:calc(100% + 10px); z-index:5;
-  min-width:142px; padding:6px; margin:0; list-style:none;
-  border:1px solid var(--glass-stroke); border-radius:14px;
-  background:rgba(248,247,243,.96); box-shadow:0 18px 45px rgba(17,21,27,.22);
-  -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
-}
-.tv__qualityMenu[hidden]{ display:none; }
-.tv__qualityOption{
-  width:100%; display:flex; align-items:center; justify-content:space-between; gap:14px;
-  padding:9px 10px; border:0; border-radius:9px; cursor:pointer;
-  background:transparent; color:var(--ink); font:500 11px/1.2 var(--mono);
-}
-.tv__qualityOption:hover,.tv__qualityOption:focus-visible{ background:rgba(17,21,27,.08); outline:0; }
-.tv__qualityOption[aria-checked="true"]{ color:var(--lamp); background:rgba(166,55,38,.08); }
-.tv__qualitySize{ color:var(--ink-2); font-weight:400; }
-
-/* На узком экране дорожке в одном ряду с кнопками остаётся десяток точек —
-   перематывать пальцем нечего. Отправляем её на свою строку. */
-@media (max-width:700px){
-  /* Кнопки по центру и с просветом между строками: на самых узких экранах ряд
-     из семи всё равно не помещается, и без этого последняя пара сваливалась
-     влево, оставляя половину строки пустой — выглядело поломкой, а не строем. */
-  .tv__bar{ flex-wrap:wrap; row-gap:4px; gap:3px; justify-content:center; }
-  /* Дорожка и время делят верхнюю строку, кнопкам достаётся нижняя целиком.
-     Перенос задан пустой строкой нулевой высоты, а не подогнанной шириной
-     дорожки: числа пришлось бы пересчитывать при каждой смене кегля времени,
-     а так строка ломается сама. Порядок: дорожка (-2), время (-1), затем этот
-     разрыв и уже кнопки. Без него время оставалось в ряду с кнопками, вытесняло
-     седьмую на свою строку, и панель выглядела развалившейся. */
-  .tv__bar .pl__track{ order:-2; flex:1 1 auto; min-width:120px; height:28px; }
-  .tv__bar .pl__time{ order:-1; flex:0 0 auto; }
-  .tv__bar::before{ content:""; order:0; flex:0 0 100%; height:0; }
-}
-/* Ползунок громкости нужен только там, где есть мышь: на телефоне и планшете
-   громкость на кнопках корпуса, а iOS свойство volume вообще не слушает. */
-@media (hover: none), (pointer: coarse){
-  .tv__vol{ display:none; }
-}
-
-/* ─── Полный экран ───
-   Обычные ограничения окна (тысяча пикселей по ширине, 68% высоты) в полном
-   экране как раз и мешали развернуться. Здесь они снимаются, а кадр
-   подстраивается под фактические размеры экрана — любого, от телефона до
-   телевизора. Класс ставит скрипт, псевдокласс — подстраховка. */
-.tv.is-fs .tv__win, .tv__win:fullscreen, .tv__win:-webkit-full-screen{
-  max-width:none; width:100vw; height:100vh;
-  padding:0; gap:0; background:#000;
-  justify-content:center;
-}
-.tv.is-fs .tv__stage, .tv__win:fullscreen .tv__stage{
-  max-width:100vw; max-height:100vh; width:100%; height:100%;
-  aspect-ratio:auto;
-  border:0; border-radius:0; box-shadow:none; background:#000;
-}
-.tv.is-fs .tv__video, .tv__win:fullscreen .tv__video{
-  width:100%; height:100%; max-width:100vw; max-height:100vh;
-  object-fit:contain;
-}
-/* Кружочек и на весь экран остаётся кругом — по меньшей стороне. Предел
-   --tv-cap уже посчитан скриптом от настоящего размера файла (сейчас —
-   полуторакратный запас, natural × 1.6, см. sizeStage): множить его здесь
-   ещё раз незачем — на большом мониторе или телевизоре два запаса
-   складывались (1.6 × 1.4 ≈ 2.24 от исходных точек файла) и кружочек 512×512
-   цифрово растягивался заметно мыльнее, чем автор целился в комментарии у
-   sizeStage. Тот же --tv-cap, что и в оконном режиме (см. .tv__win--round
-   .pl__stage выше) — разница только в доступной высоте экрана. */
-.tv.is-fs .tv__win--round .tv__stage,
-.tv__win--round:fullscreen .tv__stage{
-  width:min(96vh, 96vw, var(--tv-cap, 96vw));
-  height:min(96vh, 96vw, var(--tv-cap, 96vw));
-  aspect-ratio:1/1; margin:auto; border-radius:50%;
-}
-.tv.is-fs .tv__win--round .tv__video{ object-fit:cover; }
-
-/* Управление ложится поверх кадра. */
-.tv.is-fs .tv__bar, .tv__win:fullscreen .tv__bar{
-  position:absolute; left:50%; bottom:24px; transform:translateX(-50%);
-  width:min(720px,92vw); z-index:3;
-}
-.tv.is-fs .tv__cap, .tv__win:fullscreen .tv__cap{
-  position:absolute; left:0; right:0; top:18px; z-index:3;
-  color:color-mix(in srgb, var(--ink-inverse) 80%, transparent);
-}
-.tv.is-fs .tv__close, .tv__win:fullscreen .tv__close{ top:16px; right:16px; }
-.tv.is-fs .tv__nav, .tv__win:fullscreen .tv__nav{ margin-top:-23px; }
-.tv.is-fs .tv__prev{ left:16px; }
-.tv.is-fs .tv__next{ right:16px; }
-/* Фон окна в полном экране не нужен — его закрывает сам кадр. */
-.tv.is-fs .tv__backdrop{ display:none; }
-
-/* Пока ролик идёт и никто не шевелится, панель прячется — как в Ютубе.
-   Любое движение мышью, касание или клавиша её возвращают (см. wake() в
-   скрипте); на паузе не прячем никогда, класс попросту не ставится. */
-.tv.is-fs.is-idle .tv__bar, .tv.is-fs.is-idle .tv__cap,
-.tv.is-fs.is-idle .tv__close, .tv.is-fs.is-idle .tv__nav{
-  opacity:0; pointer-events:none;
-}
-.tv.is-fs.is-idle .tv__win{ cursor:none; }
-
-/* ─── Просмотр фото ───
-   Своё маленькое окно, а не то же самое, что у видео: тащить фотографию в
-   плеер ролика означало бы городить в нём развилку на каждом шагу ради
-   картинки. Стекло и крестик — те же классы, что у видео (.tv__backdrop,
-   .tv__close оформлены сами по себе, не через .tv), поэтому выглядят
-   одинаково без повторения стилей. */
-.ph{ position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; }
-.ph__win{
-  position:relative; z-index:1; display:flex; flex-direction:column;
-  align-items:center; gap:14px; width:100%; height:100%;
-  padding:clamp(8px,4vw,56px);
-  /* На телефоне с вырезом или домашней полосой кнопки иначе лезут прямо под
-     них. */
-  padding-top:calc(clamp(8px,4vw,56px) + env(safe-area-inset-top, 0px));
-  padding-bottom:calc(clamp(8px,4vw,56px) + env(safe-area-inset-bottom, 0px));
-}
-/* У видео крестик висит над окном — там вокруг него есть место, окно не на
-   весь экран. Здесь окно и есть весь экран, «над ним» уже некуда: сажаем
-   крестик внутрь угла, как у видео в полноэкранном режиме. */
-.ph .tv__close{ top:16px; right:16px; }
-.ph__stage{
-  position:relative; flex:1 1 auto; width:100%; min-height:0;
-  display:flex; align-items:center; justify-content:center;
-  overflow:hidden; touch-action:none;
-}
-.ph__img{
-  max-width:100%; max-height:100%; object-fit:contain;
-  cursor:grab; touch-action:none;
-}
-.ph__img:active{ cursor:grabbing; }
-.ph__zoom{
-  display:flex; align-items:center; gap:8px; flex:0 0 auto;
-  padding:6px; border-radius:22px;
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur); backdrop-filter:var(--glass-blur);
-  border:1px solid var(--glass-stroke);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-}
-.ph__zoom .pl__btn{ width:40px; height:40px; font-size:18px; }
-
-/* Фото — тоже кнопка: у него теперь есть что нажать. */
-.entry__photo, .hero__fig img{ cursor:zoom-in; }
-
-/* Телефон в ландшафте. Крестик стоит НАД окном («минус 52»), и при высоте
-   экрана в 390 точек окно занимает её целиком — крестик уезжает за верхний
-   край, а закрыть ролик больше нечем: клавиши Esc на телефоне нет, кнопка
-   «назад» уводит со страницы. Сажаем его внутрь кадра, в угол — ровно так же,
-   как это уже сделано для полного экрана строкой выше. Условие по высоте, а
-   не по ширине: дело именно в ней. Само правило стоит после мобильного блока,
-   чтобы его не перебил более поздний top:-52px. */
-
-@media (max-width:720px){
-  .tv__win{ gap:10px; }
-  .tv__close{ top:-52px; }
-  .tv__nav{ width:40px; height:40px; margin-top:-20px; }
-  .tv__prev{ left:-6px; }
-  .tv__next{ right:-6px; }
-  /* Зазор задан по осям раздельно и именно здесь: этот блок идёт после
-     медиазапроса на 700 и общим gap затирал бы и его row-gap тоже. Три точки
-     по горизонтали — то, при чём семь кнопок по 38 встают в ряд на 360. */
-  .tv__bar{ column-gap:3px; row-gap:4px; padding:6px 8px; }
-  /* Пальцем, а не курсором. Прежние 34 точки — промах через раз, но и 44 сюда
-     не встают: кнопок семь, и на 320 точках им нужно 332 при доступных 264 —
-     панель разъезжалась на три строки с полупустой последней. 38 — наибольшее,
-     при котором семь кнопок встают в один ряд и на 390, и на 360 (это почти
-     все телефоны); на редких 320 они переносятся аккуратно по центру, см.
-     justify-content в медиазапросе на 700 выше. */
-  .pl__btn{ width:38px; height:38px; font-size:13px; }
-  .pl__time{ font-size:10px; }
-}
-/* Самые узкие экраны (старый iPhone SE и подобные). Там на ряд остаётся 253
-   точки, а семи кнопкам по 38 нужно 284 — седьмая срывалась на свою строку и
-   висела одна. Ради целого ряда возвращаем прежний размер: лучше кнопка чуть
-   меньше, чем панель в три этажа. Сайт эту ширину поддерживает намеренно —
-   см. README, «Экраны — от 320 пикселей до телевизора». */
-@media (max-width:340px){
-  .tv__bar{ column-gap:2px; }
-  .pl__btn{ width:34px; height:34px; font-size:12px; }
-}
-/* Должно идти ПОСЛЕ мобильного top:-52px выше. Иначе на телефоне в
-   альбомной ориентации каскад снова уводит крестик за верхний край. */
-@media (max-height:500px){
-  .tv__close{ top:8px; right:8px; }
-}
-/* ─── Когда стекла быть не должно ───
-   Экономный режим (2G или включённая экономия трафика — класс ставит скрипт
-   в шапке страницы) и системная просьба убрать прозрачность. Размытие стоит
-   работы видеокарте, а световой фон — лишней отрисовки; на слабом устройстве
-   это разница между плавной прокруткой и рывками. Правила этого блока
-   когда-то потерялись при переборке стилей: класс вешался, а снимать было
-   нечего. */
-html.thin body{ background-image:none; }
-html.thin .entry, html.thin .about, html.thin .qa, html.thin .thesis,
-html.thin .contact, html.thin .hero__fig{
-  background:var(--paper-lift); box-shadow:none; border-color:var(--rule);
-}
-html.thin .top, html.thin .foot, html.thin .tv__backdrop, html.thin .nav__pill,
-html.thin .filters button, html.thin .tv__bar, html.thin .tv__close, html.thin .tv__nav,
-html.thin .up{
-  -webkit-backdrop-filter:none; backdrop-filter:none;
-}
-html.thin .entry{ transition:none; }
-html.thin .entry:hover{ transform:none; }
-
-/* Оба списка ниже намеренно через «html X», а не голым «.x»: у голого класса
-   та же специфичность, что у собственных правил .entry/.about/.foot и так
-   далее ниже по файлу, и они моложе — без этой приставки на исходном месте
-   отключение молча проигрывало и не действовало вовсе. Ту же ловушку однажды
-   уже описали для html.thin (см. README, «Экономный режим») — здесь она была
-   и в этом блоке, просто без класса-щита. */
-@media (prefers-reduced-transparency: reduce){
-  html body{ background-image:none; }
-  html .entry, html .about, html .qa, html .thesis, html .contact, html .hero__fig{
-    background:var(--paper-lift); border-color:var(--rule);
-  }
-  html .foot{ background:var(--paper-lift); }
-  html .tv__backdrop{ background:var(--paper); }
-  html .top, html .foot, html .tv__backdrop, html .nav__pill, html .filters button, html .tv__bar,
-  html .tv__close, html .tv__nav, html .up{
-    -webkit-backdrop-filter:none; backdrop-filter:none;
-  }
-}
-
-/* ─── Когда стекла можно больше ───
-   Зеркало экономного режима: класс ставит тот же скрипт в шапке, но только
-   когда сеть сама подтвердила высшую категорию и железо не отчиталось о
-   слабости — при любом сомнении, включая браузеры без Network Information
-   API (Safari), сайт остаётся в обычном, уже вылизанном виде. Меняем только
-   токен панелей — прозрачнее карточки записей и «О дневнике». Больший
-   радиус блюра на плавающем стекле пробовали и убрали: даже на технически
-   «подходящем» железе (4 ядра, 8 ГБ) прилипшая шапка поверх ленты при
-   прокрутке заметно проседала — до 200 мс на кадр вместо ровных 17-33,
-   потому что видеокарта пересчитывает блюр каждый кадр, а его радиус ни
-   ядра, ни память не измеряют. Явно исключён телефон и планшет — тем же
-   ядрам и памяти он гоняет ту же прокрутку тяжелее компьютера или
-   телевизора. prefers-reduced-transparency выше выигрывает у этого блока в
-   любом случае: там задаются не токены, а сами свойства. */
-html.rich{
-  --pane:        linear-gradient(157deg, rgba(255,255,255,.32), rgba(255,255,255,.10));
-  --pane-edge:   rgba(255,255,255,.62);
-}
-
-/* Фотографии */
-.entry__photo{
-  width:100%; aspect-ratio:3/2; object-fit:cover;
-  background:var(--paper-lift);
-  filter:grayscale(.1);
-}
-
-/* ─────────────────────────────────────────────
-   О ДНЕВНИКЕ
-   ───────────────────────────────────────────── */
-/* Стеклянные рамы разделов. Отступ сверху и снизу — чтобы рама не прилипала
-   к шапке и к подвалу: прижатая к краю, она читается как часть их, а не как
-   отдельная плита. */
-.about{
-  margin-block:var(--s5);
-  padding:var(--s4) var(--s4) var(--s4) var(--s3);
-  display:grid; grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s4);
-  border-radius:var(--pane-round);
-  background:var(--pane);
-  border:1px solid var(--pane-edge);
-  box-shadow:var(--pane-lift), var(--pane-glow);
-}
-.about + .about{ margin-top:var(--s3); }
-.about + .about{ border-top:1px solid var(--rule); }
-.about > .label{ text-align:right; margin:0; }
-.about__body{ max-width:var(--measure); }
-.about__body :is(h1,h2){
-  margin:0 0 var(--s3); font-weight:300; font-size:1.9rem; letter-spacing:-.015em;
-  text-wrap:balance;
-}
-.about__body :is(h1,h2) em{ font-style:italic; }
-.about__body p{ margin:0 0 var(--s3); color:var(--ink-2); }
-.about__body p:last-child{ margin-bottom:0; }
-.about__body strong{ font-weight:400; color:var(--ink); }
-
-.facts{ list-style:none; margin:0; padding:0; }
-.facts li{ padding-block:var(--s2); border-bottom:1px solid var(--rule); }
-.facts li:last-child{ border-bottom:0; }
-.facts b{ display:block; font-weight:400; font-size:1.15rem; }
-.facts span{ color:var(--ink-2); font-size:.95rem; }
-
-/* ─────────────────────────────────────────────
-   ВОПРОСЫ
-   ───────────────────────────────────────────── */
-.qa{
-  margin-block:var(--s5);
-  padding:var(--s4) var(--s4) var(--s4) var(--s3); display:grid;
-  grid-template-columns:var(--rail) minmax(0,1fr); gap:var(--s4);
-  border-radius:var(--pane-round);
-  background:var(--pane);
-  border:1px solid var(--pane-edge);
-  box-shadow:var(--pane-lift), var(--pane-glow);
-}
-.qa > .label{ text-align:right; margin:0; }
-.qa__list{ max-width:var(--measure); }
-.qa__item{ border-bottom:1px solid var(--rule); }
-.qa__item:first-child{ border-top:1px solid var(--rule); }
-.qa__q{
-  display:flex; align-items:baseline; justify-content:space-between; gap:var(--s3);
-  padding-block:var(--s3); cursor:pointer; list-style:none;
-  font-size:1.1rem; line-height:1.4;
-}
-.qa__q::-webkit-details-marker{ display:none; }
-.qa__title{
-  margin:0 0 var(--s3); font-weight:300; font-size:1.9rem; letter-spacing:-.015em;
-  text-wrap:balance;
-}
-.qa__q .pm{
-  position:relative; width:1em; min-height:1em;
-  font-family:var(--mono); font-size:0; color:var(--ink-3); flex:0 0 auto;
-}
-.qa__q .pm::before{
-  content:'+'; position:absolute; inset:0;
-  font-size:16px; line-height:1; text-align:center;
-}
-.qa__item[open] .pm{ color:var(--lamp-ink); }
-.qa__item[open] .pm::before{ content:'−'; }
-.qa__a{ padding-bottom:var(--s3); color:var(--ink-2); font-size:1rem; max-width:32rem; }
-
-/* ─────────────────────────────────────────────
-   КОНТАКТЫ И ПОДВАЛ
-   ───────────────────────────────────────────── */
-.contact{
-  margin-block:var(--s5);
-  padding:var(--s5) var(--s4);
-  border-radius:var(--pane-round);
-  background:var(--pane);
-  border:1px solid var(--pane-edge);
-  box-shadow:var(--pane-lift), var(--pane-glow);
-}
-.contact__cta{
-  font-weight:300; font-size:clamp(1.6rem,4vw,2.6rem);
-  line-height:1.22; letter-spacing:-.015em;
-  margin:0 0 var(--s3); max-width:20ch;
-  text-wrap:balance;
-}
-.contact__cta em{ font-style:italic; color:var(--lamp-ink); }
-.contact p{ margin:0 0 var(--s5); max-width:32rem; color:var(--ink-2); }
-
-/* Соцсети — та же отливка, что у кнопок выше, только кругом и мельче:
-   это не второй призыв подписаться, а тихая ссылка «вот где ещё я есть». */
-/* То же стекло, что у кнопок «Подписаться»/«Скопировать» выше — единый
-   стиль, не отдельно раскрашенные значки. Ряд центрирован по панели. */
-.social{ display:flex; justify-content:center; gap:var(--s3); margin-top:var(--s4); }
-.social__link{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:52px; height:52px; border-radius:50%;
-  border:1px solid var(--glass-stroke);
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-  color:var(--ink);
-  transition:var(--glass-transition), color .22s ease;
-}
-.social__link svg{ width:22px; height:22px; fill:currentColor; display:block; }
-.social__link:hover,.social__link:focus-visible{
-  color:var(--ink);
-  border-color:rgba(255,255,255,.95);
-  transform:translateY(-1px);
-  box-shadow:0 14px 30px -16px rgba(17,21,27,.4), var(--glass-glow);
-}
-.social__link:active{
-  transform:scale(.96);
-  box-shadow:0 8px 18px -12px rgba(17,21,27,.4), var(--glass-glow);
-}
-
-/* Подвал прижат к низу окна: на коротких разделах под ним не остаётся
-   пустой плашки. Фон — ровный тон, не градиент: снизу у подвала большой
-   пустой отступ под безопасную зону и кнопку «наверх» (без единого
-   элемента поверх), и на нём нарастающий к низу градиент был виден как
-   отдельная светлая полоса прямо над интерфейсом браузера. */
-.foot{
-  margin-top:auto;
-  border-top:1px solid var(--pane-edge);
-  background:rgba(255,255,255,.40);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-}
-.foot__row{
-  display:flex; flex-wrap:wrap; gap:var(--s3);
-  align-items:baseline; padding-block:var(--s3);
-  padding-bottom:calc(var(--s3) + env(safe-area-inset-bottom, 0px));
-}
-/* Блёклый серый в подвале не читался — берём основной текстовый тон. */
-.foot .label{ color:var(--ink-2); }
-.foot a.label{ color:var(--ink); }
-.foot__row .label:last-child{ margin-left:auto; }
-.foot a.u{ border-bottom:1px solid var(--rule); position:relative; }
-.foot a.u::after{ content:""; position:absolute; inset:-14px -10px; border-radius:8px; }
-.foot a.u:hover{ border-bottom-color:var(--lamp); }
-
-/* наверх */
-.up{
-  /* Отступы считаются от безопасной зоны: на айфоне без этого кнопка садится
-     на полосу-домой, и смахивание вверх попадает по системе, а не по ней. */
-  position:fixed;
-  right:calc(20px + env(safe-area-inset-right, 0px));
-  bottom:calc(20px + env(safe-area-inset-bottom, 0px));
-  width:46px; height:46px; border-radius:50%;
-  border:1px solid var(--glass-stroke);
-  background:var(--glass-tint);
-  -webkit-backdrop-filter:var(--glass-blur);
-  backdrop-filter:var(--glass-blur);
-  box-shadow:var(--glass-drop), var(--glass-glow);
-  color:var(--ink);
-  font-family:var(--mono); font-size:15px; cursor:pointer;
-  opacity:0; pointer-events:none; transform:translateY(8px);
-  transition:opacity .3s, transform .3s, border-color .2s, background .2s;
-  z-index:15;
-}
-.up.is-on{ opacity:1; pointer-events:auto; transform:none; }
-.up:hover{ border-color:var(--ink); background:var(--ink); color:var(--paper); }
-.up.is-on:active{ transform:scale(.92); }
-
-/* ─────────────────────────────────────────────
-   ПОЯВЛЕНИЕ
-   ───────────────────────────────────────────── */
-.rise{ opacity:0; transform:translateY(14px); }
-.rise.in{
-  opacity:1; transform:none;
-  transition:opacity .7s cubic-bezier(.2,.7,.3,1), transform .7s cubic-bezier(.2,.7,.3,1);
-}
-.lead-1{ animation:rise .8s .05s both cubic-bezier(.2,.7,.3,1); }
-.lead-2{ animation:rise .8s .16s both cubic-bezier(.2,.7,.3,1); }
-.lead-3{ animation:rise .8s .27s both cubic-bezier(.2,.7,.3,1); }
-.lead-4{ animation:rise .8s .38s both cubic-bezier(.2,.7,.3,1); }
-@keyframes rise{ from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:none;} }
-
-@media (prefers-reduced-motion: reduce){
-  .rise,.rise.in{ opacity:1; transform:none; transition:none; }
-  .lead-1,.lead-2,.lead-3,.lead-4{ animation:none; }
-  .btn:hover{ transform:none; }
-}
-
-/* ─────────────────────────────────────────────
-   МОБИЛЬНЫЕ
-   ───────────────────────────────────────────── */
-@media (max-width:900px){
-  .hero{ grid-template-columns:1fr; gap:var(--s5); padding-block:var(--s4) var(--s5); }
-  .hero__fig{ order:-1; max-width:220px; margin-inline:0; }
-  .hero__fig img{ aspect-ratio:1/1; }
-  /* На телефоне тезис и лента шли через полный десктопный отступ (64–128px)
-     подряд — на узком экране, где секции и так короче, это читалось как
-     провалы пустоты между ними. Сжимаем ритм, не трогая сами токены. */
-  .thesis{ padding:var(--s5) var(--s4); margin-block:var(--s5); }
-  .feed--home{ padding-block:var(--s6); }
-  .feed{ padding-block:var(--s5) var(--s6); }
-  /* Подвал сжат до полоски строго по тексту — с обеих сторон только
-     реальная безопасная зона, без запаса под кнопку «наверх»: она сама
-     гаснет, как только подвал показывается на экране (см. toggleUp),
-     так что резервировать под неё место в полоске больше незачем.
-     Буквы мельче — на телефоне подвал не место для крупного текста. */
-  .foot__row{
-    padding-top:8px;
-    padding-bottom:calc(8px + env(safe-area-inset-bottom, 0px));
-  }
-  .foot .label{ font-size:10px; letter-spacing:.12em; }
-  /* На широком экране «Вокруг меня» специально уезжает к правому краю —
-     на телефоне строка и так переносится, и та же отправка через всю
-     ширину только разводит её с «@danilka2028k» далеко в сторону. */
-  .foot__row .label:last-child{ margin-left:0; }
-}
-
-/* ─── Отдача на нажатие пальцем ───
-   Браузер на телефоне рисует поверх нажатой ссылки серый прямоугольник — на
-   стекле он выглядит заплаткой и не повторяет форму кнопки: у круглых кнопок
-   он квадратный. Убрать его мало: почти вся отдача в сайте висит на :hover, а
-   на пальце hover не наступает вовсе — и без замены нажатия перестали бы
-   отзываться совсем, сайт стал бы казаться неживым. Поэтому здесь пара:
-   вспышку убираем и тут же даём свою.
-
-   Всё внутри @media для касания: на компьютере :hover работает и трогать его
-   незачем. Ужимаем на 3 процента и притемняем — заметно пальцу, но не прыгает
-   в глаза, как это делала бы заливка. */
-@media (hover: none), (pointer: coarse){
-  a, button, summary, .tab, .pl__track{
-    -webkit-tap-highlight-color:transparent;
-  }
-  /* Подписи на кнопках выделять незачем: долгое нажатие на телефоне вместо
-     нажатия показывало бы лупу и «Скопировать». Текст записей не трогаем —
-     его как раз копируют. */
-  button, .tab, .top__more, .pl__btn, .tv__close, .tv__nav, .up{
-    -webkit-user-select:none; user-select:none;
-  }
-  .btn:active, .filters button:active, .entry__tag:active, .entry__more:active,
-  .tab:active, .top__name:active, .foot a:active{
-    opacity:.62;
-  }
-  .pl__btn:active, .tv__close:active, .tv__nav:active, .up:active, .social__link:active{
-    transform:scale(.92); opacity:.75;
-  }
-  /* У кнопки разделов своё сжатие стоит выше по файлу — здесь только цвет,
-     иначе два transform перебили бы друг друга. */
-  .top__more:active{ color:var(--ink); }
-
-  /* Не хватало пары точек до нормы: «Все записи» была 43, пункты меню — 42.
-     Задаём низом, а не отступами, чтобы не разъехались надписи внутри. */
-  .btn, .filters button, .tab{ min-height:44px; }
-}
-/* Через запятую, а не через «or»: последнее — синтаксис нового уровня, и
-   старый телевизор выбросил бы всё правило целиком вместе с просьбой убрать
-   движение. Запятую понимают все. */
-@media (hover: none) and (prefers-reduced-motion: reduce),
-       (pointer: coarse) and (prefers-reduced-motion: reduce){
-  .pl__btn:active, .tv__close:active, .tv__nav:active, .up:active{ transform:none; }
-}
-
-/* ─────────────────────────────────────────────
-   БОЛЬШИЕ ЭКРАНЫ И ТЕЛЕВИЗОРЫ
-   На мониторе 2K и особенно на телевизоре, который смотрят с трёх метров,
-   колонка в 1160 пикселей превращается в ленточку с мелким текстом. Растим
-   и полосу, и кегль, и рельс — пропорции при этом сохраняются.
-   ───────────────────────────────────────────── */
-@media (min-width:1600px){
-  :root{ --page:1360px; --measure:38rem; --rail:120px; }
-  body{ font-size:20px; }
-  .label,.tab,.top__name{ font-size:13px; }
-}
-@media (min-width:2000px){
-  :root{ --page:1560px; --measure:42rem; --rail:140px; }
-  body{ font-size:22px; }
-  .label,.tab,.top__name{ font-size:14px; }
-  .entry__date{ font-size:17px; }
-}
-@media (min-width:2560px){
-  :root{ --page:1840px; --measure:48rem; --rail:170px; }
-  body{ font-size:25px; }
-  .label,.tab,.top__name{ font-size:16px; }
-  .entry__date{ font-size:19px; }
-  .btn,.filters button{ font-size:14px; padding:16px 26px; }
-}
-@media (min-width:3200px){
-  :root{ --page:2300px; --measure:56rem; --rail:210px; }
-  body{ font-size:30px; }
-  .label,.tab,.top__name{ font-size:19px; }
-  .entry__date{ font-size:23px; }
-  .btn,.filters button{ font-size:17px; padding:20px 32px; }
-  .top__name{ letter-spacing:.02em; }
-}
-
-/* Телевизоры и приставки: курсора нет, ходят пультом — рамка выбора должна
-   быть видна с дивана. */
-@media (min-width:1600px){
-  :focus-visible{ outline-width:4px; outline-offset:4px; scroll-margin-top:120px; }
-}
-
-@media (max-width:720px){
-  body{ font-size:18px; }
-  .wrap{
-    padding-left:max(20px, env(safe-area-inset-left, 0px));
-    padding-right:max(20px, env(safe-area-inset-right, 0px));
-  }
-  :root{ --rail:0px; }
-
-  .top__in{
-    padding-left:max(20px, env(safe-area-inset-left, 0px));
-    padding-right:max(20px, env(safe-area-inset-right, 0px));
-  }
-  .top__name{ padding-block:14px; }
-  .tab{ padding-block:14px; }
-
-  .entry{ grid-template-columns:1fr; gap:var(--s2); padding-block:var(--s4); }
-  .entry__meta{ display:flex; align-items:baseline; gap:var(--s2); flex-wrap:wrap; text-align:left; }
-  .entry__day,.entry__tag{ margin-top:0; }
-  .about,.qa{ grid-template-columns:1fr; gap:var(--s3); }
-  .about > .label,.qa > .label{ text-align:left; }
-  .feed__foot,.feed__empty,.feed__state{ padding-left:0; }
-  .thesis,.feed,.feed--home,.about,.qa,.contact{ padding-block:var(--s6); }
-  /* В столбике пункты стоят плотно — просвет между ними держит капсула. */
-  .top__nav{ gap:2px; }
-  .media--pair{ grid-template-columns:1fr; }
-  .pl--round{ width:min(260px,86%); margin-inline:auto; }
-}
-
-:root{ --page:1200px; }
-body{
-  background-image:
-    radial-gradient(58rem 40rem at 8% -10%, rgba(160,105,45,.13), transparent 60%),
-    radial-gradient(52rem 38rem at 96% 2%, rgba(72,112,174,.16), transparent 62%),
-    radial-gradient(46rem 42rem at 80% 78%, rgba(107,82,156,.12), transparent 64%),
-    radial-gradient(44rem 36rem at 16% 92%, rgba(48,123,138,.12), transparent 62%),
-    linear-gradient(180deg, rgba(255,255,255,.025), transparent 40%);
-}
-.glass-real{
-  background:linear-gradient(157deg, rgba(31,43,56,.88), rgba(14,22,31,.72));
-  border-color:var(--glass-stroke);
-  box-shadow:var(--pane-lift), var(--pane-glow);
-}
-.hero__title--portfolio{
-  max-width:11ch;
-  font-size:clamp(2.65rem, 7.5vw, 6.4rem);
-  line-height:.98;
-  overflow-wrap:anywhere;
-}
-.hero__title--portfolio em{
-  margin-top:.2em;
-  max-width:18ch;
-  font-size:.37em;
-  font-style:normal;
-  font-weight:450;
-  line-height:1.3;
-  letter-spacing:.01em;
-}
-.project-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:var(--s3);
-  margin-top:var(--s4);
-}
-.project-card{
-  padding:var(--s3);
-  border-radius:var(--pane-round);
-  border:1px solid var(--pane-edge);
-  background:var(--pane);
-  box-shadow:var(--pane-lift),var(--pane-glow);
-}
-.project-card h2,.project-card h3{ margin:0 0 var(--s2); line-height:1.25; }
-.project-card p{ margin:0 0 var(--s3); color:var(--ink-2); }
-.project-card .btn{ margin-top:var(--s1); }
-.project-tv{ padding-block:var(--s6); }
-.project-tv__head{ display:flex; justify-content:space-between; align-items:baseline; gap:var(--s3); }
-.project-tv__head h2{ margin:0; }
-.project-tv__intro{ max-width:var(--measure); color:var(--ink-2); }
-.project-video-shelf{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:var(--s3);
-  margin-top:var(--s4);
-}
-.project-video{
-  min-width:0;
-  padding:var(--s2);
-  border:1px solid var(--pane-edge);
-  border-radius:var(--pane-round);
-  background:var(--pane);
-}
-.project-video .pl{ width:100%; max-width:none; margin:0; }
-.project-video__caption{
-  display:flex;
-  justify-content:space-between;
-  gap:var(--s2);
-  margin-top:var(--s2);
-  color:var(--ink-2);
-  font-family:var(--mono);
-  font-size:11px;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-}
-.project-video-shelf .feed__empty{ grid-column:1/-1; }
-@media (max-width:900px){
-  .project-grid,.project-video-shelf{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-  .hero__fig{ order:1; max-width:180px; }
-}
-@media (max-width:560px){
-  .project-grid,.project-video-shelf{ grid-template-columns:1fr; }
-  .project-tv__head{ align-items:flex-start; flex-direction:column; gap:var(--s1); }
-}
-</style>
 </head>
 
 <body>
+<canvas id="weatherFx" aria-hidden="true"></canvas>
 <!-- ═══════════════════════════════════════════════════════════════════════
      ЧАСТЬ 2 ИЗ 3 — РАЗМЕТКА
      Шапка, затем пять панелей: #tab-home, #tab-diary, #tab-about,
@@ -2036,16 +318,14 @@ body{
   <div class="top__in">
     <a class="top__name" href="#/glavnaya" data-tab="home"
        aria-current="page">Вокруг меня</a>
-    <span class="nav__pill" id="navPill" aria-hidden="true"></span>
     <nav class="top__nav" id="navMenu" aria-label="Разделы сайта">
       <a class="tab" href="#/dnevnik"  data-tab="diary">Дневник</a>
       <a class="tab" href="#/o-sebe"   data-tab="about">Обо мне</a>
       <a class="tab" href="#/proekty"  data-tab="projects">Проекты / ТВ</a>
       <a class="tab tab--cta" href="#/kontakty" data-tab="contacts">Контакты</a>
-      <span class="nav__pill nav__pill--m" id="navPillM" aria-hidden="true"></span>
     </nav>
-    <button type="button" class="glass-real top__more" id="moreBtn"
-            aria-expanded="false" aria-controls="navMenu" aria-label="Разделы сайта">⋯</button>
+    <button type="button" class="top__more" id="moreBtn"
+            aria-expanded="false" aria-controls="navMenu" aria-label="Открыть меню разделов">⋯</button>
     <div class="top__now" id="nowBlock">
       <span class="now-row">
         <span class="dot" aria-hidden="true"></span>
@@ -2066,32 +346,32 @@ body{
 
     <section class="hero">
       <div>
-        <p class="label hero__place lead-1">Личный сайт · проекты · дневник</p>
-        <h1 class="hero__title hero__title--portfolio lead-2">
+        <p class="label hero__place">Личный сайт · дневник</p>
+        <h1 class="hero__title">
           Данил Сарыков <em>IT-портфолио, проекты и личный дневник</em>
         </h1>
-        <p class="hero__lede lead-3">
+        <p class="hero__lede">
           Здесь собраны мои цифровые проекты, личные записи, фотографии и видео.
           Дневник обновляется из Telegram, а материалы можно читать и смотреть прямо на сайте.
         </p>
-        <div class="hero__acts lead-4">
+        <div class="hero__acts">
           <a class="btn" href="#/proekty">Проекты / ТВ</a>
           <a class="btn btn--ghost" href="#/dnevnik">Все записи</a>
           <a class="btn btn--ghost" href="https://t.me/danilka2028k" rel="noopener" target="_blank">Канал в Telegram</a>
         </div>
         <!-- Заполняет и показывает скрипт, когда посчитает по настоящим
              данным ленты — без них строка соврала бы числом. -->
-        <p class="label hero__meta lead-4" id="heroMeta" hidden></p>
+        <p class="label hero__meta" id="heroMeta" hidden></p>
       </div>
 
-      <figure class="glass-real hero__fig lead-3">
-        <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="600" height="600" loading="eager" decoding="async"
+      <figure class="hero__fig">
+        <img src="/assets/images/profile.jpg" alt="Данил Сарыков" width="800" height="600" loading="eager" decoding="async"
              tabindex="0" role="button" aria-label="Увеличить фото — Данил Сарыков">
         <figcaption>Данил · автор дневника</figcaption>
       </figure>
     </section>
 
-    <section class="thesis rise">
+    <section class="thesis">
       <figure style="margin:0">
         <blockquote>Идёшь — и слышишь только шаги. <em>И свой ритм.</em></blockquote>
         <figcaption class="label">из записи об утренней Москве и Подмосковье</figcaption>
@@ -2099,14 +379,14 @@ body{
     </section>
 
     <section class="feed feed--home">
-      <div class="feed__head rise">
+      <div class="feed__head">
         <h2>Последнее</h2>
         <span class="label">Обновляется из Telegram</span>
       </div>
       <div class="rail" id="latestRail">
         <p class="feed__state">Загружаю записи…</p>
       </div>
-      <div class="feed__foot rise">
+      <div class="feed__foot">
         <a class="btn btn--ghost" href="#/dnevnik">Все записи →</a>
       </div>
     </section>
@@ -2280,16 +560,18 @@ body{
     <a class="label u" href="https://www.sarykov.ru/">www.sarykov.ru</a>
     <a class="label u" href="https://t.me/danilka2028k" target="_blank" rel="noopener">@danilka2028k</a>
     <span class="label">Вокруг меня</span>
+    <div class="site-controls" aria-label="Настройки оформления">
+      <button type="button" id="effectsToggle" aria-pressed="true">Эффекты: вкл.</button>
+      <button type="button" id="transparencyToggle" aria-pressed="false">Уменьшить прозрачность</button>
+    </div>
   </div>
 </footer>
 
 <button type="button" class="up" id="up" aria-label="Наверх страницы">↑</button>
 
-<noscript><style>#fontStyles{ }</style></noscript>
 <!-- ═══════════════════════════════════════════════════════════════════════
      ЧАСТЬ 3 ИЗ 3 — СКРИПТ СТРАНИЦЫ
-     Раньше лежал отдельным файлом assets/js/site.js. Теперь здесь: весь сайт
-     в одном файле, править нужно только его. Содержание — в шапке скрипта.
+     Содержание — в шапке скрипта.
      ═══════════════════════════════════════════════════════════════════════ -->
 <script>
 /* ─────────────────────────────────────────────────────────────────────────
@@ -2308,7 +590,6 @@ body{
   'use strict';
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var THIN = document.documentElement.classList.contains('thin');
-
   /* ── шрифты включаем, когда лента уже показана ──
      Пока начертания не подключены, текст читается системным шрифтом: на узком
      канале это отдаёт данным дорогу и лента приходит в несколько раз раньше.
@@ -2374,36 +655,19 @@ body{
 
   var navMenu = document.getElementById('navMenu');
 
-  /* ── три точки: на телефоне под ними прячутся разделы ── */
+  /* ── доступное мобильное меню разделов ── */
   var moreBtn = document.getElementById('moreBtn');
   if (moreBtn && navMenu){
-    // Открыли — капсула встаёт на текущий раздел без касания. Мерить сразу
-    // после смены класса нельзя: панель ещё едет из transform:scale(.88)
-    // (переход только начался), и getBoundingClientRect в этот же такт
-    // возвращает не конечную геометрию, а самое начало перехода — капсула
-    // садится в масштабе этого кадра, мимо настоящего места пункта (поймано
-    // ровно на коэффициенте .88 — это и есть исходный scale закрытой панели).
-    // Поэтому сперва грубо ставим капсулу через два кадра (уже видно, не ждать
-    // же всю анимацию), а точную позицию досчитываем по transitionend, когда
-    // панель действительно домчала до конца — на медленном устройстве это
-    // может быть заметно позже двух кадров.
-    var placeOnCurrent = function(){
-      moveMobilePill(navMenu.querySelector('.tab[aria-current="page"]'));
-    };
-    var settleOnEnd = function(e){
-      if (e.target === navMenu) placeOnCurrent();
-    };
+    var mobileMenu = window.matchMedia('(max-width: 960px)');
     var setOpen = function(open){
+      open = !!open && mobileMenu.matches;
       navMenu.classList.toggle('is-open', open);
+      navMenu.toggleAttribute('inert', mobileMenu.matches && !open);
       moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open){
-        requestAnimationFrame(function(){ requestAnimationFrame(placeOnCurrent); });
-        navMenu.addEventListener('transitionend', settleOnEnd);
-      } else {
-        navMenu.removeEventListener('transitionend', settleOnEnd);
-        moveMobilePill(null);
-      }
+      moreBtn.setAttribute('aria-label', open ? 'Закрыть меню разделов' : 'Открыть меню разделов');
     };
+    setOpen(false);
+    mobileMenu.addEventListener('change', function(){ setOpen(false); });
     moreBtn.addEventListener('click', function(e){
       e.stopPropagation();
       setOpen(moreBtn.getAttribute('aria-expanded') !== 'true');
@@ -2416,15 +680,12 @@ body{
       if (!navMenu.contains(e.target) && e.target !== moreBtn) setOpen(false);
     });
     document.addEventListener('keydown', function(e){
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape' && moreBtn.getAttribute('aria-expanded') === 'true'){
+        setOpen(false);
+        moreBtn.focus();
+      }
     });
   }
-
-  /* ── линия под шапкой появляется при прокрутке ── */
-  var topBar = document.getElementById('top');
-  function stuck(){ if (topBar) topBar.classList.toggle('is-stuck', window.scrollY > 8); }
-  window.addEventListener('scroll', stuck, { passive:true });
-  stuck();
 
   /* ── кнопка «наверх» ── */
   var up = document.getElementById('up');
@@ -2477,21 +738,6 @@ body{
     });
   }
 
-  /* ── появление блоков при прокрутке ── */
-  var io = null;
-  if ('IntersectionObserver' in window && !reduce){
-    io = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        if (e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
-      });
-    }, { threshold:.08, rootMargin:'0px 0px -40px 0px' });
-  }
-  function watch(el){
-    if (!el.classList.contains('rise')) return;
-    if (io) io.observe(el); else el.classList.add('in');
-  }
-  [].slice.call(document.querySelectorAll('.rise')).forEach(watch);
-
   /* ── разделы: адрес вида #/dnevnik, чтобы на раздел можно было дать ссылку ── */
   var TABS = [
     { key:'home',     slug:'glavnaya', title:'Данил Сарыков — IT-портфолио, проекты и личный дневник' },
@@ -2539,152 +785,6 @@ body{
     if (el) el.scrollIntoView({ block:'start', behavior: reduce ? 'auto' : 'smooth' });
   }
 
-  /* Капсула едет к выбранному разделу — одинаково на любой ширине: на
-     телефоне разделы теперь в той же строке, что и на компьютере. */
-  var navPill = document.getElementById('navPill');
-  var topIn = document.querySelector('.top__in');
-  var pillPlaced = false;
-  var pillHover = null;      // раздел под курсором, если он там есть
-  function movePill(){
-    if (!navPill || !topIn) return;
-    // На телефоне разделы лежат в закрытом выпадающем меню — там капсула
-    // не нужна и мерить там нечего (панель невидима, но не убрана из потока).
-    var narrow = window.matchMedia('(max-width:900px)').matches;
-    // Под курсором капсула забегает вперёд, к тому разделу, на который
-    // человек смотрит. Отпустил — вернулась к открытому.
-    var active = pillHover || document.querySelector('[data-tab][aria-current="page"]');
-    if (narrow || !active || !active.offsetWidth){
-      topIn.classList.remove('has-pill');
-      pillPlaced = false;
-      return;
-    }
-    // Считаем от края шапки, а не от полосы разделов: имя лежит вне полосы,
-    // а сама полоса может быть прокручена.
-    var pad = 14;
-    var barBox = topIn.getBoundingClientRect();
-    var box = active.getBoundingClientRect();
-    var x = box.left - barBox.left - pad;
-    var y = box.top - barBox.top + (box.height - 34) / 2;
-    // Первую установку не анимируем, иначе капсула приезжает из угла.
-    if (!pillPlaced) navPill.classList.add('no-anim');
-    navPill.style.width = (box.width + pad * 2) + 'px';
-    navPill.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-    topIn.classList.add('has-pill');
-    if (!pillPlaced){
-      void navPill.offsetWidth;
-      navPill.classList.remove('no-anim');
-      pillPlaced = true;
-    }
-  }
-  // Полосу разделов можно прокрутить — капсула едет вместе с ней.
-  if (navMenu) navMenu.addEventListener('scroll', movePill, { passive:true });
-
-  /* ── Та же капсула, только в свёрнутом меню на телефоне ──
-     На узком экране разделы лежат не строкой в шапке, а столбиком в панели
-     под кнопкой «⋯» — обычная капсула туда не достаёт (см. movePill выше).
-     Здесь свой указатель на свою панель: открыли меню — капсула сразу
-     встаёт на текущий раздел; повели пальцем по списку, не отпуская, —
-     капсула едет следом, как мышь на компьютере водит капсулу по строке. */
-  var navPillM = document.getElementById('navPillM');
-  var pillMPlaced = false;
-  function moveMobilePill(target){
-    if (!navPillM || !navMenu) return;
-    if (!target || !navMenu.classList.contains('is-open') || !target.offsetWidth){
-      navMenu.classList.remove('has-pill-m');
-      pillMPlaced = false;
-      return;
-    }
-    var barBox = navMenu.getBoundingClientRect();
-    var box = target.getBoundingClientRect();
-    var x = box.left - barBox.left;
-    var y = box.top - barBox.top;
-    if (!pillMPlaced) navPillM.classList.add('no-anim');
-    navPillM.style.width = box.width + 'px';
-    navPillM.style.height = box.height + 'px';
-    navPillM.style.transform = 'translate(' + x + 'px,' + y + 'px)';
-    navMenu.classList.add('has-pill-m');
-    if (!pillMPlaced){
-      void navPillM.offsetWidth;
-      navPillM.classList.remove('no-anim');
-      pillMPlaced = true;
-    }
-  }
-  if (navMenu){
-    // Коснулись пункта — капсула тут же встаёт на него.
-    navMenu.addEventListener('pointerdown', function(e){
-      var t = e.target.closest && e.target.closest('.tab');
-      if (t) moveMobilePill(t);
-    });
-    // Не отпуская палец, повели по списку — капсула едет за ним следом.
-    // e.buttons проверяем, чтобы обычная наводка мышью без нажатия (когда
-    // окно просто узкое) не гоняла капсулу без повода.
-    navMenu.addEventListener('pointermove', function(e){
-      if (!e.buttons) return;
-      var el = document.elementFromPoint(e.clientX, e.clientY);
-      var t = el && el.closest && el.closest('.tab');
-      if (t && navMenu.contains(t)) moveMobilePill(t);
-    }, { passive:true });
-  }
-
-  /* ── Живой блик на стекле ──
-     Неподвижный отсвет выглядит наклейкой. Этот ходит за указателем: кладём
-     в переменные место курсора внутри стекла, а рисует уже CSS. Считаем не
-     чаще кадра и только там, где есть мышь: на телефоне двигать нечем, а
-     лишние вычисления на прокрутке ни к чему. */
-  if (!reduce && !THIN){
-    var стёкла = [].slice.call(document.querySelectorAll('.glass-real'));
-    var бликЖдёт = false, бликСобытие = null;
-    var светить = function(e, только){
-      (только ? [только] : стёкла).forEach(function(el){
-        var b = el.getBoundingClientRect();
-        if (!b.width) return;
-        el.style.setProperty('--mx', ((e.clientX - b.left) / b.width * 100).toFixed(1) + '%');
-        el.style.setProperty('--my', ((e.clientY - b.top) / b.height * 100).toFixed(1) + '%');
-      });
-    };
-    // Палец: блик вспыхивает там, где коснулись. Считать на каждое движение
-    // пальца незачем — касание одно и короткое.
-    стёкла.forEach(function(el){
-      el.addEventListener('pointerdown', function(e){ светить(e, el); });
-    });
-    if (стёкла.length && window.matchMedia('(hover: hover) and (pointer: fine)').matches){
-      window.addEventListener('pointermove', function(e){
-        бликСобытие = e;
-        if (бликЖдёт) return;
-        бликЖдёт = true;
-        requestAnimationFrame(function(){
-          бликЖдёт = false;
-          светить(бликСобытие);
-        });
-      }, { passive:true });
-    }
-  }
-
-  /* Капсула следует за курсором. Только там, где есть настоящая мышь: на
-     сенсорном экране браузер выдаёт «наведение» после касания, и капсула
-     залипала бы на разделе, который человек просто задел пальцем. */
-  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches){
-    tabLinks.forEach(function(el){
-      el.addEventListener('mouseenter', function(){ pillHover = el; movePill(); });
-      // С клавиатуры — то же самое: видно, куда переведён выбор.
-      el.addEventListener('focus', function(){ pillHover = el; movePill(); });
-      el.addEventListener('blur', function(){ pillHover = null; movePill(); });
-    });
-    // Возвращается к открытому разделу, только когда курсор ушёл из шапки
-    // совсем. Промежутки между пунктами не в счёт: пока курсор идёт от
-    // «Записей» к «Контактам», он их пересекает, и капсула на каждом
-    // отскакивала назад — получалось дёрганье вместо движения.
-    topIn.addEventListener('mouseleave', function(){ pillHover = null; movePill(); });
-  }
-
-  var pillTick = 0;
-  window.addEventListener('resize', function(){
-    if (pillTick) return;
-    pillTick = requestAnimationFrame(function(){ pillTick = 0; movePill(); });
-  });
-  // Ширина надписей меняется, когда доезжают шрифты — пересчитываем.
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(movePill);
-
   function showTab(tab, keepScroll){
     TABS.forEach(function(t){
       var panel = document.getElementById('tab-' + t.key);
@@ -2700,7 +800,6 @@ body{
         link.scrollIntoView({ block:'nearest', inline:'nearest', behavior: reduce ? 'auto' : 'smooth' });
       }
     });
-    movePill();
     document.title = tab.title;
     // Останавливаем всё, что играло на покинутой вкладке.
     [].slice.call(document.querySelectorAll('video')).forEach(function(v){
@@ -4051,7 +2150,7 @@ body{
 
   function buildEntry(post, mediaList, withPermalink){
     var art = document.createElement('article');
-    art.className = 'entry rise';
+    art.className = 'entry';
     art._tagKeys = post.tags.map(tagKey);
     // Числовой хвост id ("danilka2028k/540" → "540") — устойчивый и
     // короткий, в отличие от позиции в массиве: та съезжает при каждой
@@ -4253,7 +2352,7 @@ body{
       return null;
     }
     target.appendChild(frag);
-    [].slice.call(target.querySelectorAll('.rise')).forEach(watch);
+
     // Тем набирается много — показываем те, что встречаются чаще всего.
     return Object.keys(tagStats).map(function(key){ return tagStats[key]; }).sort(function(a,b){
       return b.count - a.count || a.label.localeCompare(b.label, 'ru');
@@ -4420,9 +2519,10 @@ body{
     applyTagFilter('all', 'Все');
   }
 
-  function failure(err){
+  function failure(err, retry){
     var p = document.createElement('p');
     p.className = 'feed__state';
+    p.setAttribute('role', 'alert');
     p.appendChild(document.createTextNode('Не получилось загрузить записи. Загляните в '));
     var a = document.createElement('a');
     a.className = 'u';
@@ -4433,23 +2533,29 @@ body{
     p.appendChild(document.createTextNode('.'));
     if (err && err.message){
       var small = document.createElement('small');
-      small.style.cssText = 'display:block;margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--ink-3)';
       small.textContent = String(err.message);
       p.appendChild(small);
     }
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn--ghost';
+    button.textContent = 'Повторить загрузку';
+    button.addEventListener('click', retry);
+    p.appendChild(button);
     return p;
   }
 
   if (railEl){
+    var loading = false;
     var loadFrom = function(index){
-      if (index >= POSTS_SOURCES.length) throw new Error('источники недоступны');
+      if (index >= POSTS_SOURCES.length) return Promise.reject(new Error('источники недоступны'));
       return fetch(POSTS_SOURCES[index], { cache:'no-store' })
         .then(function(res){
           if (!res.ok) throw new Error('HTTP ' + res.status);
           return res.json();
         })
         .then(function(posts){
-          if (!Array.isArray(posts) || !posts.length) throw new Error('пустой ответ');
+          if (!Array.isArray(posts)) throw new Error('ответ должен быть списком записей');
           return posts;
         })
         .catch(function(err){
@@ -4458,40 +2564,61 @@ body{
         });
     };
 
+    function renderPosts(posts){
+      loading = false;
+      var tags = renderInto(railEl, posts, 0, true);
+      renderFilters(tags);
+      if (latestEl) renderInto(latestEl, posts, 3);
+      renderProjectVideos(posts);
+      paintHeroMeta(posts);
+      scrollToPost(postIdFromHash());
+      enableFonts();
+    }
+
+    function showLoadFailure(err){
+      loading = false;
+      enableFonts();
+      railEl.innerHTML = '';
+      railEl.appendChild(failure(err, retryPosts));
+      if (latestEl){
+        latestEl.innerHTML = '';
+        latestEl.appendChild(failure(err, retryPosts));
+      }
+      if (filtersEl) filtersEl.hidden = true;
+      if (filtersStatusEl) filtersStatusEl.hidden = true;
+    }
+
+    function retryPosts(){
+      if (loading) return;
+      loading = true;
+      [railEl, latestEl].forEach(function(target){
+        if (!target) return;
+        target.innerHTML = '';
+        var state = document.createElement('p');
+        state.className = 'feed__state';
+        state.setAttribute('role', 'status');
+        state.textContent = 'Загружаю записи…';
+        target.appendChild(state);
+      });
+      loadFrom(0).then(renderPosts).catch(showLoadFailure);
+    }
+
     // Страница успела начать загрузку записей ещё до этого скрипта —
     // пользуемся её результатом, а к запасным источникам идём только если
     // тот запрос не удался.
     var early = window.__posts;
     var first = early
       ? early.then(function(posts){
-          if (!Array.isArray(posts) || !posts.length) throw new Error('пустой ответ');
+          if (!Array.isArray(posts)) throw new Error('ответ должен быть списком записей');
           return posts;
         }).catch(function(){ return loadFrom(0); })
       : loadFrom(0);
 
-    first
-      .then(function(posts){
-        var tags = renderInto(railEl, posts, 0, true);
-        renderFilters(tags);
-        if (latestEl) renderInto(latestEl, posts, 3);
-        renderProjectVideos(posts);
-        paintHeroMeta(posts);
-        // Открыли сайт сразу по ссылке на запись — докручиваем, как только
-        // лента впервые отрисовалась (до этого момента карточки ещё нет).
-        scrollToPost(postIdFromHash());
-        enableFonts();
-      })
-      .catch(function(err){
-        enableFonts();
-        railEl.innerHTML = '';
-        railEl.appendChild(failure(err));
-        if (latestEl){ latestEl.innerHTML = ''; latestEl.appendChild(failure(err)); }
-        if (filtersEl) filtersEl.hidden = true;
-        if (filtersStatusEl) filtersStatusEl.hidden = true;
-      });
+    first.then(renderPosts).catch(showLoadFailure);
   }
 })();
 </script>
 
+<script src="/assets/js/atmosphere.js" defer></script>
 </body>
 </html>

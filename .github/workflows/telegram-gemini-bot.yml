@@ -12,6 +12,7 @@ on:
       - 'telegram-gemini-bot/telegram_album_state.py'
       - 'telegram-gemini-bot/telegram_retry_state.py'
       - 'telegram-gemini-bot/telegram_state_crypto.py'
+      - 'telegram-gemini-bot/telegram_diagnostics.py'
       - 'telegram-gemini-bot/pages_build.py'
       - 'telegram-gemini-bot/gemini_resilience.py'
       - 'telegram-gemini-bot/bot_utils.py'

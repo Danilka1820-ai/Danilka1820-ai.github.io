@@ -27,6 +27,7 @@ Telegram-бот на pyTelegramBotAPI + Google Gemini.
 import os
 import time
 import tempfile
+from collections.abc import Callable
 from contextlib import ExitStack
 
 import telebot
@@ -99,6 +100,7 @@ POST_STYLE_HINT = (
 
 delivery_checkpoint_errors: list[telegram_delivery.DeliveryCheckpointError] = []
 processing_errors: list[Exception] = []
+published_post_handler: Callable[[str, list, list[str], str | None], None] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -178,32 +180,33 @@ def _send_channel_content(text: str, media_paths: list[str], media_type: str):
     with ExitStack() as stack:
         files = [stack.enter_context(open(path, "rb")) for path in media_paths]
         if media_type == "album":
-            items = [
-                telebot.types.InputMediaPhoto(
-                    media_file,
-                    caption=caption if index == 0 else None,
-                )
-                for index, media_file in enumerate(files)
-            ]
-            sent = bot.send_media_group(CHANNEL_ID, media=items)
-            first_sent = sent[0] if sent else None
+            sent_messages = bot.send_media_group(
+                CHANNEL_ID,
+                media=[
+                    telebot.types.InputMediaPhoto(
+                        media_file,
+                        caption=caption if index == 0 else None,
+                    )
+                    for index, media_file in enumerate(files)
+                ],
+            )
         elif media_type == "photo":
-            first_sent = bot.send_photo(CHANNEL_ID, files[0], caption=caption)
+            sent_messages = [bot.send_photo(CHANNEL_ID, files[0], caption=caption)]
         elif media_type == "video":
-            first_sent = bot.send_video(CHANNEL_ID, files[0], caption=caption)
+            sent_messages = [bot.send_video(CHANNEL_ID, files[0], caption=caption)]
         elif media_type == "voice":
-            first_sent = bot.send_voice(CHANNEL_ID, files[0], caption=caption)
+            sent_messages = [bot.send_voice(CHANNEL_ID, files[0], caption=caption)]
         elif media_type == "video_note":
-            first_sent = bot.send_video_note(CHANNEL_ID, files[0])
+            sent_messages = [bot.send_video_note(CHANNEL_ID, files[0])]
         else:
             raise ValueError(f"Неподдерживаемый тип вложения для канала: {media_type}")
 
         if caption is None or media_type == "video_note":
             try:
-                bot.send_message(CHANNEL_ID, text)
+                sent_messages.append(bot.send_message(CHANNEL_ID, text))
             except Exception as error:
                 raise PartialChannelDeliveryError(error) from error
-        return first_sent
+        return sent_messages
 
 
 def publish_to_channel(
@@ -254,6 +257,9 @@ def publish_to_channel(
             sent = _send_channel_content(text, media_paths, media_type or "")
         else:
             sent = bot.send_message(CHANNEL_ID, text)
+        sent_messages = sent if isinstance(sent, list) else [sent]
+        if not sent_messages or not sent_messages[0]:
+            raise RuntimeError("Telegram не вернул сообщение после публикации.")
     except Exception as error:  # noqa: BLE001 - внешний API может завершиться неоднозначно
         processing_errors.append(error)
         partial_delivery = isinstance(error, PartialChannelDeliveryError)
@@ -291,7 +297,26 @@ def publish_to_channel(
         # process dies before the workflow commits its final state.
         print(_redact_secrets(str(error)))
 
-    notice = f"✅ Опубликовано в канале. ID сообщения: {sent.message_id}"
+    if published_post_handler:
+        try:
+            published_post_handler(text, sent_messages, media_paths or [], media_type)
+        except Exception as error:
+            processing_errors.append(error)
+            print(
+                "Telegram пост опубликован, но запись сайта не сохранена: "
+                f"{type(error).__name__}"
+            )
+            notice = (
+                "✅ В канал отправлено, но сайт не подтвердил сохранение записи. "
+                "Автоматически повторять пост не буду; резервная сверка восстановит запись."
+            )
+            if processing_message:
+                edit_reply(processing_message, notice)
+            else:
+                reply(message, notice)
+            return False
+
+    notice = f"✅ Опубликовано в канале. ID сообщения: {sent_messages[0].message_id}"
     if processing_message:
         edit_reply(processing_message, notice)
     else:
